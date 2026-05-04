@@ -1,0 +1,105 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum GameStatus {
+  WAITING
+  IN_PROGRESS
+  FINISHED
+}
+
+enum Winner {
+  VILLAGERS
+  WEREWOLVES
+}
+
+enum Role {
+  WEREWOLF
+  VILLAGER
+  SEER
+  DOCTOR
+}
+
+enum Phase {
+  DAY
+  NIGHT
+}
+
+enum ActionType {
+  KILL
+  INVESTIGATE
+  SAVE
+}
+
+model Game {
+  id           String     @id @default(uuid())
+  roomCode     String     @unique @map("room_code")
+  status       GameStatus @default(WAITING)
+  winner       Winner?
+  playerCount  Int        @default(0) @map("player_count")
+  totalRounds  Int        @default(0) @map("total_rounds")
+  startedAt    DateTime?  @map("started_at")
+  endedAt      DateTime?  @map("ended_at")
+  createdAt    DateTime   @default(now()) @map("created_at")
+
+  players      Player[]
+  messages     Message[]
+  nightActions NightAction[]
+
+  @@map("games")
+}
+
+model Player {
+  id               String   @id @default(uuid())
+  gameId           String   @map("game_id")
+  name             String
+  role             Role
+  isWinner         Boolean? @map("is_winner")
+  eliminationRound Int?     @map("elimination_round")
+  eliminationPhase Phase?   @map("elimination_phase")
+
+  game             Game          @relation(fields: [gameId], references: [id])
+  messages         Message[]
+  actionsPerformed NightAction[] @relation("Performer")
+  actionsReceived  NightAction[] @relation("Target")
+
+  @@map("players")
+}
+
+model Message {
+  id         String   @id @default(uuid())
+  gameId     String   @map("game_id")
+  playerId   String?  @map("player_id")
+  playerName String   @map("player_name")
+  role       Role?
+  content    String
+  phase      Phase
+  round      Int
+  isSystem   Boolean  @default(false) @map("is_system")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  game   Game    @relation(fields: [gameId], references: [id])
+  player Player? @relation(fields: [playerId], references: [id])
+
+  @@map("messages")
+}
+
+model NightAction {
+  id             String     @id @default(uuid())
+  gameId         String     @map("game_id")
+  playerId       String     @map("player_id")
+  actionType     ActionType @map("action_type")
+  targetPlayerId String     @map("target_player_id")
+  round          Int
+  wasBlocked     Boolean    @default(false) @map("was_blocked")
+
+  game         Game   @relation(fields: [gameId], references: [id])
+  player       Player @relation("Performer", fields: [playerId], references: [id])
+  targetPlayer Player @relation("Target", fields: [targetPlayerId], references: [id])
+
+  @@map("night_actions")
+}
