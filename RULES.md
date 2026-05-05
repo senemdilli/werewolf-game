@@ -1,24 +1,31 @@
-8 Players:
-
+# Our rules
+8 Players
 - 2 Werewolfs
+- 1 Seer (1 player identity discovered per round)
+- 1 Witch 
+- 4 Villagers
 
-- 1 Seer (1 id discovered per round)
+## Mayor
+There must be a moyor at any point in time.
+This role can be taken by anyone.
+It is decided by vote among all players.
+If tie: Random assignment between players with most votes
+If mayor dies: new mayor gets elected among surviving players
+The mayor has the power to stop the conversation.
+If after a day-time voting (who to kill) there is a tie, the mayor decides who dies.
 
-- 1 Witch (one healing potion & one kill potion, played after the wearwolf) - 4 Villagers
+## Witch
+- one healing potion
+- one kill potion
+- the witch makes her move at night, after the wearwolfs
+- she can decide to do nothing
+- if the wearvolves kill the witch she will not be able to make her move
+- not disclosed if player was killed by witch or wearwolf
 
-- Mayor: Decided by vote among all players (can stop the conversation)
-
-○ If tie: Random assignment between players with most votes
-
-○ If mayor dies: new mayor gets elected among surviving players
-
-- Major acts as tie breaker
-
+## Others
 - Roles of dead players will be exposed
-
-- Seer only sees faction
-
-not disclosed if player was killed by witch or wearwolf
+- Seer only sees faction (i.e. good/bad), in other words the seer doesn't learn who the witch is.
+- not disclosed if player was killed by witch or wearwolf
 
 
 ## Where is the game played
