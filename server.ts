@@ -9,7 +9,7 @@ const dev = process.env.NODE_ENV !== 'production'
 const app = next({ dev, port })
 const handle = app.getRequestHandler()
 
-app.prepare().then(() => {
+app.prepare().catch((err) => { console.error('Next.js failed to prepare:', err); process.exit(1) }).then(() => {
   const httpServer = createServer((req, res) => {
     handle(req, res)
   })
