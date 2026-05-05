@@ -14,13 +14,11 @@ ENV DATABASE_URL=$DATABASE_URL
 RUN npx prisma generate
 RUN npm run build
 
-FROM base AS runner
+FROM node:20-alpine AS runner
+WORKDIR /app
 ENV NODE_ENV=production
-# Copy entire build context — Next.js 16 App Router needs source files at runtime alongside .next
 COPY --from=builder /app ./
-
-RUN npm install -g tsx
 
 EXPOSE 3000
 
-CMD ["sh", "-c", "npx prisma db push --accept-data-loss && tsx server.ts"]
+CMD ["sh", "-c", "npx prisma db push --accept-data-loss && ./node_modules/.bin/tsx server.ts"]
