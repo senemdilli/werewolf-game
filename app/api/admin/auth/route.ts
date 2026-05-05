@@ -4,8 +4,6 @@ export async function POST(request: NextRequest) {
   const { password } = await request.json()
   const secret = process.env.ADMIN_SECRET
 
-  console.log('[admin/auth] secret defined:', !!secret, '| secret length:', secret?.length, '| password length:', password?.length, '| match:', password === secret)
-
   if (!secret || password !== secret) {
     return NextResponse.json({ error: 'Invalid password' }, { status: 401 })
   }

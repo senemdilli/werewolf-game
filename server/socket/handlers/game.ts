@@ -295,6 +295,37 @@ async function getDbPlayerId(gameId: string, name: string): Promise<string> {
 
 // ── Handler registration ──────────────────────────────────────────────────────
 
+export async function startGame(io: GameServer, roomCode: string): Promise<void> {
+  const state = await getGame(roomCode)
+  if (!state || state.phase !== 'lobby' || state.players.length < 4) return
+
+  state.players = assignRoles(state.players)
+  state.phase = 'role_reveal'
+
+  const dbGame = await prisma.game.create({
+    data: {
+      roomCode,
+      status: 'IN_PROGRESS',
+      playerCount: state.players.length,
+      startedAt: new Date(),
+      players: {
+        create: state.players.map(p => ({
+          name: p.name,
+          role: p.role!.toUpperCase() as import('@prisma/client').$Enums.Role,
+        })),
+      },
+    },
+  })
+  state.dbGameId = dbGame.id
+
+  for (const p of state.players) {
+    if (p.role === 'werewolf') io.sockets.sockets.get(p.socketId)?.join(`wolves:${roomCode}`)
+  }
+
+  await saveGame(state)
+  await broadcastState(io, roomCode)
+}
+
 export function registerGameHandlers(io: GameServer, socket: GameSocket) {
 
   socket.on('game:start', async (cb) => {
@@ -302,35 +333,12 @@ export function registerGameHandlers(io: GameServer, socket: GameSocket) {
       const { playerId, roomCode } = socket.data
       const state = await getGame(roomCode)
       if (!state) return cb({ success: false, error: 'Room not found' })
-      if (state.hostId !== playerId) return cb({ success: false, error: 'Only the host can start' })
+      const player = state.players.find(p => p.id === playerId)
+      if (!player?.isHost) return cb({ success: false, error: 'Only the host can start' })
       if (state.players.length < 4) return cb({ success: false, error: 'Need at least 4 players' })
       if (state.phase !== 'lobby') return cb({ success: false, error: 'Already started' })
 
-      state.players = assignRoles(state.players)
-      state.phase = 'role_reveal'
-
-      const dbGame = await prisma.game.create({
-        data: {
-          roomCode,
-          status: 'IN_PROGRESS',
-          playerCount: state.players.length,
-          startedAt: new Date(),
-          players: {
-            create: state.players.map(p => ({
-              name: p.name,
-              role: p.role!.toUpperCase() as import('@prisma/client').$Enums.Role,
-            })),
-          },
-        },
-      })
-      state.dbGameId = dbGame.id
-
-      for (const p of state.players) {
-        if (p.role === 'werewolf') io.sockets.sockets.get(p.socketId)?.join(`wolves:${roomCode}`)
-      }
-
-      await saveGame(state)
-      await broadcastState(io, roomCode)
+      await startGame(io, roomCode)
       cb({ success: true })
     } catch (err) {
       console.error('[game:start]', err)
@@ -506,7 +514,9 @@ export function registerGameHandlers(io: GameServer, socket: GameSocket) {
     try {
       const { playerId, roomCode } = socket.data
       const state = await getGame(roomCode)
-      if (!state || state.hostId !== playerId) return
+      if (!state) return
+      const player = state.players.find(p => p.id === playerId)
+      if (!player?.isHost) return
 
       if (state.phase === 'night') await transitionAfterNight(io, roomCode)
       else if (state.phase === 'mayor_election') await finalizeMayorElection(io, roomCode)

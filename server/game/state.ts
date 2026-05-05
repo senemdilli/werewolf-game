@@ -19,6 +19,7 @@ export function createInitialState(roomCode: string, hostSocketId: string, hostN
       socketId: hostSocketId,
       isHost: true,
       roleAcknowledged: false,
+      isReady: false,
     }],
     nightActions: {
       werewolfVotes: {},
@@ -111,6 +112,7 @@ export function buildClientState(state: GameState, playerId: string): ClientGame
       role: revealRole ? (p.role ?? undefined) : undefined,
       hasVoted: p.id in state.dayVotes.votes,
       isMayor: p.id === state.mayorId,
+      isReady: p.isReady,
     }
   })
 

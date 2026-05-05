@@ -7,12 +7,17 @@ import PlayerList from './PlayerList'
 interface Props {
   state: ClientGameState
   onStart: () => void
+  onReady: () => void
   starting: boolean
 }
 
-export default function Lobby({ state, onStart, starting }: Props) {
-  const isHost = state.players.find(p => p.id === state.myId)?.isHost
+export default function Lobby({ state, onStart, onReady, starting }: Props) {
+  const me = state.players.find(p => p.id === state.myId)
+  const isHost = me?.isHost
+  const iAmReady = me?.isReady ?? false
   const canStart = state.players.length >= 4
+  const readyCount = state.players.filter(p => p.isReady).length
+  const allReady = canStart && readyCount === state.players.length
 
   return (
     <div className="flex flex-col items-center gap-8 py-8 px-4 max-w-md mx-auto w-full">
@@ -29,11 +34,15 @@ export default function Lobby({ state, onStart, starting }: Props) {
           <h2 className="text-sm font-semibold text-slate-300 uppercase tracking-wide">
             Players ({state.players.length}/12)
           </h2>
-          {!canStart && (
+          {canStart ? (
+            <span className={`text-xs font-medium ${allReady ? 'text-emerald-400' : 'text-slate-400'}`}>
+              {readyCount}/{state.players.length} ready
+            </span>
+          ) : (
             <span className="text-xs text-amber-400">Need at least 4 players</span>
           )}
         </div>
-        <PlayerList players={state.players} myId={state.myId} />
+        <PlayerList players={state.players} myId={state.myId} showReady />
       </div>
 
       <div className="w-full bg-slate-900 border border-slate-700 rounded-xl p-4">
@@ -41,13 +50,33 @@ export default function Lobby({ state, onStart, starting }: Props) {
         <RolePreview count={state.players.length} />
       </div>
 
-      {isHost ? (
-        <Button size="lg" className="w-full" disabled={!canStart} loading={starting} onClick={onStart}>
-          Start Game
+      <div className="w-full flex flex-col gap-3">
+        <Button
+          size="lg"
+          className="w-full"
+          variant={iAmReady ? 'ghost' : 'primary'}
+          onClick={onReady}
+        >
+          {iAmReady ? 'Cancel Ready' : 'Ready'}
         </Button>
-      ) : (
-        <p className="text-slate-400 text-sm">Waiting for the host to start the game…</p>
-      )}
+
+        {isHost && (
+          <Button
+            size="lg"
+            className="w-full"
+            variant="ghost"
+            disabled={!canStart}
+            loading={starting}
+            onClick={onStart}
+          >
+            Force Start
+          </Button>
+        )}
+
+        {allReady && (
+          <p className="text-emerald-400 text-sm text-center animate-pulse">Everyone is ready — starting…</p>
+        )}
+      </div>
     </div>
   )
 }
@@ -58,7 +87,6 @@ function RolePreview({ count }: { count: number }) {
   }
 
   const wolves = count <= 5 ? 1 : count <= 8 ? 2 : Math.floor(count / 4)
-  // seer + witch = 2 specials always
   const villagers = count - wolves - 2
 
   return (

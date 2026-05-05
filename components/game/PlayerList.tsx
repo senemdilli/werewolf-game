@@ -13,6 +13,7 @@ interface Props {
   players: PublicPlayer[]
   myId: string
   showVotes?: boolean
+  showReady?: boolean
   onSelect?: (playerId: string) => void
   selectedId?: string
   selectable?: boolean
@@ -23,6 +24,7 @@ export default function PlayerList({
   players,
   myId,
   showVotes,
+  showReady,
   onSelect,
   selectedId,
   selectable,
@@ -55,6 +57,11 @@ export default function PlayerList({
               </span>
             </div>
             <div className="flex items-center gap-2 shrink-0">
+              {showReady && (
+                <span className={`text-xs ${p.isReady ? 'text-emerald-400' : 'text-slate-600'}`}>
+                  {p.isReady ? '✓ ready' : 'not ready'}
+                </span>
+              )}
               {showVotes && p.hasVoted && (
                 <span className="text-xs text-slate-400">voted</span>
               )}

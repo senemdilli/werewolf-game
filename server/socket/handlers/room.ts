@@ -2,6 +2,7 @@ import type { Server, Socket } from 'socket.io'
 import type { ServerToClientEvents, ClientToServerEvents } from '@/types/game'
 import { createInitialState, getGame, saveGame } from '@/server/game/state'
 import { buildClientState } from '@/server/game/state'
+import { startGame } from './game'
 import { v4 as uuidv4 } from 'uuid'
 
 type GameSocket = Socket<ClientToServerEvents, ServerToClientEvents>
@@ -53,6 +54,7 @@ export function registerRoomHandlers(io: GameServer, socket: GameSocket) {
         socketId: socket.id,
         isHost: false,
         roleAcknowledged: false,
+        isReady: false,
       })
 
       await saveGame(state)
@@ -102,6 +104,31 @@ export function registerRoomHandlers(io: GameServer, socket: GameSocket) {
     }
   })
 
+  socket.on('room:ready', async () => {
+    try {
+      const { playerId, roomCode } = socket.data
+      const state = await getGame(roomCode)
+      if (!state || state.phase !== 'lobby') return
+
+      const player = state.players.find(p => p.id === playerId)
+      if (!player) return
+
+      player.isReady = !player.isReady
+      await saveGame(state)
+
+      const allReady = state.players.length >= 4 && state.players.every(p => p.isReady)
+      if (allReady) {
+        await startGame(io, roomCode)
+      } else {
+        for (const p of state.players) {
+          io.to(p.socketId).emit('game:state', buildClientState(state, p.id))
+        }
+      }
+    } catch (err) {
+      console.error('[room:ready]', err)
+    }
+  })
+
   socket.on('disconnect', async () => {
     const { playerId, roomCode } = socket.data
     if (!playerId || !roomCode) return
@@ -112,9 +139,8 @@ export function registerRoomHandlers(io: GameServer, socket: GameSocket) {
 
       if (state.phase === 'lobby') {
         state.players = state.players.filter(p => p.id !== playerId)
-        if (state.players.length === 0) {
-          return
-        }
+        if (state.players.length === 0) return
+
         if (state.hostId === playerId && state.players.length > 0) {
           state.players[0].isHost = true
           state.hostId = state.players[0].id
@@ -122,8 +148,20 @@ export function registerRoomHandlers(io: GameServer, socket: GameSocket) {
         await saveGame(state)
 
         for (const p of state.players) {
-          const cs = buildClientState(state, p.id)
-          io.to(p.socketId).emit('game:state', cs)
+          io.to(p.socketId).emit('game:state', buildClientState(state, p.id))
+        }
+      } else {
+        // In-game: transfer host if host left so phase:advance still works
+        if (state.hostId === playerId) {
+          const nextHost = state.players.find(p => p.id !== playerId && p.isAlive)
+          if (nextHost) {
+            state.players.forEach(p => { p.isHost = p.id === nextHost.id })
+            state.hostId = nextHost.id
+            await saveGame(state)
+            for (const p of state.players) {
+              io.to(p.socketId).emit('game:state', buildClientState(state, p.id))
+            }
+          }
         }
       }
     } catch (err) {

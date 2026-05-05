@@ -17,6 +17,7 @@ export interface Player {
   socketId: string
   isHost: boolean
   roleAcknowledged: boolean
+  isReady: boolean
 }
 
 export interface NightActions {
@@ -69,6 +70,7 @@ export interface PublicPlayer {
   role?: Role
   hasVoted?: boolean
   isMayor?: boolean
+  isReady?: boolean
 }
 
 export interface ClientGameState {
@@ -121,6 +123,7 @@ export interface ClientToServerEvents {
   'room:create': (playerName: string, cb: (r: { roomCode: string; playerId: string }) => void) => void
   'room:join': (data: { roomCode: string; playerName: string }, cb: (r: { success: boolean; playerId?: string; error?: string }) => void) => void
   'room:rejoin': (data: { roomCode: string; playerId: string }, cb: (r: { success: boolean; error?: string }) => void) => void
+  'room:ready': () => void
   'game:start': (cb: (r: { success: boolean; error?: string }) => void) => void
   'game:acknowledge_role': () => void
   'chat:send': (content: string) => void

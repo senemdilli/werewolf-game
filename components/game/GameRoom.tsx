@@ -75,6 +75,11 @@ export default function GameRoom({ roomCode, playerId }: Props) {
     })
   }, [socket])
 
+  const handleReady = useCallback(() => {
+    if (!socket) return
+    socket.emit('room:ready')
+  }, [socket])
+
   const handleAcknowledge = useCallback(() => {
     if (!socket) return
     setAcknowledged(true)
@@ -123,7 +128,7 @@ export default function GameRoom({ roomCode, playerId }: Props) {
 
       <main className="flex-1 flex flex-col">
         {state.phase === 'lobby' && socket && (
-          <Lobby state={state} onStart={handleStart} starting={starting} />
+          <Lobby state={state} onStart={handleStart} starting={starting} onReady={handleReady} />
         )}
         {state.phase === 'role_reveal' && (
           <RoleReveal state={state} onAcknowledge={handleAcknowledge} acknowledged={acknowledged} />
