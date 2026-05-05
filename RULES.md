@@ -26,6 +26,7 @@ If after a day-time voting (who to kill) there is a tie, the mayor decides who d
 - Roles of dead players will be exposed
 - Seer only sees faction (i.e. good/bad), in other words the seer doesn't learn who the witch is.
 - not disclosed if player was killed by witch or wearwolf
+- wearvolves night-time communication is not verbal (they just vote, they can see in real time what each other preference is)
 
 
 ## Where is the game played
