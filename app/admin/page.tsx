@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 interface GameSummary {
   id: string
@@ -16,11 +17,17 @@ interface GameSummary {
 }
 
 export default function AdminPage() {
+  const router = useRouter()
   const [games, setGames] = useState<GameSummary[]>([])
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
   const [pages, setPages] = useState(1)
   const [loading, setLoading] = useState(true)
+
+  async function handleLogout() {
+    await fetch('/api/admin/auth', { method: 'DELETE' })
+    router.push('/admin/login')
+  }
 
   useEffect(() => {
     setLoading(true)
@@ -53,10 +60,18 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen p-6 max-w-6xl mx-auto">
-      <div className="mb-8">
-        <a href="/" className="text-slate-500 hover:text-slate-300 text-sm">← Back to game</a>
-        <h1 className="text-2xl font-bold text-slate-100 mt-2">Research Admin</h1>
-        <p className="text-slate-400 text-sm mt-1">{total} total games recorded</p>
+      <div className="mb-8 flex items-start justify-between">
+        <div>
+          <a href="/" className="text-slate-500 hover:text-slate-300 text-sm">← Back to game</a>
+          <h1 className="text-2xl font-bold text-slate-100 mt-2">Research Admin</h1>
+          <p className="text-slate-400 text-sm mt-1">{total} total games recorded</p>
+        </div>
+        <button
+          onClick={handleLogout}
+          className="text-xs px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded transition-colors cursor-pointer text-slate-300"
+        >
+          Logout
+        </button>
       </div>
 
       {loading ? (

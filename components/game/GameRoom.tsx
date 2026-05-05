@@ -8,6 +8,7 @@ import type { GameSocket } from '@/app/room/[code]/page'
 import Lobby from './Lobby'
 import RoleReveal from './RoleReveal'
 import NightPhase from './NightPhase'
+import MayorElection from './MayorElection'
 import DayPhase from './DayPhase'
 import GameOver from './GameOver'
 
@@ -129,6 +130,9 @@ export default function GameRoom({ roomCode, playerId }: Props) {
         )}
         {state.phase === 'night' && socket && (
           <NightPhase state={state} socket={socket} messages={messages} />
+        )}
+        {state.phase === 'mayor_election' && socket && (
+          <MayorElection state={state} socket={socket} />
         )}
         {(state.phase === 'day_discussion' || state.phase === 'day_vote') && socket && (
           <DayPhase state={state} socket={socket} messages={messages} />

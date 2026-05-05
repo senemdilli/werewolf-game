@@ -6,8 +6,7 @@ const roleColor: Record<Role, string> = {
   werewolf: 'text-red-400 bg-red-950/50 border-red-800',
   villager: 'text-blue-400 bg-blue-950/50 border-blue-800',
   seer:     'text-amber-400 bg-amber-950/50 border-amber-800',
-  doctor:   'text-emerald-400 bg-emerald-950/50 border-emerald-800',
-  mayor:    'text-violet-400 bg-violet-950/50 border-violet-800',
+  witch:    'text-purple-400 bg-purple-950/50 border-purple-800',
 }
 
 interface Props {
@@ -58,6 +57,11 @@ export default function PlayerList({
             <div className="flex items-center gap-2 shrink-0">
               {showVotes && p.hasVoted && (
                 <span className="text-xs text-slate-400">voted</span>
+              )}
+              {p.isMayor && (
+                <span className="text-xs px-2 py-0.5 rounded border text-yellow-400 bg-yellow-950/50 border-yellow-700">
+                  👑 mayor
+                </span>
               )}
               {p.role && (
                 <span className={`text-xs px-2 py-0.5 rounded border ${roleColor[p.role]}`}>

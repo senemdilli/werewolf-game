@@ -56,7 +56,7 @@ export function registerChatHandlers(io: GameServer, socket: GameSocket) {
             gameId: state.dbGameId,
             playerId: await getDbPlayerId(state.dbGameId, player.name),
             playerName: player.name,
-            role: player.role?.toUpperCase() as 'WEREWOLF' | 'VILLAGER' | 'SEER' | 'DOCTOR',
+            role: player.role?.toUpperCase() as 'WEREWOLF' | 'VILLAGER' | 'SEER' | 'WITCH',
             content: trimmed,
             phase: dbPhase,
             round: state.round,

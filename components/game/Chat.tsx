@@ -7,8 +7,7 @@ const roleColor: Record<Role, string> = {
   werewolf: 'text-red-400',
   villager: 'text-blue-400',
   seer:     'text-amber-400',
-  doctor:   'text-emerald-400',
-  mayor:    'text-violet-400',
+  witch:    'text-purple-400',
 }
 
 interface Props {

@@ -4,39 +4,39 @@ import { v4 as uuidv4 } from 'uuid'
 
 const GAME_TTL = 60 * 60 * 24
 
-export function createInitialState(
-  roomCode: string,
-  hostSocketId: string,
-  hostName: string
-): GameState {
+export function createInitialState(roomCode: string, hostSocketId: string, hostName: string): GameState {
   const hostId = uuidv4()
   return {
     id: uuidv4(),
     roomCode,
     phase: 'lobby',
     round: 0,
-    players: [
-      {
-        id: hostId,
-        name: hostName,
-        role: null,
-        isAlive: true,
-        socketId: hostSocketId,
-        isHost: true,
-        roleAcknowledged: false,
-      },
-    ],
+    players: [{
+      id: hostId,
+      name: hostName,
+      role: null,
+      isAlive: true,
+      socketId: hostSocketId,
+      isHost: true,
+      roleAcknowledged: false,
+    }],
     nightActions: {
       werewolfVotes: {},
+      killTarget: null,
       seerTarget: null,
-      doctorTarget: null,
-      completed: { werewolves: false, seer: false, doctor: false },
+      witchHeal: null,
+      witchKill: null,
+      completed: { werewolves: false, seer: false, witch: false },
     },
     dayVotes: { votes: {} },
+    mayorVotes: {},
+    mayorId: null,
+    mayorElected: false,
+    postElectionPhase: null,
+    witchPotions: { heal: true, kill: true },
     lastEliminated: null,
     winner: null,
     hostId,
-    mayorId: null,
     phaseEndTime: null,
     dbGameId: null,
   }
@@ -59,18 +59,20 @@ export async function deleteGame(roomCode: string): Promise<void> {
 export function resetNightActions(state: GameState): GameState {
   const alivePlayers = state.players.filter(p => p.isAlive)
   const hasSeer = alivePlayers.some(p => p.role === 'seer')
-  const hasDoctor = alivePlayers.some(p => p.role === 'doctor')
+  const hasWitch = alivePlayers.some(p => p.role === 'witch')
 
   return {
     ...state,
     nightActions: {
       werewolfVotes: {},
+      killTarget: null,
       seerTarget: null,
-      doctorTarget: null,
+      witchHeal: null,
+      witchKill: null,
       completed: {
         werewolves: false,
         seer: !hasSeer,
-        doctor: !hasDoctor,
+        witch: !hasWitch,
       },
     },
   }
@@ -79,28 +81,27 @@ export function resetNightActions(state: GameState): GameState {
 export function areNightActionsDone(state: GameState): boolean {
   const alivePlayers = state.players.filter(p => p.isAlive)
   const aliveWolves = alivePlayers.filter(p => p.role === 'werewolf')
-
   const wolvesVoted = aliveWolves.every(w => !!state.nightActions.werewolfVotes[w.id])
-
-  return wolvesVoted && state.nightActions.completed.seer && state.nightActions.completed.doctor
+  return wolvesVoted && state.nightActions.completed.seer && state.nightActions.completed.witch
 }
 
 export function areDayVotesDone(state: GameState): boolean {
-  const alivePlayers = state.players.filter(p => p.isAlive)
-  return alivePlayers.every(p => !!state.dayVotes.votes[p.id])
+  return state.players.filter(p => p.isAlive).every(p => !!state.dayVotes.votes[p.id])
+}
+
+export function areMayorVotesDone(state: GameState): boolean {
+  return state.players.filter(p => p.isAlive).every(p => !!state.mayorVotes[p.id])
 }
 
 export function buildClientState(state: GameState, playerId: string): ClientGameState {
   const me = state.players.find(p => p.id === playerId)
 
   const players: PublicPlayer[] = state.players.map(p => {
-    const isMayor = p.id === state.mayorId
     const revealRole =
       state.phase === 'game_over' ||
       !p.isAlive ||
       p.id === playerId ||
-      (me?.role === 'werewolf' && p.role === 'werewolf') ||
-      p.role === 'mayor'
+      (me?.role === 'werewolf' && p.role === 'werewolf')
 
     return {
       id: p.id,
@@ -109,7 +110,7 @@ export function buildClientState(state: GameState, playerId: string): ClientGame
       isHost: p.isHost,
       role: revealRole ? (p.role ?? undefined) : undefined,
       hasVoted: p.id in state.dayVotes.votes,
-      isMayor,
+      isMayor: p.id === state.mayorId,
     }
   })
 
@@ -122,8 +123,16 @@ export function buildClientState(state: GameState, playerId: string): ClientGame
   if (state.phase === 'night' && me?.isAlive) {
     if (me.role === 'werewolf') nightActionsCompleted = !!state.nightActions.werewolfVotes[me.id]
     else if (me.role === 'seer') nightActionsCompleted = state.nightActions.completed.seer
-    else if (me.role === 'doctor') nightActionsCompleted = state.nightActions.completed.doctor
+    else if (me.role === 'witch') nightActionsCompleted = state.nightActions.completed.witch
   }
+
+  const isWitch = me?.role === 'witch' && me.isAlive
+  const nightKillTarget = isWitch && state.nightActions.killTarget
+    ? (() => {
+        const t = state.players.find(p => p.id === state.nightActions.killTarget)
+        return t ? { id: t.id, name: t.name } : null
+      })()
+    : undefined
 
   return {
     id: state.id,
@@ -138,9 +147,12 @@ export function buildClientState(state: GameState, playerId: string): ClientGame
     werewolfTeammates,
     nightActionsCompleted,
     dayVotes: state.dayVotes.votes,
+    mayorVotes: state.mayorVotes,
+    mayorId: state.mayorId,
     aliveWerewolvesVoted:
       me?.role === 'werewolf' ? Object.keys(state.nightActions.werewolfVotes) : undefined,
-    mayorId: state.mayorId,
     phaseEndTime: state.phaseEndTime,
+    nightKillTarget,
+    witchPotions: isWitch ? state.witchPotions : undefined,
   }
 }
