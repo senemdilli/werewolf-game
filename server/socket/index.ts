@@ -3,6 +3,7 @@ import type { ServerToClientEvents, ClientToServerEvents } from '@/types/game'
 import { registerRoomHandlers } from './handlers/room'
 import { registerGameHandlers } from './handlers/game'
 import { registerChatHandlers } from './handlers/chat'
+import { registerNoteHandlers } from './handlers/notes'
 
 type GameServer = Server<ClientToServerEvents, ServerToClientEvents>
 
@@ -13,5 +14,6 @@ export function setupSocketHandlers(io: GameServer) {
     registerRoomHandlers(io, socket)
     registerGameHandlers(io, socket)
     registerChatHandlers(io, socket)
+    registerNoteHandlers(io, socket)
   })
 }

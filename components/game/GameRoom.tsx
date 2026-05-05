@@ -11,6 +11,7 @@ import NightPhase from './NightPhase'
 import MayorElection from './MayorElection'
 import DayPhase from './DayPhase'
 import GameOver from './GameOver'
+import NotePanel from './NotePanel'
 
 interface Props {
   roomCode: string
@@ -146,6 +147,13 @@ export default function GameRoom({ roomCode, playerId }: Props) {
           <GameOver state={state} onPlayAgain={handlePlayAgain} />
         )}
       </main>
+
+      {socket && ['night', 'mayor_election', 'day_discussion', 'day_vote'].includes(state.phase) && (
+        <NotePanel
+          socket={socket}
+          phaseLabel={state.phase === 'night' ? `Night ${state.round}` : `Day ${state.round} — ${state.phase.replace('_', ' ')}`}
+        />
+      )}
     </div>
   )
 }
