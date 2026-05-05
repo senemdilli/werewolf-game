@@ -1,4 +1,4 @@
-export type Role = 'werewolf' | 'villager' | 'seer' | 'doctor'
+export type Role = 'werewolf' | 'villager' | 'seer' | 'doctor' | 'mayor'
 export type Phase = 'lobby' | 'role_reveal' | 'night' | 'day_discussion' | 'day_vote' | 'game_over'
 export type Winner = 'villagers' | 'werewolves' | null
 
@@ -38,6 +38,8 @@ export interface GameState {
   lastEliminated: { playerId: string; playerName: string; role: Role } | null
   winner: Winner
   hostId: string
+  mayorId: string | null
+  phaseEndTime: number | null
   dbGameId: string | null
 }
 
@@ -48,6 +50,7 @@ export interface PublicPlayer {
   isHost: boolean
   role?: Role
   hasVoted?: boolean
+  isMayor?: boolean
 }
 
 export interface ClientGameState {
@@ -64,6 +67,8 @@ export interface ClientGameState {
   nightActionsCompleted: boolean
   dayVotes: Record<string, string>
   aliveWerewolvesVoted?: string[]
+  mayorId: string | null
+  phaseEndTime: number | null
 }
 
 export interface ChatMessage {

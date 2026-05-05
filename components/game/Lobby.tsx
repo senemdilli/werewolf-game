@@ -42,13 +42,7 @@ export default function Lobby({ state, onStart, starting }: Props) {
       </div>
 
       {isHost ? (
-        <Button
-          size="lg"
-          className="w-full"
-          disabled={!canStart}
-          loading={starting}
-          onClick={onStart}
-        >
+        <Button size="lg" className="w-full" disabled={!canStart} loading={starting} onClick={onStart}>
           Start Game
         </Button>
       ) : (
@@ -64,12 +58,14 @@ function RolePreview({ count }: { count: number }) {
   }
 
   const wolves = count <= 5 ? 1 : count <= 8 ? 2 : Math.floor(count / 4)
-  const villagers = count - wolves - 1 - (count >= 6 ? 1 : 0)
+  const specials = 2 + (count >= 6 ? 1 : 0) // seer + mayor + doctor?
+  const villagers = count - wolves - specials
 
   return (
     <div className="flex flex-wrap gap-2 text-xs">
       <span className="px-2 py-1 rounded bg-red-950/60 border border-red-800 text-red-400">{wolves}× Werewolf</span>
       <span className="px-2 py-1 rounded bg-amber-950/60 border border-amber-800 text-amber-400">1× Seer</span>
+      <span className="px-2 py-1 rounded bg-violet-950/60 border border-violet-800 text-violet-400">1× Mayor</span>
       {count >= 6 && (
         <span className="px-2 py-1 rounded bg-emerald-950/60 border border-emerald-800 text-emerald-400">1× Doctor</span>
       )}

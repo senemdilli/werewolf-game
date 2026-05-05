@@ -19,6 +19,15 @@ import { prisma } from '@/lib/prisma'
 type GameSocket = Socket<ClientToServerEvents, ServerToClientEvents>
 type GameServer = Server<ClientToServerEvents, ServerToClientEvents>
 
+const DAY_DISCUSSION_MS = 2 * 60 * 1000 // 2 minutes
+
+const phaseTimers = new Map<string, ReturnType<typeof setTimeout>>()
+
+function clearPhaseTimer(roomCode: string) {
+  const t = phaseTimers.get(roomCode)
+  if (t) { clearTimeout(t); phaseTimers.delete(roomCode) }
+}
+
 async function broadcastState(io: GameServer, roomCode: string) {
   const state = await getGame(roomCode)
   if (!state) return
@@ -28,6 +37,7 @@ async function broadcastState(io: GameServer, roomCode: string) {
 }
 
 async function transitionToNight(io: GameServer, roomCode: string) {
+  clearPhaseTimer(roomCode)
   let state = await getGame(roomCode)
   if (!state) return
 
@@ -35,10 +45,10 @@ async function transitionToNight(io: GameServer, roomCode: string) {
   state = resetNightActions(state)
   state.phase = 'night'
   state.lastEliminated = null
+  state.phaseEndTime = null
 
   for (const p of state.players) {
     if (p.role === 'werewolf') {
-      io.in(`room:${roomCode}`).socketsJoin(`wolves:${roomCode}`)
       const wSocket = io.sockets.sockets.get(p.socketId)
       wSocket?.join(`wolves:${roomCode}`)
     }
@@ -46,11 +56,11 @@ async function transitionToNight(io: GameServer, roomCode: string) {
 
   await saveGame(state)
   await broadcastState(io, roomCode)
-
-  await persistSystemMessage(state.dbGameId!, `Night ${state.round} begins. The village sleeps...`, 'NIGHT', state.round)
+  await persistSystemMessage(state.dbGameId!, `Night ${state.round} begins. The village sleeps…`, 'NIGHT', state.round)
 }
 
 async function transitionToDayDiscussion(io: GameServer, roomCode: string) {
+  clearPhaseTimer(roomCode)
   let state = await getGame(roomCode)
   if (!state) return
 
@@ -69,9 +79,7 @@ async function transitionToDayDiscussion(io: GameServer, roomCode: string) {
       systemMsg = `Dawn breaks. ${victim.name} was found dead. They were a ${victim.role}.`
 
       if (state.dbGameId) {
-        const dbPlayer = await prisma.player.findFirst({
-          where: { gameId: state.dbGameId, name: victim.name },
-        })
+        const dbPlayer = await prisma.player.findFirst({ where: { gameId: state.dbGameId, name: victim.name } })
         if (dbPlayer) {
           await prisma.player.update({
             where: { id: dbPlayer.id },
@@ -90,35 +98,49 @@ async function transitionToDayDiscussion(io: GameServer, roomCode: string) {
   if (winner) {
     state.winner = winner
     state.phase = 'game_over'
+    state.phaseEndTime = null
     await saveGame(state)
     await finalizeGame(state.dbGameId!, winner, state.round)
-    if (systemMsg) await persistSystemMessage(state.dbGameId!, systemMsg, 'DAY', state.round)
+    if (systemMsg && state.dbGameId) await persistSystemMessage(state.dbGameId, systemMsg, 'DAY', state.round)
     await broadcastState(io, roomCode)
     return
   }
 
+  const endTime = Date.now() + DAY_DISCUSSION_MS
   state.phase = 'day_discussion'
   state.dayVotes = { votes: {} }
+  state.phaseEndTime = endTime
   await saveGame(state)
   if (systemMsg && state.dbGameId) await persistSystemMessage(state.dbGameId, systemMsg, 'DAY', state.round)
   await broadcastState(io, roomCode)
+
+  // Auto-advance to vote after timer
+  const timer = setTimeout(() => {
+    phaseTimers.delete(roomCode)
+    transitionToDayVote(io, roomCode)
+  }, DAY_DISCUSSION_MS)
+  phaseTimers.set(roomCode, timer)
 }
 
 async function transitionToDayVote(io: GameServer, roomCode: string) {
+  clearPhaseTimer(roomCode)
   const state = await getGame(roomCode)
-  if (!state) return
+  if (!state || state.phase !== 'day_discussion') return
+
   state.phase = 'day_vote'
   state.dayVotes = { votes: {} }
+  state.phaseEndTime = null
   await saveGame(state)
   if (state.dbGameId) await persistSystemMessage(state.dbGameId, 'Voting begins. Cast your vote to eliminate a suspect.', 'DAY', state.round)
   await broadcastState(io, roomCode)
 }
 
 async function resolveVoteAndAdvance(io: GameServer, roomCode: string) {
+  clearPhaseTimer(roomCode)
   const state = await getGame(roomCode)
   if (!state) return
 
-  const eliminatedId = resolveDayVote(state.dayVotes.votes)
+  const eliminatedId = resolveDayVote(state.dayVotes.votes, state.mayorId)
   let systemMsg = ''
 
   if (eliminatedId) {
@@ -129,9 +151,7 @@ async function resolveVoteAndAdvance(io: GameServer, roomCode: string) {
       systemMsg = `The village voted. ${victim.name} has been eliminated. They were a ${victim.role}.`
 
       if (state.dbGameId) {
-        const dbPlayer = await prisma.player.findFirst({
-          where: { gameId: state.dbGameId, name: victim.name },
-        })
+        const dbPlayer = await prisma.player.findFirst({ where: { gameId: state.dbGameId, name: victim.name } })
         if (dbPlayer) {
           await prisma.player.update({
             where: { id: dbPlayer.id },
@@ -148,6 +168,7 @@ async function resolveVoteAndAdvance(io: GameServer, roomCode: string) {
   if (winner) {
     state.winner = winner
     state.phase = 'game_over'
+    state.phaseEndTime = null
     await saveGame(state)
     await finalizeGame(state.dbGameId!, winner, state.round)
     if (systemMsg && state.dbGameId) await persistSystemMessage(state.dbGameId, systemMsg, 'DAY', state.round)
@@ -163,14 +184,7 @@ async function resolveVoteAndAdvance(io: GameServer, roomCode: string) {
 async function persistSystemMessage(gameId: string, content: string, phase: 'DAY' | 'NIGHT', round: number) {
   try {
     await prisma.message.create({
-      data: {
-        gameId,
-        playerName: 'System',
-        content,
-        phase: phase as 'DAY' | 'NIGHT',
-        round,
-        isSystem: true,
-      },
+      data: { gameId, playerName: 'System', content, phase: phase as 'DAY' | 'NIGHT', round, isSystem: true },
     })
   } catch (err) {
     console.error('[persistSystemMessage]', err)
@@ -203,8 +217,9 @@ export function registerGameHandlers(io: GameServer, socket: GameSocket) {
       if (state.players.length < 4) return cb({ success: false, error: 'Need at least 4 players' })
       if (state.phase !== 'lobby') return cb({ success: false, error: 'Game already started' })
 
-      const withRoles = assignRoles(state.players)
+      const { players: withRoles, mayorId } = assignRoles(state.players)
       state.players = withRoles
+      state.mayorId = mayorId
       state.phase = 'role_reveal'
 
       const dbGame = await prisma.game.create({
@@ -233,7 +248,6 @@ export function registerGameHandlers(io: GameServer, socket: GameSocket) {
 
       await saveGame(state)
       await broadcastState(io, roomCode)
-
       cb({ success: true })
     } catch (err) {
       console.error('[game:start]', err)
@@ -250,8 +264,7 @@ export function registerGameHandlers(io: GameServer, socket: GameSocket) {
       const player = state.players.find(p => p.id === playerId)
       if (player) player.roleAcknowledged = true
 
-      const allAcknowledged = state.players.every(p => p.roleAcknowledged)
-      if (allAcknowledged) {
+      if (state.players.every(p => p.roleAcknowledged)) {
         await saveGame(state)
         await transitionToNight(io, roomCode)
       } else {
@@ -293,14 +306,11 @@ export function registerGameHandlers(io: GameServer, socket: GameSocket) {
             targetPlayerId: await getDbPlayerId(state.dbGameId, target.name),
             round: state.round,
           },
-          update: {
-            targetPlayerId: await getDbPlayerId(state.dbGameId, target.name),
-          },
+          update: { targetPlayerId: await getDbPlayerId(state.dbGameId, target.name) },
         }).catch(() => {})
       }
 
       await saveGame(state)
-
       if (areNightActionsDone(state)) {
         await transitionToDayDiscussion(io, roomCode)
       } else {
@@ -338,13 +348,9 @@ export function registerGameHandlers(io: GameServer, socket: GameSocket) {
         }).catch(() => {})
       }
 
-      socket.emit('seer:result', {
-        targetName: target.name,
-        isWerewolf: target.role === 'werewolf',
-      })
+      socket.emit('seer:result', { targetName: target.name, isWerewolf: target.role === 'werewolf' })
 
       await saveGame(state)
-
       if (areNightActionsDone(state)) {
         await transitionToDayDiscussion(io, roomCode)
       } else {
@@ -378,13 +384,11 @@ export function registerGameHandlers(io: GameServer, socket: GameSocket) {
             actionType: 'SAVE',
             targetPlayerId: await getDbPlayerId(state.dbGameId, target.name),
             round: state.round,
-            wasBlocked: false,
           },
         }).catch(() => {})
       }
 
       await saveGame(state)
-
       if (areNightActionsDone(state)) {
         await transitionToDayDiscussion(io, roomCode)
       } else {
@@ -407,6 +411,7 @@ export function registerGameHandlers(io: GameServer, socket: GameSocket) {
       const target = state.players.find(p => p.id === targetId)
       if (!target || !target.isAlive || target.id === playerId) return
 
+      // Allow vote changes — simply overwrite
       state.dayVotes.votes[playerId] = targetId
       await saveGame(state)
 
@@ -424,16 +429,11 @@ export function registerGameHandlers(io: GameServer, socket: GameSocket) {
     try {
       const { playerId, roomCode } = socket.data
       const state = await getGame(roomCode)
-      if (!state) return
-      if (state.hostId !== playerId) return
+      if (!state || state.hostId !== playerId) return
 
-      if (state.phase === 'night') {
-        await transitionToDayDiscussion(io, roomCode)
-      } else if (state.phase === 'day_discussion') {
-        await transitionToDayVote(io, roomCode)
-      } else if (state.phase === 'day_vote') {
-        await resolveVoteAndAdvance(io, roomCode)
-      }
+      if (state.phase === 'night') await transitionToDayDiscussion(io, roomCode)
+      else if (state.phase === 'day_discussion') await transitionToDayVote(io, roomCode)
+      else if (state.phase === 'day_vote') await resolveVoteAndAdvance(io, roomCode)
     } catch (err) {
       console.error('[phase:advance]', err)
     }

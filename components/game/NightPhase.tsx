@@ -13,6 +13,7 @@ const rolePrompt: Record<Role, string> = {
   seer:     'Choose a player to investigate.',
   doctor:   'Choose a player to protect tonight.',
   villager: '',
+  mayor:    '',
 }
 
 interface Props {

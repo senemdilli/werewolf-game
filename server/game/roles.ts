@@ -1,10 +1,12 @@
 import type { Role, Player, Winner } from '@/types/game'
 
-export function assignRoles(players: Player[]): Player[] {
+export function assignRoles(players: Player[]): { players: Player[]; mayorId: string | null } {
   const count = players.length
   const roles = buildRoleList(count)
   const shuffled = roles.sort(() => Math.random() - 0.5)
-  return players.map((p, i) => ({ ...p, role: shuffled[i] }))
+  const assigned = players.map((p, i) => ({ ...p, role: shuffled[i] }))
+  const mayor = assigned.find(p => p.role === 'mayor')
+  return { players: assigned, mayorId: mayor?.id ?? null }
 }
 
 function buildRoleList(count: number): Role[] {
@@ -14,6 +16,7 @@ function buildRoleList(count: number): Role[] {
   for (let i = 0; i < werewolves; i++) roles.push('werewolf')
 
   roles.push('seer')
+  roles.push('mayor')
   if (count >= 6) roles.push('doctor')
 
   while (roles.length < count) roles.push('villager')
@@ -50,11 +53,13 @@ export function resolveNightKill(
 }
 
 export function resolveDayVote(
-  votes: Record<string, string>
+  votes: Record<string, string>,
+  mayorId: string | null
 ): string | null {
   const voteCounts: Record<string, number> = {}
-  for (const targetId of Object.values(votes)) {
-    voteCounts[targetId] = (voteCounts[targetId] || 0) + 1
+  for (const [voterId, targetId] of Object.entries(votes)) {
+    const weight = voterId === mayorId ? 2 : 1
+    voteCounts[targetId] = (voteCounts[targetId] || 0) + weight
   }
 
   const sorted = Object.entries(voteCounts).sort((a, b) => b[1] - a[1])
@@ -84,5 +89,10 @@ export const ROLE_INFO: Record<Role, { label: string; color: string; description
     label: 'Doctor',
     color: 'green',
     description: 'Each night, choose one player to protect from the werewolves\' attack (you may protect yourself).',
+  },
+  mayor: {
+    label: 'Mayor',
+    color: 'violet',
+    description: 'Your identity is public — everyone knows you are the Mayor. Your vote counts double during village elections.',
   },
 }

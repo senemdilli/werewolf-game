@@ -7,6 +7,7 @@ const roleColor: Record<Role, string> = {
   villager: 'text-blue-400 bg-blue-950/50 border-blue-800',
   seer:     'text-amber-400 bg-amber-950/50 border-amber-800',
   doctor:   'text-emerald-400 bg-emerald-950/50 border-emerald-800',
+  mayor:    'text-violet-400 bg-violet-950/50 border-violet-800',
 }
 
 interface Props {

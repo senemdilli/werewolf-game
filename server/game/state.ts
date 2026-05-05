@@ -36,6 +36,8 @@ export function createInitialState(
     lastEliminated: null,
     winner: null,
     hostId,
+    mayorId: null,
+    phaseEndTime: null,
     dbGameId: null,
   }
 }
@@ -92,11 +94,13 @@ export function buildClientState(state: GameState, playerId: string): ClientGame
   const me = state.players.find(p => p.id === playerId)
 
   const players: PublicPlayer[] = state.players.map(p => {
+    const isMayor = p.id === state.mayorId
     const revealRole =
       state.phase === 'game_over' ||
       !p.isAlive ||
       p.id === playerId ||
-      (me?.role === 'werewolf' && p.role === 'werewolf')
+      (me?.role === 'werewolf' && p.role === 'werewolf') ||
+      p.role === 'mayor'
 
     return {
       id: p.id,
@@ -105,6 +109,7 @@ export function buildClientState(state: GameState, playerId: string): ClientGame
       isHost: p.isHost,
       role: revealRole ? (p.role ?? undefined) : undefined,
       hasVoted: p.id in state.dayVotes.votes,
+      isMayor,
     }
   })
 
@@ -135,5 +140,7 @@ export function buildClientState(state: GameState, playerId: string): ClientGame
     dayVotes: state.dayVotes.votes,
     aliveWerewolvesVoted:
       me?.role === 'werewolf' ? Object.keys(state.nightActions.werewolfVotes) : undefined,
+    mayorId: state.mayorId,
+    phaseEndTime: state.phaseEndTime,
   }
 }

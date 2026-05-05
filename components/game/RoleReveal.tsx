@@ -5,10 +5,11 @@ import { ROLE_INFO } from '@/server/game/roles'
 import Button from '@/components/ui/Button'
 
 const roleStyle: Record<Role, { border: string; bg: string; icon: string }> = {
-  werewolf: { border: 'border-red-700',    bg: 'bg-red-950/40',    icon: '🐺' },
-  villager: { border: 'border-blue-700',   bg: 'bg-blue-950/40',   icon: '🏘' },
-  seer:     { border: 'border-amber-700',  bg: 'bg-amber-950/40',  icon: '🔮' },
+  werewolf: { border: 'border-red-700',     bg: 'bg-red-950/40',     icon: '🐺' },
+  villager: { border: 'border-blue-700',    bg: 'bg-blue-950/40',    icon: '🏘' },
+  seer:     { border: 'border-amber-700',   bg: 'bg-amber-950/40',   icon: '🔮' },
   doctor:   { border: 'border-emerald-700', bg: 'bg-emerald-950/40', icon: '⚕' },
+  mayor:    { border: 'border-violet-700',  bg: 'bg-violet-950/40',  icon: '👑' },
 }
 
 interface Props {

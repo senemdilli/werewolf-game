@@ -4,6 +4,15 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { connectSocket } from '@/lib/socket-client'
 
+const RANDOM_NAMES = [
+  'Aldric', 'Beatrix', 'Casimir', 'Delara', 'Edmund',
+  'Fiona', 'Garrett', 'Helena', 'Isidore', 'Juliana',
+  'Kieran', 'Lyra', 'Magnus', 'Nadia', 'Oswin',
+  'Petra', 'Rowena', 'Stellan', 'Tamsin', 'Ulric',
+  'Vesper', 'Wren', 'Xander', 'Yara', 'Zephyr',
+  'Alaric', 'Briar', 'Corvus', 'Dusk', 'Ember',
+]
+
 type Mode = 'home' | 'create' | 'join'
 
 export default function Home() {
@@ -86,15 +95,22 @@ export default function Home() {
         {mode === 'create' && (
           <div className="bg-slate-900 border border-slate-700 rounded-2xl p-6 space-y-4">
             <h2 className="font-semibold text-lg">Create game</h2>
-            <input
-              autoFocus
-              value={name}
-              onChange={e => setName(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && handleCreate()}
-              placeholder="Your name"
-              maxLength={20}
-              className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-violet-500 placeholder-slate-500"
-            />
+            <div className="flex gap-2">
+              <input
+                autoFocus
+                value={name}
+                onChange={e => setName(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleCreate()}
+                placeholder="Your name"
+                maxLength={20}
+                className="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-violet-500 placeholder-slate-500"
+              />
+              <button
+                onClick={() => setName(RANDOM_NAMES[Math.floor(Math.random() * RANDOM_NAMES.length)])}
+                className="px-3 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm text-slate-300 transition-colors cursor-pointer shrink-0"
+                title="Random name"
+              >🎲</button>
+            </div>
             {error && <p className="text-red-400 text-sm">{error}</p>}
             <button
               disabled={loading}
@@ -112,14 +128,21 @@ export default function Home() {
         {mode === 'join' && (
           <div className="bg-slate-900 border border-slate-700 rounded-2xl p-6 space-y-4">
             <h2 className="font-semibold text-lg">Join game</h2>
-            <input
-              autoFocus
-              value={name}
-              onChange={e => setName(e.target.value)}
-              placeholder="Your name"
-              maxLength={20}
-              className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-violet-500 placeholder-slate-500"
-            />
+            <div className="flex gap-2">
+              <input
+                autoFocus
+                value={name}
+                onChange={e => setName(e.target.value)}
+                placeholder="Your name"
+                maxLength={20}
+                className="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-violet-500 placeholder-slate-500"
+              />
+              <button
+                onClick={() => setName(RANDOM_NAMES[Math.floor(Math.random() * RANDOM_NAMES.length)])}
+                className="px-3 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm text-slate-300 transition-colors cursor-pointer shrink-0"
+                title="Random name"
+              >🎲</button>
+            </div>
             <input
               value={code}
               onChange={e => setCode(e.target.value.toUpperCase())}
