@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
   const response = NextResponse.json({ ok: true })
   response.cookies.set('admin_token', secret, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: request.url.startsWith('https://'),
     sameSite: 'lax',
     maxAge: 60 * 60 * 8, // 8 hours
     path: '/',
