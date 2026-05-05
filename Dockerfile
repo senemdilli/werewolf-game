@@ -8,7 +8,7 @@ RUN npm ci
 FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-# DATABASE_URL is required by prisma.config.ts at generate time — dummy value is fine, no connection is made
+# DATABASE_URL required by prisma.config.ts at generate time — dummy is fine, no connection made
 ARG DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
 ENV DATABASE_URL=$DATABASE_URL
 RUN npx prisma generate
@@ -16,19 +16,8 @@ RUN npm run build
 
 FROM base AS runner
 ENV NODE_ENV=production
-# Use node_modules from builder (includes generated Prisma client)
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/.next ./.next
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
-COPY --from=builder /app/server ./server
-COPY --from=builder /app/lib ./lib
-COPY --from=builder /app/types ./types
-COPY --from=builder /app/server.ts ./server.ts
-COPY --from=builder /app/next.config.ts ./next.config.ts
-COPY --from=builder /app/tsconfig.json ./tsconfig.json
-COPY package*.json ./
+# Copy entire build context — Next.js 16 App Router needs source files at runtime alongside .next
+COPY --from=builder /app ./
 
 RUN npm install -g tsx
 
