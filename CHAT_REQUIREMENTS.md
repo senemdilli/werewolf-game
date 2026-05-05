@@ -1,0 +1,6 @@
+- need to post messages
+- need to be able to annotate the messages
+- timestamps attached to messagese
+- id of sender (e.g. Tim) attached to the message (same string used in the game)
+- SESSIONS: we want to group games that were played one after the other. This is because maybe later, we use this "cross-game trust effects" information 
+- export functionality
