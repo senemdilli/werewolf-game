@@ -84,8 +84,14 @@ export default function Home() {
               Join a game
             </button>
             <a
-              href="/admin"
+              href="/how-to-play"
               className="block text-center text-slate-500 hover:text-slate-300 text-sm mt-4 transition-colors"
+            >
+              How to play? →
+            </a>
+            <a
+              href="/admin"
+              className="block text-center text-slate-500 hover:text-slate-300 text-sm transition-colors"
             >
               Research admin →
             </a>
