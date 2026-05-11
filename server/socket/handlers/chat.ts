@@ -35,7 +35,7 @@ export function registerChatHandlers(io: GameServer, socket: GameSocket) {
         id: uuidv4(),
         playerId,
         playerName: player.name,
-        role: player.role,
+        role: null,
         content: trimmed,
         phase: state.phase as Phase,
         round: state.round,
