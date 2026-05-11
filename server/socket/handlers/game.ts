@@ -1,5 +1,6 @@
 import type { Server, Socket } from 'socket.io'
 import type { ServerToClientEvents, ClientToServerEvents, Role, GameState } from '@/types/game'
+import { SKIP_VOTE } from '@/types/game'
 import {
   getGame, saveGame, resetNightActions,
   areNightActionsDone, areDayVotesDone, areMayorVotesDone,
@@ -16,6 +17,7 @@ type GameServer = Server<ClientToServerEvents, ServerToClientEvents>
 
 const DAY_DISCUSSION_MS = 2 * 60 * 1000
 const MAYOR_ELECTION_MS = 60 * 1000
+const DAY_RESULT_MS = 8 * 1000
 
 const phaseTimers = new Map<string, ReturnType<typeof setTimeout>>()
 
@@ -227,10 +229,12 @@ async function resolveVoteAndAdvance(io: GameServer, roomCode: string) {
   const state = await getGame(roomCode)
   if (!state) return
 
-  const eliminatedId = resolveDayVote(state.dayVotes.votes, state.mayorId)
+  const { outcome, eliminatedId } = resolveDayVote(state.dayVotes.votes, state.mayorId)
   let systemMsg = ''
+  state.lastEliminated = null
+  state.dayVoteOutcome = outcome
 
-  if (eliminatedId) {
+  if (outcome === 'eliminated' && eliminatedId) {
     const victim = state.players.find(p => p.id === eliminatedId)
     if (victim) {
       victim.isAlive = false
@@ -241,6 +245,8 @@ async function resolveVoteAndAdvance(io: GameServer, roomCode: string) {
         if (dbP) await prisma.player.update({ where: { id: dbP.id }, data: { eliminationRound: state.round, eliminationPhase: 'DAY' } })
       }
     }
+  } else if (outcome === 'skipped') {
+    systemMsg = 'The village voted to skip. No one was eliminated.'
   } else {
     systemMsg = 'The vote ended in a tie. No one was eliminated.'
   }
@@ -259,8 +265,28 @@ async function resolveVoteAndAdvance(io: GameServer, roomCode: string) {
 
   if (state.dbGameId) await persistSystem(state.dbGameId, systemMsg, 'DAY', state.round)
 
-  const mayorDied = eliminatedId === state.mayorId
+  state.phase = 'day_result'
+  state.phaseEndTime = Date.now() + DAY_RESULT_MS
+  await saveGame(state)
+  await broadcastState(io, roomCode)
+
+  const timer = setTimeout(() => {
+    phaseTimers.delete(roomCode)
+    transitionAfterDayResult(io, roomCode)
+  }, DAY_RESULT_MS)
+  phaseTimers.set(roomCode, timer)
+}
+
+async function transitionAfterDayResult(io: GameServer, roomCode: string) {
+  clearPhaseTimer(roomCode)
+  const state = await getGame(roomCode)
+  if (!state || state.phase !== 'day_result') return
+
+  const mayorDied = state.lastEliminated?.playerId === state.mayorId
   if (mayorDied) state.mayorId = null
+
+  state.dayVoteOutcome = null
+  state.phaseEndTime = null
 
   if (mayorDied) {
     await saveGame(state)
@@ -481,8 +507,10 @@ export function registerGameHandlers(io: GameServer, socket: GameSocket) {
       const voter = state.players.find(p => p.id === playerId)
       if (!voter || !voter.isAlive) return
 
-      const target = state.players.find(p => p.id === targetId && p.isAlive && p.id !== playerId)
-      if (!target) return
+      if (targetId !== SKIP_VOTE) {
+        const target = state.players.find(p => p.id === targetId && p.isAlive && p.id !== playerId)
+        if (!target) return
+      }
 
       state.dayVotes.votes[playerId] = targetId
       await saveGame(state)
@@ -522,6 +550,7 @@ export function registerGameHandlers(io: GameServer, socket: GameSocket) {
       else if (state.phase === 'mayor_election') await finalizeMayorElection(io, roomCode)
       else if (state.phase === 'day_discussion') await transitionToDayVote(io, roomCode)
       else if (state.phase === 'day_vote') await resolveVoteAndAdvance(io, roomCode)
+      else if (state.phase === 'day_result') await transitionAfterDayResult(io, roomCode)
     } catch (err) { console.error('[phase:advance]', err) }
   })
 }

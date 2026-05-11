@@ -6,7 +6,12 @@ export type Phase =
   | 'mayor_election'
   | 'day_discussion'
   | 'day_vote'
+  | 'day_result'
   | 'game_over'
+
+export type DayVoteOutcome = 'eliminated' | 'tie' | 'skipped'
+
+export const SKIP_VOTE = 'skip' as const
 export type Winner = 'villagers' | 'werewolves' | null
 
 export interface Player {
@@ -56,6 +61,7 @@ export interface GameState {
   postElectionPhase: 'day_discussion' | 'night' | null
   witchPotions: WitchPotions
   lastEliminated: { playerId: string; playerName: string; role: Role } | null
+  dayVoteOutcome: DayVoteOutcome | null
   winner: Winner
   hostId: string
   phaseEndTime: number | null
@@ -83,6 +89,7 @@ export interface ClientGameState {
   myId: string
   winner: Winner
   lastEliminated: { playerId: string; playerName: string; role: Role } | null
+  dayVoteOutcome: DayVoteOutcome | null
   werewolfTeammates?: string[]
   nightActionsCompleted: boolean
   dayVotes: Record<string, string>

@@ -1,4 +1,5 @@
-import type { Role, Player, Winner } from '@/types/game'
+import type { Role, Player, Winner, DayVoteOutcome } from '@/types/game'
+import { SKIP_VOTE } from '@/types/game'
 
 export function assignRoles(players: Player[]): Player[] {
   const count = players.length
@@ -45,7 +46,7 @@ export function resolveWerewolfKill(
 export function resolveDayVote(
   votes: Record<string, string>,
   mayorId: string | null
-): string | null {
+): { outcome: DayVoteOutcome; eliminatedId: string | null } {
   const voteCounts: Record<string, number> = {}
   for (const [voterId, targetId] of Object.entries(votes)) {
     const weight = voterId === mayorId ? 2 : 1
@@ -53,14 +54,22 @@ export function resolveDayVote(
   }
 
   const sorted = Object.entries(voteCounts).sort((a, b) => b[1] - a[1])
-  if (sorted.length === 0) return null
-  if (sorted.length >= 2 && sorted[0][1] === sorted[1][1]) {
-    // Tie — random pick among tied players
-    const topScore = sorted[0][1]
-    const tied = sorted.filter(([, v]) => v === topScore).map(([k]) => k)
-    return tied[Math.floor(Math.random() * tied.length)]
+  if (sorted.length === 0) return { outcome: 'skipped', eliminatedId: null }
+
+  const topScore = sorted[0][1]
+  const tied = sorted.filter(([, v]) => v === topScore).map(([k]) => k)
+
+  // Skip wins outright, including ties involving skip
+  if (tied.includes(SKIP_VOTE)) {
+    return { outcome: 'skipped', eliminatedId: null }
   }
-  return sorted[0][0]
+
+  // Tie among real players — no one is eliminated
+  if (tied.length > 1) {
+    return { outcome: 'tie', eliminatedId: null }
+  }
+
+  return { outcome: 'eliminated', eliminatedId: tied[0] }
 }
 
 export function resolveMayorElection(votes: Record<string, string>): string | null {

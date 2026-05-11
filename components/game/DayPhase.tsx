@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import type { ClientGameState, ChatMessage } from '@/types/game'
+import { SKIP_VOTE } from '@/types/game'
 import type { GameSocket } from '@/app/room/[code]/page'
 import Button from '@/components/ui/Button'
-import PlayerList from './PlayerList'
 import Chat from './Chat'
 
 interface Props {
@@ -55,6 +55,9 @@ export default function DayPhase({ state, socket, messages }: Props) {
     if (!voterNames[targetId]) voterNames[targetId] = []
     voterNames[targetId].push(voterName + (voterId === state.mayorId ? ' ×2' : ''))
   }
+
+  const skipVotes = tally[SKIP_VOTE] || 0
+  const skipVoters = voterNames[SKIP_VOTE] || []
 
   function handleVote(targetId: string) {
     setSelected(targetId)
@@ -155,14 +158,51 @@ export default function DayPhase({ state, socket, messages }: Props) {
             })}
           </ul>
 
+          {isVoting && (
+            <button
+              onClick={() => isAlive && handleVote(SKIP_VOTE)}
+              disabled={!isAlive}
+              className={`
+                mt-2 w-full flex items-center justify-between px-3 py-2 rounded-lg border transition-colors text-left
+                ${myVoteTargetId === SKIP_VOTE || selected === SKIP_VOTE
+                  ? 'border-amber-500 bg-amber-950/30'
+                  : 'border-slate-700 bg-slate-800/60'}
+                ${isAlive ? 'cursor-pointer hover:border-amber-400' : 'opacity-50 cursor-not-allowed'}
+              `}
+            >
+              <span className="text-sm font-medium text-slate-200">
+                ⏭ Skip vote
+                <span className="text-xs text-slate-400 ml-2">(don't eliminate anyone)</span>
+              </span>
+              <div className="flex items-center gap-3 shrink-0">
+                {skipVoters.length > 0 && (
+                  <span className="text-xs text-slate-400 italic hidden sm:block">
+                    ← {skipVoters.join(', ')}
+                  </span>
+                )}
+                {skipVotes > 0 && (
+                  <span className={`text-sm font-bold px-2 py-0.5 rounded ${skipVotes >= 2 ? 'text-amber-300 bg-amber-950/60' : 'text-slate-300 bg-slate-700'}`}>
+                    {skipVotes}
+                  </span>
+                )}
+              </div>
+            </button>
+          )}
+
+          {isVoting && isAlive && myVoteTargetId === SKIP_VOTE && (
+            <p className="text-sm text-amber-400 mt-3">
+              Your vote: <span className="font-semibold">Skip</span>
+              <span className="text-slate-500 ml-1">(click another to change)</span>
+            </p>
+          )}
           {isVoting && isAlive && myVoteTarget && (
             <p className="text-sm text-red-400 mt-3">
               Your vote: <span className="font-semibold">{myVoteTarget.name}</span>
               <span className="text-slate-500 ml-1">(click another to change)</span>
             </p>
           )}
-          {isVoting && isAlive && !myVoteTarget && (
-            <p className="text-sm text-slate-400 mt-3">Click a player to vote for elimination.</p>
+          {isVoting && isAlive && !myVoteTargetId && (
+            <p className="text-sm text-slate-400 mt-3">Click a player to vote for elimination, or skip.</p>
           )}
         </div>
       </div>
