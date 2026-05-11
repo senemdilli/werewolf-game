@@ -10,6 +10,7 @@ import RoleReveal from './RoleReveal'
 import NightPhase from './NightPhase'
 import MayorElection from './MayorElection'
 import DayPhase from './DayPhase'
+import DayResult from './DayResult'
 import GameOver from './GameOver'
 import NotePanel from './NotePanel'
 
@@ -142,6 +143,9 @@ export default function GameRoom({ roomCode, playerId }: Props) {
         )}
         {(state.phase === 'day_discussion' || state.phase === 'day_vote') && socket && (
           <DayPhase state={state} socket={socket} messages={messages} />
+        )}
+        {state.phase === 'day_result' && socket && (
+          <DayResult state={state} socket={socket} />
         )}
         {state.phase === 'game_over' && (
           <GameOver state={state} onPlayAgain={handlePlayAgain} />
