@@ -5,6 +5,10 @@
 - 1 Witch 
 - 4 Villagers
 
+## Win Conditions
+- Village wins: All Werewolves are dead
+- Werewolves win: Their numbers equal or outnumber the remaining villagers —> the village can no longer vote them out
+
 ## Mayor
 There must be a moyor at any point in time.
 This role can be taken by anyone.
@@ -20,7 +24,13 @@ If after a day-time voting (who to kill) there is a tie, the mayor decides who d
 - the witch makes her move at night, after the wearwolfs
 - she can decide to do nothing
 - if the wearvolves kill the witch she will not be able to make her move
-- not disclosed if player was killed by witch or wearwolf
+- not disclosed if player was killed by witch or werewolf
+
+## Night Sequence (Order of Actions)
+1. Seer: Wakes up first to discover the faction (good or bad) of one player
+2. Werewolves: They select their victim for the night
+3. Witch: She is informed of the victim and decides whether to use her healing or kill potion (or do nothing)
+   - *Note:* If the Witch is killed by the Werewolves, she cannot perform any action that night
 
 ## Others
 - Roles of dead players will be exposed
@@ -31,3 +41,5 @@ If after a day-time voting (who to kill) there is a tie, the mayor decides who d
 
 ## Where is the game played
 https://play.werwolfonline.eu/Werwolf.php
+
+
