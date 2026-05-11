@@ -33,7 +33,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ gameId:
   for (const msg of messages) {
     const playerRole = (msg.playerId ? playerRoleMap.get(msg.playerId) : null) ?? msg.role ?? ''
     rows.push(csvRow([
-      'message',
+      'chat',
       game.id,
       game.roomCode,
       game.winner ?? '',
@@ -67,7 +67,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ gameId:
 
   for (const note of notes) {
     rows.push(csvRow([
-      'player_note',
+      'note',
       game.id,
       game.roomCode,
       game.winner ?? '',

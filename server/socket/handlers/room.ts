@@ -12,6 +12,13 @@ function generateRoomCode(): string {
   return Math.random().toString(36).substring(2, 8).toUpperCase()
 }
 
+function uniquifyName(name: string, taken: string[]): string {
+  if (!taken.includes(name)) return name
+  let n = 2
+  while (taken.includes(`${name}${n}`)) n++
+  return `${name}${n}`
+}
+
 export function registerRoomHandlers(io: GameServer, socket: GameSocket) {
   socket.on('room:create', async (playerName, cb) => {
     try {
@@ -46,9 +53,10 @@ export function registerRoomHandlers(io: GameServer, socket: GameSocket) {
       if (state.players.length >= 12) return cb({ success: false, error: 'Room is full' })
 
       const playerId = uuidv4()
+      const finalName = uniquifyName(playerName, state.players.map(p => p.name))
       state.players.push({
         id: playerId,
-        name: playerName,
+        name: finalName,
         role: null,
         isAlive: true,
         socketId: socket.id,
