@@ -1,6 +1,6 @@
 # Our rules
 8 Players
-- 2 Werewolfs
+- 2 Werewolves
 - 1 Seer (1 player identity discovered per round)
 - 1 Witch 
 - 4 Villagers
@@ -21,7 +21,7 @@ If after a day-time voting (who to kill) there is a tie, the mayor decides who d
 ## Witch
 - one healing potion
 - one kill potion
-- the witch makes her move at night, after the wearwolfs
+- the witch makes her move at night, after the wearwolves
 - she can decide to do nothing
 - if the wearvolves kill the witch she will not be able to make her move
 - not disclosed if player was killed by witch or werewolf
