@@ -123,6 +123,10 @@ npm run db:studio    # open Prisma Studio
 npm run lint
 ```
 
+## Changelog
+
+See [CHANGELOG.md](./CHANGELOG.md) for a dated, user-facing summary of every change that has landed on `main`.
+
 ## Deploying to Railway
 
 1. Create a Railway project and add the **PostgreSQL** and **Redis** plugins.
