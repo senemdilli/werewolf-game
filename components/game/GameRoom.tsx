@@ -139,7 +139,7 @@ export default function GameRoom({ roomCode, playerId }: Props) {
           <NightPhase state={state} socket={socket} messages={messages} />
         )}
         {state.phase === 'mayor_election' && socket && (
-          <MayorElection state={state} socket={socket} />
+          <MayorElection state={state} socket={socket} messages={messages} />
         )}
         {(state.phase === 'day_discussion' || state.phase === 'day_vote') && socket && (
           <DayPhase state={state} socket={socket} messages={messages} />

@@ -16,6 +16,7 @@ type GameSocket = Socket<ClientToServerEvents, ServerToClientEvents>
 type GameServer = Server<ClientToServerEvents, ServerToClientEvents>
 
 const DAY_DISCUSSION_MS = 2 * 60 * 1000
+const DAY_VOTE_MS = 60 * 1000
 const MAYOR_ELECTION_MS = 60 * 1000
 const DAY_RESULT_MS = 8 * 1000
 
@@ -218,16 +219,22 @@ async function transitionToDayVote(io: GameServer, roomCode: string) {
 
   state.phase = 'day_vote'
   state.dayVotes = { votes: {} }
-  state.phaseEndTime = null
+  state.phaseEndTime = Date.now() + DAY_VOTE_MS
   await saveGame(state)
   if (state.dbGameId) await persistSystem(state.dbGameId, 'Voting begins.', 'DAY', state.round)
   await broadcastState(io, roomCode)
+
+  const timer = setTimeout(() => {
+    phaseTimers.delete(roomCode)
+    resolveVoteAndAdvance(io, roomCode)
+  }, DAY_VOTE_MS)
+  phaseTimers.set(roomCode, timer)
 }
 
 async function resolveVoteAndAdvance(io: GameServer, roomCode: string) {
   clearPhaseTimer(roomCode)
   const state = await getGame(roomCode)
-  if (!state) return
+  if (!state || state.phase !== 'day_vote') return
 
   const { outcome, eliminatedId } = resolveDayVote(state.dayVotes.votes, state.mayorId)
   let systemMsg = ''
@@ -464,6 +471,11 @@ export function registerGameHandlers(io: GameServer, socket: GameSocket) {
 
       const witch = state.players.find(p => p.id === playerId)
       if (!witch || witch.role !== 'witch' || !witch.isAlive) return
+
+      // Witch can only act after wolves have decided their target
+      const aliveWolves = state.players.filter(p => p.role === 'werewolf' && p.isAlive)
+      const wolvesActed = aliveWolves.every(w => !!state.nightActions.werewolfVotes[w.id])
+      if (!wolvesActed) return
 
       if (heal && state.witchPotions.heal) {
         const target = state.players.find(p => p.id === heal && p.isAlive)

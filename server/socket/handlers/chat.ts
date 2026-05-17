@@ -27,7 +27,7 @@ export function registerChatHandlers(io: GameServer, socket: GameSocket) {
       if (isNight) {
         if (player.role !== 'werewolf' || !player.isAlive) return
       } else {
-        if (!['day_discussion', 'day_vote', 'lobby'].includes(state.phase)) return
+        if (!['day_discussion', 'day_vote', 'mayor_election', 'lobby'].includes(state.phase)) return
         if (state.phase !== 'lobby' && !player.isAlive) return
       }
 

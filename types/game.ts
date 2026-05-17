@@ -98,6 +98,7 @@ export interface ClientGameState {
   aliveWerewolvesVoted?: string[]
   phaseEndTime: number | null
   // witch-only fields
+  wolvesActed?: boolean
   nightKillTarget?: { id: string; name: string } | null
   witchPotions?: WitchPotions
 }

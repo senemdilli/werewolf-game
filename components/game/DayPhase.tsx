@@ -75,8 +75,8 @@ export default function DayPhase({ state, socket, messages }: Props) {
               <h2 className="font-bold text-slate-100">
                 Day {state.round} — {isVoting ? 'Voting' : 'Discussion'}
               </h2>
-              {!isVoting && state.phaseEndTime && countdown.remaining > 0 && (
-                <span className={`text-sm font-mono px-2 py-0.5 rounded ${countdown.remaining < 30000 ? 'text-red-400 bg-red-950/40' : 'text-amber-400 bg-amber-950/40'}`}>
+              {state.phaseEndTime && countdown.remaining > 0 && (
+                <span className={`text-sm font-mono px-2 py-0.5 rounded ${countdown.remaining < 15000 ? 'text-red-400 bg-red-950/40' : isVoting ? 'text-red-300 bg-red-950/30' : 'text-amber-400 bg-amber-950/40'}`}>
                   {countdown.label}
                 </span>
               )}

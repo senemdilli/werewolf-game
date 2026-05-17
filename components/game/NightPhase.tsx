@@ -106,8 +106,19 @@ export default function NightPhase({ state, socket, messages }: Props) {
           </div>
         )}
 
+        {/* Witch panel — waiting for wolves */}
+        {canAct && isWitch && !state.wolvesActed && (
+          <div className="bg-slate-900 border border-purple-800/60 rounded-xl p-6 flex flex-col items-center gap-2">
+            <p className="text-2xl animate-pulse">🧙</p>
+            <p className="text-sm font-semibold text-purple-300">Waiting for the werewolves…</p>
+            <p className="text-xs text-slate-400 text-center">
+              You will be informed if someone is under attack.
+            </p>
+          </div>
+        )}
+
         {/* Witch panel */}
-        {canAct && isWitch && (
+        {canAct && isWitch && state.wolvesActed && (
           <div className="bg-slate-900 border border-purple-800/60 rounded-xl p-4 flex flex-col gap-4">
             <div>
               <p className="text-sm font-semibold text-purple-300 mb-1">🧙 Witch's Turn</p>

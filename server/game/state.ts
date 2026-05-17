@@ -130,6 +130,10 @@ export function buildClientState(state: GameState, playerId: string): ClientGame
   }
 
   const isWitch = me?.role === 'witch' && me.isAlive
+  const aliveWolves = state.players.filter(p => p.role === 'werewolf' && p.isAlive)
+  const wolvesActed = isWitch
+    ? aliveWolves.every(w => !!state.nightActions.werewolfVotes[w.id])
+    : undefined
   const nightKillTarget = isWitch && state.nightActions.killTarget
     ? (() => {
         const t = state.players.find(p => p.id === state.nightActions.killTarget)
@@ -156,6 +160,7 @@ export function buildClientState(state: GameState, playerId: string): ClientGame
     aliveWerewolvesVoted:
       me?.role === 'werewolf' ? Object.keys(state.nightActions.werewolfVotes) : undefined,
     phaseEndTime: state.phaseEndTime,
+    wolvesActed,
     nightKillTarget,
     witchPotions: isWitch ? state.witchPotions : undefined,
   }
