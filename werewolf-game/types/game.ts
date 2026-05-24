@@ -86,6 +86,9 @@ export interface ConversationState {
   speakerId: string | null
   speakerName: string | null
   speakerEndTime: number | null
+  // FIFO of player IDs who were @-mentioned by a speaker and earn the next speak
+  // slots without bidding. Each pop still consumes one round (counts toward maxRounds).
+  pendingSpeakers: string[]
   history: ConversationHistoryEntry[]
 }
 
@@ -164,6 +167,7 @@ export interface ConversationView {
   speakerName: string | null
   speakerEndTime: number | null
   bidsSubmittedCount: number
+  pendingSpeakers: string[]
   history: ConversationHistoryEntry[]
 }
 

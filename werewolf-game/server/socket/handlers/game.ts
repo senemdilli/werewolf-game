@@ -23,7 +23,7 @@ const DAY_RESULT_MS = 8 * 1000
 
 // Arena pacing
 const ADVOCACY_WINDOW_MS = 30 * 1000
-const BID_WINDOW_MS = 10 * 1000
+const BID_WINDOW_MS = 60 * 1000
 const SPEAK_WINDOW_MS = 30 * 1000
 const MAYOR_RUNOFF_MS = 30 * 1000
 const MAYOR_TIEBREAK_MS = 30 * 1000
@@ -179,6 +179,7 @@ async function startConversation(
     speakerId: null,
     speakerName: null,
     speakerEndTime: null,
+    pendingSpeakers: [],
     history: [],
   }
   state.phaseEndTime = null
@@ -247,6 +248,34 @@ async function endSpeak(io: GameServer, roomCode: string) {
   }
 
   c.round += 1
+
+  // Drop dead/missing players from the mention queue before deciding the next slot.
+  c.pendingSpeakers = (c.pendingSpeakers ?? []).filter(id => {
+    const p = state.players.find(pp => pp.id === id)
+    return !!p && p.isAlive
+  })
+
+  if (c.pendingSpeakers.length > 0) {
+    // Mentioned player goes next — skip the bid window.
+    const nextId = c.pendingSpeakers.shift()!
+    const next = state.players.find(p => p.id === nextId)
+    c.sub = 'speak'
+    c.bids = {}
+    c.bidEndTime = null
+    c.speakerId = nextId
+    c.speakerName = next?.name ?? '?'
+    c.speakerEndTime = Date.now() + SPEAK_WINDOW_MS
+    await saveGame(state)
+    await broadcastState(io, roomCode)
+
+    const timer = setTimeout(() => {
+      phaseTimers.delete(roomCode)
+      endSpeak(io, roomCode)
+    }, SPEAK_WINDOW_MS)
+    phaseTimers.set(roomCode, timer)
+    return
+  }
+
   c.sub = 'bid'
   c.bids = {}
   c.bidEndTime = Date.now() + BID_WINDOW_MS
@@ -290,7 +319,12 @@ async function finishConversation(io: GameServer, roomCode: string) {
 }
 
 // Called by chat handler when speaker sends their message (or advocate sends theirs).
-export async function onSpeakerMessage(io: GameServer, roomCode: string, senderId: string): Promise<void> {
+export async function onSpeakerMessage(
+  io: GameServer,
+  roomCode: string,
+  senderId: string,
+  content: string,
+): Promise<void> {
   const state = await getGame(roomCode)
   if (!state) return
 
@@ -303,9 +337,56 @@ export async function onSpeakerMessage(io: GameServer, roomCode: string, senderI
 
   if (state.conversation?.active && state.conversation.sub === 'speak') {
     if (state.conversation.speakerId !== senderId) return
+
+    // Enqueue any newly mentioned alive players (skip the speaker themselves and
+    // anyone already queued). Persist before endSpeak reads state.
+    const mentioned = findMentions(content, state.players, senderId)
+    if (mentioned.length > 0) {
+      const c = state.conversation
+      const queue = c.pendingSpeakers ?? []
+      const seen = new Set(queue)
+      for (const id of mentioned) {
+        if (!seen.has(id)) {
+          queue.push(id)
+          seen.add(id)
+        }
+      }
+      c.pendingSpeakers = queue
+      await saveGame(state)
+    }
+
     await endSpeak(io, roomCode)
     return
   }
+}
+
+// Match alive player names as whole tokens in `content`, case-insensitive.
+// Excludes the speaker. Returns IDs in the order they first appear in the message.
+function findMentions(content: string, players: GameState['players'], speakerId: string): string[] {
+  const lower = content.toLowerCase()
+  type Hit = { id: string; at: number }
+  const hits: Hit[] = []
+  for (const p of players) {
+    if (!p.isAlive) continue
+    if (p.id === speakerId) continue
+    const name = p.name.trim().toLowerCase()
+    if (!name) continue
+    let from = 0
+    let at = -1
+    while (from <= lower.length) {
+      const idx = lower.indexOf(name, from)
+      if (idx === -1) break
+      const before = idx === 0 ? '' : lower[idx - 1]
+      const after = idx + name.length >= lower.length ? '' : lower[idx + name.length]
+      const beforeOk = !before || !/[a-z0-9_]/.test(before)
+      const afterOk = !after || !/[a-z0-9_]/.test(after)
+      if (beforeOk && afterOk) { at = idx; break }
+      from = idx + 1
+    }
+    if (at !== -1) hits.push({ id: p.id, at })
+  }
+  hits.sort((a, b) => a.at - b.at)
+  return hits.map(h => h.id)
 }
 
 async function finalizeMayorElection(io: GameServer, roomCode: string) {

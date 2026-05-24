@@ -25,6 +25,8 @@ Dates are when the change landed on `main`. Loosely follows
 - Wolf pack night chat is disabled in Arena mode (matching the paper's "no talking" rule).
 - During Arena discussion phases, chat is gated to the current bid-winner only.
 - Night resolution trusts the already-decided `killTarget` instead of re-deriving from raw wolf votes, so the no-consensus rule produces no death.
+- **Arena bid window** extended from 10s to 60s — playtesting showed 10s was too tight to choose a meaningful bid.
+- **Arena mentions grant the next speaking slot**: if a speaker names another living player in their message, that player is queued to speak next (no bid needed). Multiple mentions queue in mention-order; each queued slot still counts toward the discussion's round budget. The conversation panel shows the queue so players know they're up.
 
 ## [2026-05-17]
 ### Added

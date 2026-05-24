@@ -83,7 +83,7 @@ export function registerChatHandlers(io: GameServer, socket: GameSocket) {
 
       // Arena: advancing advocacy / conversation after the speaker sent their one message.
       if (isArena && !isNight) {
-        await onSpeakerMessage(io, roomCode, playerId)
+        await onSpeakerMessage(io, roomCode, playerId, trimmed)
       }
     } catch (err) {
       console.error('[chat:send]', err)
