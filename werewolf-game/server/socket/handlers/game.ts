@@ -1,5 +1,5 @@
 import type { Server, Socket } from 'socket.io'
-import type { ServerToClientEvents, ClientToServerEvents, Role, GameState, WolfArenaState, ConversationContext, DayVoteOutcome } from '@/types/game'
+import type { ServerToClientEvents, ClientToServerEvents, Role, GameState, WolfArenaState, ConversationContext, DayVoteOutcome, ChatMessage, Phase } from '@/types/game'
 import { SKIP_VOTE, WOLF_VOTE_NOBODY } from '@/types/game'
 import {
   getGame, saveGame, resetNightActions,
@@ -29,6 +29,13 @@ const MAYOR_RUNOFF_MS = 30 * 1000
 const MAYOR_TIEBREAK_MS = 30 * 1000
 const MAYOR_DISCUSSION_ROUNDS = 4
 const DAY_DISCUSSION_ROUNDS = 8
+
+// Anonymous labeling break: pushes the current phase's deadline back so
+// players can fill in trust labels. One break per phase+round.
+const LABELING_BREAK_MS = 30 * 1000
+const BREAK_PHASES = new Set<Phase>([
+  'day_discussion', 'day_vote', 'mayor_election', 'day_result',
+])
 
 const phaseTimers = new Map<string, ReturnType<typeof setTimeout>>()
 
@@ -66,7 +73,7 @@ async function transitionToNight(io: GameServer, roomCode: string) {
 
   await saveGame(state)
   await broadcastState(io, roomCode)
-  if (state.dbGameId) await persistSystem(state.dbGameId, `Night ${state.round} begins.`, 'NIGHT', state.round)
+  await persistSystem(io, state, `Night ${state.round} begins.`, 'NIGHT')
 }
 
 async function transitionToMayorElection(
@@ -94,7 +101,7 @@ async function transitionToMayorElection(
     }
     state.phaseEndTime = null
     await saveGame(state)
-    if (state.dbGameId) await persistSystem(state.dbGameId, 'Mayor election begins. Each player makes one statement, in turn.', 'DAY', state.round)
+    await persistSystem(io, state, 'Mayor election begins. Each player makes one statement, in turn.', 'DAY')
     await broadcastState(io, roomCode)
     scheduleAdvocacyTimer(io, roomCode)
     return
@@ -105,7 +112,7 @@ async function transitionToMayorElection(
   state.phaseEndTime = Date.now() + MAYOR_ELECTION_MS
 
   await saveGame(state)
-  if (state.dbGameId) await persistSystem(state.dbGameId, 'The village must elect a Mayor.', 'DAY', state.round)
+  await persistSystem(io, state, 'The village must elect a Mayor.', 'DAY')
   await broadcastState(io, roomCode)
 
   const timer = setTimeout(() => {
@@ -144,7 +151,7 @@ async function advanceAdvocacy(io: GameServer, roomCode: string, fromTimer: bool
     state.advocacy = null
     state.phase = 'mayor_election'
     await saveGame(state)
-    if (state.dbGameId) await persistSystem(state.dbGameId, 'Open discussion begins.', 'DAY', state.round)
+    await persistSystem(io, state, 'Open discussion begins.', 'DAY')
     await startConversation(io, roomCode, 'mayor', MAYOR_DISCUSSION_ROUNDS)
     return
   }
@@ -304,7 +311,7 @@ async function finishConversation(io: GameServer, roomCode: string) {
     state.mayorVotes = {}
     state.phaseEndTime = Date.now() + MAYOR_ELECTION_MS
     await saveGame(state)
-    if (state.dbGameId) await persistSystem(state.dbGameId, 'Mayor vote begins.', 'DAY', state.round)
+    await persistSystem(io, state, 'Mayor vote begins.', 'DAY')
     await broadcastState(io, roomCode)
     const timer = setTimeout(() => {
       phaseTimers.delete(roomCode)
@@ -404,7 +411,7 @@ async function finalizeMayorElection(io: GameServer, roomCode: string) {
 
     if (sorted.length === 0) {
       // No one voted: skip and proceed without electing a mayor.
-      if (state.dbGameId) await persistSystem(state.dbGameId, 'No one voted. No Mayor elected.', 'DAY', state.round)
+      await persistSystem(io, state, 'No one voted. No Mayor elected.', 'DAY')
       await proceedAfterMayorElection(io, state)
       return
     }
@@ -420,14 +427,14 @@ async function finalizeMayorElection(io: GameServer, roomCode: string) {
         return `${v} → ${t}`
       })
       const summary = `Mayor vote results: ${lines.join(', ')}`
-      await persistSystem(state.dbGameId, summary, 'DAY', state.round)
+      await persistSystem(io, state, summary, 'DAY')
     }
 
     if (tied.length === 1) {
       state.mayorId = tied[0]
       const name = state.players.find(p => p.id === state.mayorId)?.name ?? 'Someone'
       state.mayorElected = true
-      if (state.dbGameId) await persistSystem(state.dbGameId, `${name} has been elected Mayor. The Mayor breaks ties in day votes.`, 'DAY', state.round)
+      await persistSystem(io, state, `${name} has been elected Mayor. The Mayor breaks ties in day votes.`, 'DAY')
       await proceedAfterMayorElection(io, state)
       return
     }
@@ -442,7 +449,7 @@ async function finalizeMayorElection(io: GameServer, roomCode: string) {
     state.phaseEndTime = Date.now() + MAYOR_RUNOFF_MS
     await saveGame(state)
     const names = tied.map(id => state.players.find(p => p.id === id)?.name ?? '?').join(', ')
-    if (state.dbGameId) await persistSystem(state.dbGameId, `Mayor vote tied between ${names}. Runoff begins.`, 'DAY', state.round)
+    await persistSystem(io, state, `Mayor vote tied between ${names}. Runoff begins.`, 'DAY')
     await broadcastState(io, roomCode)
     const timer = setTimeout(() => {
       phaseTimers.delete(roomCode)
@@ -459,7 +466,7 @@ async function finalizeMayorElection(io: GameServer, roomCode: string) {
     state.mayorId = winnerId
     const name = state.players.find(p => p.id === winnerId)?.name ?? 'Someone'
     state.mayorElected = true
-    if (state.dbGameId) await persistSystem(state.dbGameId, `${name} has been elected Mayor. Their vote counts double.`, 'DAY', state.round)
+    await persistSystem(io, state, `${name} has been elected Mayor. Their vote counts double.`, 'DAY')
   }
 
   await proceedAfterMayorElection(io, state)
@@ -505,7 +512,7 @@ async function resolveMayorRunoff(io: GameServer, roomCode: string) {
   state.phaseEndTime = null
 
   const name = state.players.find(p => p.id === winnerId)?.name ?? 'Someone'
-  if (state.dbGameId) await persistSystem(state.dbGameId, `Runoff result: ${name} elected Mayor.`, 'DAY', state.round)
+  await persistSystem(io, state, `Runoff result: ${name} elected Mayor.`, 'DAY')
 
   await proceedAfterMayorElection(io, state)
 }
@@ -518,7 +525,7 @@ async function startDayDiscussion(io: GameServer, state: GameState) {
     state.phaseEndTime = null
     await saveGame(state)
     await broadcastState(io, state.roomCode)
-    if (state.dbGameId) await persistSystem(state.dbGameId, `Day ${state.round} discussion begins. ${DAY_DISCUSSION_ROUNDS} bid-to-speak rounds.`, 'DAY', state.round)
+    await persistSystem(io, state, `Day ${state.round} discussion begins. ${DAY_DISCUSSION_ROUNDS} bid-to-speak rounds.`, 'DAY')
     await startConversation(io, state.roomCode, 'day', DAY_DISCUSSION_ROUNDS)
     return
   }
@@ -601,12 +608,12 @@ async function transitionAfterNight(io: GameServer, roomCode: string) {
     state.phaseEndTime = null
     await saveGame(state)
     await finalizeGame(state.dbGameId!, winner, state.round)
-    if (state.dbGameId) await persistSystem(state.dbGameId, systemMsg, 'DAY', state.round)
+    await persistSystem(io, state, systemMsg, 'DAY')
     await broadcastState(io, state.roomCode)
     return
   }
 
-  if (state.dbGameId) await persistSystem(state.dbGameId, systemMsg, 'DAY', state.round)
+  await persistSystem(io, state, systemMsg, 'DAY')
 
   const mayorDied = victims.some(v => v.id === state.mayorId)
   if (mayorDied) state.mayorId = null
@@ -634,7 +641,7 @@ async function transitionToDayVote(io: GameServer, roomCode: string) {
   state.dayVotes = { votes: {} }
   state.phaseEndTime = Date.now() + DAY_VOTE_MS
   await saveGame(state)
-  if (state.dbGameId) await persistSystem(state.dbGameId, 'Voting begins.', 'DAY', state.round)
+  await persistSystem(io, state, 'Voting begins.', 'DAY')
   await broadcastState(io, roomCode)
 
   const timer = setTimeout(() => {
@@ -659,7 +666,7 @@ async function resolveVoteAndAdvance(io: GameServer, roomCode: string) {
         state.phaseEndTime = Date.now() + MAYOR_TIEBREAK_MS
         await saveGame(state)
         const names = tieCandidates.map(id => state.players.find(p => p.id === id)?.name ?? '?').join(', ')
-        if (state.dbGameId) await persistSystem(state.dbGameId, `The vote tied between ${names}. ${mayor.name} (Mayor) will break the tie.`, 'DAY', state.round)
+        await persistSystem(io, state, `The vote tied between ${names}. ${mayor.name} (Mayor) will break the tie.`, 'DAY')
         await broadcastState(io, roomCode)
         const timer = setTimeout(() => {
           phaseTimers.delete(roomCode)
@@ -700,9 +707,9 @@ async function applyMayorTiebreak(
     const mayorName = state.mayorId ? (state.players.find(p => p.id === state.mayorId)?.name ?? 'Mayor') : 'Mayor'
     if (eliminatedId) {
       const tname = state.players.find(p => p.id === eliminatedId)?.name ?? '?'
-      await persistSystem(state.dbGameId, `${mayorName} (Mayor) broke the tie: ${tname} is exiled.`, 'DAY', state.round)
+      await persistSystem(io, state, `${mayorName} (Mayor) broke the tie: ${tname} is exiled.`, 'DAY')
     } else {
-      await persistSystem(state.dbGameId, `${mayorName} (Mayor) declined to break the tie. No one is exiled.`, 'DAY', state.round)
+      await persistSystem(io, state, `${mayorName} (Mayor) declined to break the tie. No one is exiled.`, 'DAY')
     }
   }
 
@@ -746,12 +753,12 @@ async function applyDayElimination(
     state.phaseEndTime = null
     await saveGame(state)
     await finalizeGame(state.dbGameId!, winner, state.round)
-    if (state.dbGameId) await persistSystem(state.dbGameId, systemMsg, 'DAY', state.round)
+    await persistSystem(io, state, systemMsg, 'DAY')
     await broadcastState(io, roomCode)
     return
   }
 
-  if (state.dbGameId) await persistSystem(state.dbGameId, systemMsg, 'DAY', state.round)
+  await persistSystem(io, state, systemMsg, 'DAY')
 
   state.phase = 'day_result'
   state.phaseEndTime = Date.now() + DAY_RESULT_MS
@@ -787,9 +794,50 @@ async function transitionAfterDayResult(io: GameServer, roomCode: string) {
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-async function persistSystem(gameId: string, content: string, phase: 'DAY' | 'NIGHT', round: number) {
+const DAY_LIKE_PHASES = new Set<Phase>([
+  'mayor_advocacy', 'mayor_election', 'day_discussion', 'day_vote', 'day_result',
+])
+
+// Persist a system message to the DB *and* broadcast it to all players in the
+// room so the chronological event log is visible client-side (used by the
+// trust-labeling survey to pick the event being labeled).
+async function persistSystem(
+  io: GameServer,
+  state: GameState,
+  content: string,
+  dbPhase: 'DAY' | 'NIGHT',
+) {
+  if (!state.dbGameId) return
   try {
-    await prisma.message.create({ data: { gameId, playerName: 'System', content, phase, round, isSystem: true } })
+    const created = await prisma.message.create({
+      data: {
+        gameId: state.dbGameId,
+        playerName: 'System',
+        content,
+        phase: dbPhase,
+        round: state.round,
+        isSystem: true,
+      },
+    })
+    // Pick a granular broadcast phase: night messages tag as 'night'; day
+    // messages prefer the current state phase, falling back to a generic
+    // daytime tag when state has already moved on (dawn announcements, etc.).
+    const broadcastPhase: Phase =
+      dbPhase === 'NIGHT'
+        ? 'night'
+        : DAY_LIKE_PHASES.has(state.phase) ? state.phase : 'day_discussion'
+    const msg: ChatMessage = {
+      id: created.id,
+      playerId: null,
+      playerName: 'System',
+      role: null,
+      content,
+      phase: broadcastPhase,
+      round: state.round,
+      isSystem: true,
+      timestamp: created.createdAt.getTime(),
+    }
+    io.to(`room:${state.roomCode}`).emit('chat:message', msg)
   } catch (err) { console.error('[persistSystem]', err) }
 }
 
@@ -805,6 +853,77 @@ async function finalizeGame(gameId: string, winner: string, totalRounds: number)
 async function getDbPlayerId(gameId: string, name: string): Promise<string> {
   const p = await prisma.player.findFirst({ where: { gameId, name } })
   return p?.id ?? ''
+}
+
+// Maps the current phase to the function that should fire when its timer
+// expires. Used to (re)schedule the phase deadline after a labeling break.
+function schedulePhaseTimer(io: GameServer, roomCode: string, state: GameState) {
+  if (!state.phaseEndTime) return
+  const delay = Math.max(0, state.phaseEndTime - Date.now())
+  let fn: (() => void) | null = null
+  switch (state.phase) {
+    case 'day_discussion':
+      fn = () => { transitionToDayVote(io, roomCode) }
+      break
+    case 'day_vote':
+      fn = () => { resolveVoteAndAdvance(io, roomCode) }
+      break
+    case 'mayor_election':
+      // Only classic mayor election uses phaseEndTime in this way. In Arena,
+      // when the conversation is active, phaseEndTime is null; once it ends
+      // and the vote opens, phaseEndTime is set and this branch handles it.
+      fn = () => { finalizeMayorElection(io, roomCode) }
+      break
+    case 'day_result':
+      fn = () => { transitionAfterDayResult(io, roomCode) }
+      break
+  }
+  if (!fn) return
+  const timer = setTimeout(() => {
+    phaseTimers.delete(roomCode)
+    fn!()
+  }, delay)
+  phaseTimers.set(roomCode, timer)
+}
+
+async function startLabelingBreak(io: GameServer, roomCode: string): Promise<{ ok: boolean; error?: string }> {
+  const state = await getGame(roomCode)
+  if (!state) return { ok: false, error: 'Game not found' }
+  if (!BREAK_PHASES.has(state.phase)) return { ok: false, error: 'Breaks are not allowed in this phase' }
+  if (state.labelingBreak?.active) return { ok: false, error: 'A labeling break is already in progress' }
+  if (state.conversation?.active || state.advocacy?.active || state.mayorRunoff?.active || state.pendingMayorTiebreak) {
+    return { ok: false, error: 'Cannot pause during the current sub-phase' }
+  }
+  const key = `${state.phase}:${state.round}`
+  const used = state.labelingBreakUsed ?? []
+  if (used.includes(key)) return { ok: false, error: 'A break has already been used this phase' }
+
+  clearPhaseTimer(roomCode)
+
+  const now = Date.now()
+  const breakEnd = now + LABELING_BREAK_MS
+  state.phaseEndTime = (state.phaseEndTime ?? now) + LABELING_BREAK_MS
+  state.labelingBreak = { active: true, endTime: breakEnd }
+  state.labelingBreakUsed = [...used, key]
+
+  await saveGame(state)
+  await broadcastState(io, roomCode)
+  await persistSystem(io, state, 'A labeling break has been called. The phase deadline is pushed back 30 seconds.', 'DAY')
+
+  // After the break ends, clear the flag, then reschedule the phase timer for
+  // the remaining (now extended) time.
+  const breakTimer = setTimeout(async () => {
+    phaseTimers.delete(roomCode)
+    const s = await getGame(roomCode)
+    if (!s) return
+    s.labelingBreak = null
+    await saveGame(s)
+    await broadcastState(io, roomCode)
+    schedulePhaseTimer(io, roomCode, s)
+  }, LABELING_BREAK_MS)
+  phaseTimers.set(roomCode, breakTimer)
+
+  return { ok: true }
 }
 
 // ── Handler registration ──────────────────────────────────────────────────────
@@ -1189,5 +1308,23 @@ export function registerGameHandlers(io: GameServer, socket: GameSocket) {
       if (targetId !== null && !state.pendingMayorTiebreak.includes(targetId)) return
       await applyMayorTiebreak(io, roomCode, targetId)
     } catch (err) { console.error('[mayor:tiebreak_decision]', err) }
+  })
+
+  socket.on('label:request_break', async (cb) => {
+    const ack = typeof cb === 'function' ? cb : () => {}
+    try {
+      const { playerId, roomCode } = socket.data
+      if (!playerId || !roomCode) return ack({ success: false, error: 'Not in a room' })
+      const state = await getGame(roomCode)
+      if (!state) return ack({ success: false, error: 'No game' })
+      const player = state.players.find(p => p.id === playerId)
+      if (!player?.isAlive) return ack({ success: false, error: 'Only alive players can request a break' })
+      const r = await startLabelingBreak(io, roomCode)
+      if (!r.ok) return ack({ success: false, error: r.error })
+      ack({ success: true })
+    } catch (err) {
+      console.error('[label:request_break]', err)
+      ack({ success: false, error: 'Failed to start break' })
+    }
   })
 }

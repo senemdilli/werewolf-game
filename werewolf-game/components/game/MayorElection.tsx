@@ -130,17 +130,20 @@ export default function MayorElection({ state, socket, messages }: Props) {
               <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wide">Players</h3>
               <span className="text-xs text-slate-400">{voteCount}/{alivePlayers.length} voted</span>
             </div>
+            {/* Show all players (dead included, with revealed roles) for context.
+                PlayerList only makes alive non-self entries selectable. */}
             {isAlive && !hasVoted && !submitted ? (
               <PlayerList
-                players={allowSelfVote ? alivePlayers : alivePlayers.filter(p => p.id !== state.myId)}
+                players={state.players}
                 myId={state.myId}
                 onSelect={setSelected}
                 selectedId={selected ?? undefined}
                 selectable
+                excludeId={allowSelfVote ? undefined : state.myId}
               />
             ) : (
               <PlayerList
-                players={alivePlayers}
+                players={state.players}
                 myId={state.myId}
               />
             )}

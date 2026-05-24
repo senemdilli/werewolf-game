@@ -7,6 +7,8 @@ Dates are when the change landed on `main`. Loosely follows
 ## [Unreleased]
 
 ### Added
+- **Trust-labeling survey** — during daytime phases, a floating Labels panel lets each alive player record structured trust updates toward other players. Each label captures: the event being labeled (a system announcement, or "Other / general impression"), an action type from a preset list, one or more affected players each with at least one trust dimension update (alignment / information / consistency on a 1–7 Likert scale with low / medium / high confidence), and free-text reasoning. The panel auto-opens on each new daytime system announcement and remains available on demand via a floating button. Past labels are never shown back to the player (write-only by design).
+- **Admin JSON export** — new "JSON" button on the admin dashboard exports a game's trust labels as a structured JSON document, with ground-truth roles attached to the observer and each target for offline trust-accuracy analysis. CSV export (chat / notes / night actions) is unchanged.
 - **Arena game mode** — a complete alternate ruleset based on the Werewolf Arena paper, selectable as a toggle on the create-game screen. Both modes coexist; the room is locked to its mode at creation.
 - **Arena night**: multi-wolf voting runs as 3 sequential rounds in a randomly-shuffled order, with each round's votes visible to the whole pack. The wolves only kill if round 3 is unanimous on the same target — otherwise no one dies. Wolves can vote "nobody" to spare everyone. Solo-wolf nights gain a "Spare everyone" option.
 - **Arena mayor election**:

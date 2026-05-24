@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { connectSocket, disconnectSocket } from '@/lib/socket-client'
 import type { ClientGameState, ChatMessage, SeerResult } from '@/types/game'
@@ -14,6 +14,29 @@ import DayPhase from './DayPhase'
 import DayResult from './DayResult'
 import GameOver from './GameOver'
 import NotePanel from './NotePanel'
+import LabelPanel from './LabelPanel'
+
+const LABELABLE_PHASES = new Set([
+  'mayor_advocacy', 'mayor_election', 'day_discussion', 'day_vote', 'day_result',
+])
+
+function LabelingBreakBanner({ endTime }: { endTime: number }) {
+  const [left, setLeft] = useState(Math.max(0, Math.ceil((endTime - Date.now()) / 1000)))
+  useEffect(() => {
+    const tick = () => setLeft(Math.max(0, Math.ceil((endTime - Date.now()) / 1000)))
+    tick()
+    const id = setInterval(tick, 250)
+    return () => clearInterval(id)
+  }, [endTime])
+  return (
+    <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-amber-950 border border-amber-700 text-amber-100 px-4 py-2 rounded-lg text-sm shadow-lg flex items-center gap-3">
+      <span className="font-semibold">🏷️ Labeling break</span>
+      <span className="text-amber-200">
+        Phase deadline paused — <span className="font-mono">{left}s</span> remaining
+      </span>
+    </div>
+  )
+}
 
 interface Props {
   roomCode: string
@@ -29,6 +52,8 @@ export default function GameRoom({ roomCode, playerId }: Props) {
   const [acknowledged, setAcknowledged] = useState(false)
   const [starting, setStarting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [labelAutoOpenTrigger, setLabelAutoOpenTrigger] = useState<string | null>(null)
+  const lastProcessedSystemMsgRef = useRef<string | null>(null)
 
   useEffect(() => {
     const s = connectSocket() as GameSocket
@@ -66,6 +91,21 @@ export default function GameRoom({ roomCode, playerId }: Props) {
       s.off('error')
     }
   }, [roomCode, playerId])
+
+  // Auto-open the Labels panel when a new daytime system announcement arrives
+  // during a labelable phase. Track the last-seen system message so we don't
+  // re-trigger on re-renders.
+  useEffect(() => {
+    if (!state || !LABELABLE_PHASES.has(state.phase)) return
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const m = messages[i]
+      if (!m.isSystem || !LABELABLE_PHASES.has(m.phase)) continue
+      if (m.id === lastProcessedSystemMsgRef.current) return
+      lastProcessedSystemMsgRef.current = m.id
+      setLabelAutoOpenTrigger(m.id)
+      return
+    }
+  }, [messages, state])
 
   const handleStart = useCallback(() => {
     if (!socket) return
@@ -110,6 +150,10 @@ export default function GameRoom({ roomCode, playerId }: Props) {
         <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-red-900 border border-red-700 text-red-100 px-4 py-2 rounded-lg text-sm shadow-lg animate-fade-in">
           {error}
         </div>
+      )}
+
+      {state.labelingBreak && (
+        <LabelingBreakBanner endTime={state.labelingBreak.endTime} />
       )}
 
       {seerResults.length > 0 && state.phase === 'night' && (
@@ -160,6 +204,15 @@ export default function GameRoom({ roomCode, playerId }: Props) {
         <NotePanel
           socket={socket}
           phaseLabel={state.phase === 'night' ? `Night ${state.round}` : `Day ${state.round} — ${state.phase.replace('_', ' ')}`}
+        />
+      )}
+
+      {socket && LABELABLE_PHASES.has(state.phase) && (
+        <LabelPanel
+          socket={socket}
+          state={state}
+          messages={messages}
+          autoOpenTrigger={labelAutoOpenTrigger}
         />
       )}
     </div>
