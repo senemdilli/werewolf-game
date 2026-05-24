@@ -42,7 +42,7 @@ for remote in "$SOURCE_REMOTE" "$TARGET_REMOTE"; do
   fi
 done
 
-echo "Fetching from $SOURCE_REMOTE and $TARGET_REMOTE…"
+echo "Fetching from $SOURCE_REMOTE and $TARGET_REMOTE..."
 git fetch "$SOURCE_REMOTE" --prune
 git fetch "$TARGET_REMOTE" --prune
 
@@ -67,10 +67,10 @@ for branch in "${BRANCHES[@]}"; do
   synth="_mirror/$(echo "$branch" | tr / _)"
   git branch -D "$synth" >/dev/null 2>&1 || true
 
-  echo "Splitting $SUBDIR/ as the new root…"
+  echo "Splitting $SUBDIR/ as the new root..."
   git subtree split -P "$SUBDIR" -b "$synth"
 
-  echo "Force-pushing to $TARGET_REMOTE/$branch…"
+  echo "Force-pushing to $TARGET_REMOTE/$branch..."
   git push -f "$TARGET_REMOTE" "$synth:$branch"
 
   git branch -D "$synth" >/dev/null 2>&1 || true
