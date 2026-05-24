@@ -18,6 +18,9 @@ interface Props {
   selectedId?: string
   selectable?: boolean
   excludeId?: string
+  // When provided, renders a kick button next to every player except `myId`.
+  // Only pass this when the viewer has authority to kick (e.g. lobby host).
+  onKick?: (playerId: string) => void
 }
 
 export default function PlayerList({
@@ -29,6 +32,7 @@ export default function PlayerList({
   selectedId,
   selectable,
   excludeId,
+  onKick,
 }: Props) {
   return (
     <ul className="space-y-2">
@@ -77,6 +81,16 @@ export default function PlayerList({
               )}
               {!p.isAlive && (
                 <span className="text-xs text-slate-500">☠</span>
+              )}
+              {onKick && p.id !== myId && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); onKick(p.id) }}
+                  className="text-xs px-1.5 py-0.5 rounded border border-red-900 text-red-400 hover:bg-red-950/60 cursor-pointer"
+                  title={`Kick ${p.name}`}
+                  aria-label={`Kick ${p.name}`}
+                >
+                  ✕
+                </button>
               )}
             </div>
           </li>

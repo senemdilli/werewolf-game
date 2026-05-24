@@ -17,6 +17,13 @@ const rolePrompt: Record<Role, string> = {
   villager: '',
 }
 
+const roleBadge: Record<Role, { emoji: string; label: string; cls: string }> = {
+  werewolf: { emoji: '🐺', label: 'Werewolf', cls: 'text-red-300 bg-red-950/60 border-red-800' },
+  villager: { emoji: '🧑‍🌾', label: 'Villager', cls: 'text-blue-300 bg-blue-950/60 border-blue-800' },
+  seer:     { emoji: '🔮', label: 'Seer',     cls: 'text-amber-300 bg-amber-950/60 border-amber-800' },
+  witch:    { emoji: '🧙', label: 'Witch',    cls: 'text-purple-300 bg-purple-950/60 border-purple-800' },
+}
+
 interface Props {
   state: ClientGameState
   socket: GameSocket
@@ -67,9 +74,15 @@ export default function NightPhase({ state, socket, messages }: Props) {
     <div className="flex flex-col lg:flex-row gap-4 h-full p-4 max-w-5xl mx-auto w-full">
       <div className="flex-1 flex flex-col gap-4">
         <div className="bg-slate-900 border border-slate-700 rounded-xl p-4">
-          <div className="flex items-center gap-2 mb-1">
+          <div className="flex items-center gap-2 mb-1 flex-wrap">
             <span className="text-lg">🌙</span>
             <h2 className="font-bold text-slate-100">Night {state.round}</h2>
+            {me && role && (
+              <span className={`ml-auto text-xs px-2 py-0.5 rounded border ${roleBadge[role].cls}`}>
+                You are <span className="font-semibold">{me.name}</span> · {roleBadge[role].emoji} {roleBadge[role].label}
+                {!isAlive && <span className="ml-1 text-slate-400">(dead)</span>}
+              </span>
+            )}
           </div>
           <p className="text-slate-400 text-sm">The village sleeps. Creatures of the night awaken.</p>
         </div>
