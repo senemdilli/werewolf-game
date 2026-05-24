@@ -202,6 +202,7 @@ export function buildClientState(state: GameState, playerId: string): ClientGame
       speakerName: c.speakerName,
       speakerEndTime: c.speakerEndTime,
       bidsSubmittedCount: Object.keys(c.bids).length,
+      pendingSpeakers: c.pendingSpeakers ?? [],
       history: c.history,
     }
   }

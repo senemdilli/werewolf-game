@@ -33,6 +33,9 @@ export default function ConversationPanel({ state, socket }: Props) {
 
   const inBid = c.sub === 'bid'
   const inSpeak = c.sub === 'speak'
+  const queue = c.pendingSpeakers ?? []
+  const queueNames = queue.map(id => state.players.find(p => p.id === id)?.name ?? '?')
+  const myQueuePos = queue.indexOf(state.myId)
 
   return (
     <div className="bg-slate-900 border border-slate-700 rounded-xl p-4 flex flex-col gap-3">
@@ -57,6 +60,16 @@ export default function ConversationPanel({ state, socket }: Props) {
           </span>
         )}
       </div>
+
+      {queue.length > 0 && (
+        <div className="text-xs bg-violet-950/30 border border-violet-800/60 rounded-lg p-2">
+          <span className="text-violet-300 font-semibold">Up next (mentioned):</span>{' '}
+          <span className="text-slate-200">{queueNames.join(' → ')}</span>
+          {myQueuePos >= 0 && isAlive && (
+            <span className="text-violet-200"> · you&rsquo;re #{myQueuePos + 1} — no bid needed</span>
+          )}
+        </div>
+      )}
 
       {inBid && (
         <div>

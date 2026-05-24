@@ -91,7 +91,7 @@ const arenaPhases = [
   {
     icon: '💬',
     name: 'Mayor Election (Discussion)',
-    description: 'Four bid-to-speak rounds. Every round, players privately bid 1–5; the highest bidder speaks one message (random tiebreak). 10s bid window, 30s speak window.',
+    description: 'Four bid-to-speak rounds. Every round, players privately bid 1–5; the highest bidder speaks one message (random tiebreak). 60s bid window, 30s speak window.',
   },
   {
     icon: '⚖️',
@@ -132,6 +132,7 @@ const arenaRules = [
   'Witch is informed whether anyone is under attack and can heal if so; her kill potion is available regardless.',
   'In discussion phases, only the highest bidder speaks each round. Everyone else watches.',
   'Bids are private. Highest bid wins; random tiebreak. Default bid is 1 if you don\'t submit one.',
+  'If a speaker names another living player in their message, that player is queued to speak next (no bid needed). Mention slots are first-in-first-out and still count toward the round budget.',
   'Mayor advocacy gives every player exactly one opening message in a random order.',
   'Mayor vote allows voting for yourself. Individual votes are published. Ties → runoff → random.',
   'Day vote requires more than one vote on a single target to exile. Tied vote → Mayor decides.',
