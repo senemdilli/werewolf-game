@@ -55,6 +55,8 @@ export function createInitialState(
     advocacy: null,
     mayorRunoff: null,
     pendingMayorTiebreak: null,
+    labelingBreak: null,
+    labelingBreakUsed: [],
   }
 }
 
@@ -242,6 +244,26 @@ export function buildClientState(state: GameState, playerId: string): ClientGame
       : null
   const mayorTiebreakPending = !!state.pendingMayorTiebreak
 
+  // Labeling break info — visible to everyone; the "available" flag is
+  // per-player (only alive players may request).
+  const BREAK_PHASES = new Set<Phase>([
+    'day_discussion', 'day_vote', 'mayor_election', 'day_result',
+  ])
+  const breakKey = `${state.phase}:${state.round}`
+  const labelingBreakUsed = state.labelingBreakUsed ?? []
+  const labelingBreak = state.labelingBreak?.active
+    ? { endTime: state.labelingBreak.endTime }
+    : null
+  const labelingBreakAvailable =
+    !!me?.isAlive &&
+    BREAK_PHASES.has(state.phase) &&
+    !labelingBreak &&
+    !labelingBreakUsed.includes(breakKey) &&
+    !state.conversation?.active &&
+    !state.advocacy?.active &&
+    !state.mayorRunoff?.active &&
+    !state.pendingMayorTiebreak
+
   return {
     id: state.id,
     roomCode: state.roomCode,
@@ -271,5 +293,7 @@ export function buildClientState(state: GameState, playerId: string): ClientGame
     mayorRunoff,
     mayorTiebreakCandidates,
     mayorTiebreakPending,
+    labelingBreak,
+    labelingBreakAvailable,
   }
 }

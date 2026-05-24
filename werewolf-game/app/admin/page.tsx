@@ -46,6 +46,10 @@ export default function AdminPage() {
     window.open(`/api/admin/export/${gameId}`, '_blank')
   }
 
+  function exportLabelsJson(gameId: string) {
+    window.open(`/api/admin/export/${gameId}/labels`, '_blank')
+  }
+
   const winnerBadge = (w: string | null) => {
     if (!w) return <span className="text-slate-500 text-xs">-</span>
     return (
@@ -129,12 +133,21 @@ export default function AdminPage() {
                     </td>
                     <td className="px-4 py-3">
                       {g.status === 'FINISHED' && (
-                        <button
-                          onClick={() => exportCsv(g.id)}
-                          className="text-xs px-3 py-1 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded transition-colors cursor-pointer"
-                        >
-                          CSV
-                        </button>
+                        <div className="flex gap-1.5">
+                          <button
+                            onClick={() => exportCsv(g.id)}
+                            className="text-xs px-3 py-1 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded transition-colors cursor-pointer"
+                          >
+                            CSV
+                          </button>
+                          <button
+                            onClick={() => exportLabelsJson(g.id)}
+                            className="text-xs px-3 py-1 bg-slate-800 hover:bg-slate-700 border border-amber-800/60 text-amber-200 rounded transition-colors cursor-pointer"
+                            title="Trust-label survey data"
+                          >
+                            JSON
+                          </button>
+                        </div>
                       )}
                     </td>
                   </tr>

@@ -19,6 +19,54 @@ export const SKIP_VOTE = 'skip' as const
 export const WOLF_VOTE_NOBODY = 'nobody' as const
 export type Winner = 'villagers' | 'werewolves' | null
 
+export type TrustDimension = 'alignment' | 'information' | 'consistency'
+export type Confidence = 'low' | 'medium' | 'high'
+export type LabelAction =
+  | 'voted_to_exile'
+  | 'voted_for_mayor'
+  | 'accused_of_werewolf'
+  | 'accused_of_lying'
+  | 'claimed_role'
+  | 'defended'
+  | 'supported'
+  | 'betrayed'
+  | 'contradicted_themselves'
+  | 'did_not_respond'
+  | 'other'
+
+export const LABEL_ACTIONS: LabelAction[] = [
+  'voted_to_exile',
+  'voted_for_mayor',
+  'accused_of_werewolf',
+  'accused_of_lying',
+  'claimed_role',
+  'defended',
+  'supported',
+  'betrayed',
+  'contradicted_themselves',
+  'did_not_respond',
+  'other',
+]
+
+export interface LabelTrustUpdateInput {
+  dimension: TrustDimension
+  score: number  // 1..7
+  confidence: Confidence
+}
+
+export interface LabelTargetInput {
+  playerId: string
+  updates: LabelTrustUpdateInput[]
+}
+
+export interface LabelCreateInput {
+  eventId: string | null
+  action: LabelAction
+  actionArgs?: string | null
+  reasoning: string
+  targets: LabelTargetInput[]
+}
+
 export interface Player {
   id: string
   name: string
@@ -106,6 +154,11 @@ export interface MayorRunoffState {
   endTime: number | null
 }
 
+export interface LabelingBreakState {
+  active: boolean
+  endTime: number
+}
+
 export interface GameState {
   id: string
   roomCode: string
@@ -132,6 +185,10 @@ export interface GameState {
   mayorRunoff: MayorRunoffState | null
   // Arena day vote: when set, mayor will break a tie from a closed vote
   pendingMayorTiebreak: string[] | null
+  // Anonymous labeling break (delays current phase deadline so players can fill labels)
+  labelingBreak: LabelingBreakState | null
+  // Keys of phase+round combos that have already used their one break (e.g. "day_discussion:2")
+  labelingBreakUsed: string[]
 }
 
 export interface PublicPlayer {
@@ -221,6 +278,10 @@ export interface ClientGameState {
   mayorTiebreakCandidates?: string[] | null
   // Public flag — true while the mayor is deciding a tied day-vote
   mayorTiebreakPending?: boolean
+  // Labeling break info (visible to all players)
+  labelingBreak?: { endTime: number } | null
+  // Whether the current player could request a break right now (validated server-side)
+  labelingBreakAvailable?: boolean
 }
 
 export interface ChatMessage {
@@ -265,4 +326,6 @@ export interface ClientToServerEvents {
   'mayor:tiebreak_decision': (targetId: string | null) => void
   'conversation:bid': (bid: number) => void
   'phase:advance': () => void
+  'label:create': (data: LabelCreateInput, cb: (r: { success: boolean; error?: string }) => void) => void
+  'label:request_break': (cb: (r: { success: boolean; error?: string }) => void) => void
 }
