@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { ClientGameState } from '@/types/game'
 import type { GameSocket } from '@/app/room/[code]/page'
+import { play } from '@/lib/sounds'
 
 interface Props {
   state: ClientGameState
@@ -28,6 +29,13 @@ export default function ConversationPanel({ state, socket }: Props) {
   const alive = state.players.filter(p => p.isAlive)
   const bidLeft = useSecondsLeft(c?.bidEndTime ?? null)
   const speakLeft = useSecondsLeft(c?.speakerEndTime ?? null)
+
+  const isMySpeakerTurn = !!c?.active && c.sub === 'speak' && c.speakerId === state.myId && isAlive
+  const speakerTurnRef = useRef(false)
+  useEffect(() => {
+    if (isMySpeakerTurn && !speakerTurnRef.current) play('your-turn')
+    speakerTurnRef.current = isMySpeakerTurn
+  }, [isMySpeakerTurn])
 
   if (!c?.active) return null
 

@@ -1,10 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { ClientGameState } from '@/types/game'
 import { WOLF_VOTE_NOBODY } from '@/types/game'
 import type { GameSocket } from '@/app/room/[code]/page'
 import Button from '@/components/ui/Button'
+import { play } from '@/lib/sounds'
 
 interface Props {
   state: ClientGameState
@@ -27,6 +28,12 @@ export default function WerewolfArenaPanel({ state, socket }: Props) {
   const currentVoter = arena.order[arena.turn]
   const currentVoterName = state.players.find(p => p.id === currentVoter)?.name ?? '?'
   const isMyTurn = arena.myTurn && !!me?.isAlive
+
+  const myTurnRef = useRef(false)
+  useEffect(() => {
+    if (isMyTurn && !myTurnRef.current) play('your-turn')
+    myTurnRef.current = isMyTurn
+  }, [isMyTurn])
 
   function handleVote() {
     if (!selected || submitting) return

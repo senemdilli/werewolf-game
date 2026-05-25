@@ -1,9 +1,10 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { ClientGameState, ChatMessage } from '@/types/game'
 import type { GameSocket } from '@/app/room/[code]/page'
 import Chat from './Chat'
+import { play } from '@/lib/sounds'
 
 interface Props {
   state: ClientGameState
@@ -30,6 +31,13 @@ export default function MayorAdvocacy({ state, socket, messages }: Props) {
   const left = useSecondsLeft(a?.endTime ?? null)
   const dayMessages = messages.filter(m => m.phase !== 'night' || m.isSystem)
   const isHost = me?.isHost
+
+  const isMyAdvocacyTurn = !!a?.active && !!a.myTurn && isAlive
+  const advocacyTurnRef = useRef(false)
+  useEffect(() => {
+    if (isMyAdvocacyTurn && !advocacyTurnRef.current) play('your-turn')
+    advocacyTurnRef.current = isMyAdvocacyTurn
+  }, [isMyAdvocacyTurn])
 
   if (!a?.active) return null
   const currentName = state.players.find(p => p.id === a.currentSpeakerId)?.name ?? '?'

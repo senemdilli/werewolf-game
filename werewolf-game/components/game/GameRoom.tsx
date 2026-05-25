@@ -15,6 +15,8 @@ import DayResult from './DayResult'
 import GameOver from './GameOver'
 import NotePanel from './NotePanel'
 import LabelPanel from './LabelPanel'
+import MuteToggle from './MuteToggle'
+import { play } from '@/lib/sounds'
 
 const LABELABLE_PHASES = new Set([
   'mayor_advocacy', 'mayor_election', 'day_discussion', 'day_vote', 'day_result',
@@ -54,6 +56,8 @@ export default function GameRoom({ roomCode, playerId }: Props) {
   const [error, setError] = useState<string | null>(null)
   const [labelAutoOpenTrigger, setLabelAutoOpenTrigger] = useState<string | null>(null)
   const lastProcessedSystemMsgRef = useRef<string | null>(null)
+  const prevPhaseRef = useRef<string | null>(null)
+  const lastCuedMsgIdRef = useRef<string | null>(null)
 
   useEffect(() => {
     const s = connectSocket() as GameSocket
@@ -118,6 +122,38 @@ export default function GameRoom({ roomCode, playerId }: Props) {
     }
   }, [messages, state])
 
+  // Phase-transition audio cues. Fires once per phase change (not on every render).
+  useEffect(() => {
+    if (!state) return
+    const prev = prevPhaseRef.current
+    const cur = state.phase
+    if (prev === cur) return
+    prevPhaseRef.current = cur
+    if (!prev) return  // first paint — no cue for "joining a room"
+    switch (cur) {
+      case 'night':            play('phase-night'); break
+      case 'mayor_advocacy':
+      case 'day_discussion':   play('phase-day'); break
+      case 'day_vote':
+      case 'mayor_election':   play('vote-open'); break
+      case 'day_result':       play('vote-result'); break
+    }
+  }, [state])
+
+  // Chat-arrival cues: 'dawn' for the morning system message, otherwise a
+  // (rate-limited) ping for non-system, non-own messages.
+  useEffect(() => {
+    if (messages.length === 0) return
+    const m = messages[messages.length - 1]
+    if (m.id === lastCuedMsgIdRef.current) return
+    lastCuedMsgIdRef.current = m.id
+    if (m.isSystem) {
+      if (m.content.startsWith('Dawn breaks')) play('dawn')
+      return
+    }
+    if (m.playerId && m.playerId !== playerId) play('chat-msg')
+  }, [messages, playerId])
+
   const handleStart = useCallback(() => {
     if (!socket) return
     setStarting(true)
@@ -157,6 +193,10 @@ export default function GameRoom({ roomCode, playerId }: Props) {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <div className="fixed top-3 left-3 z-40">
+        <MuteToggle />
+      </div>
+
       {error && (
         <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-red-900 border border-red-700 text-red-100 px-4 py-2 rounded-lg text-sm shadow-lg animate-fade-in">
           {error}
