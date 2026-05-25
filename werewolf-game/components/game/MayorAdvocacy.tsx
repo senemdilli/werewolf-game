@@ -28,7 +28,7 @@ export default function MayorAdvocacy({ state, socket, messages }: Props) {
   const me = state.players.find(p => p.id === state.myId)
   const isAlive = me?.isAlive ?? false
   const left = useSecondsLeft(a?.endTime ?? null)
-  const dayMessages = messages.filter(m => m.phase !== 'night')
+  const dayMessages = messages.filter(m => m.phase !== 'night' || m.isSystem)
   const isHost = me?.isHost
 
   if (!a?.active) return null

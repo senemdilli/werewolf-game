@@ -36,7 +36,10 @@ export default function DayPhase({ state, socket, messages }: Props) {
   const isAlive = me?.isAlive ?? false
   const isVoting = state.phase === 'day_vote'
   const isHost = me?.isHost
-  const dayMessages = messages.filter(m => m.phase !== 'night')
+  // System messages (e.g. "Night 2 begins.") are public and tagged with the
+  // phase they were emitted in — keep them so the day-chat log shows the full
+  // arc, including night transitions. Private wolf-pack chat is non-system.
+  const dayMessages = messages.filter(m => m.phase !== 'night' || m.isSystem)
   const countdown = useCountdown(state.phaseEndTime)
   const isArena = state.gameMode === 'arena'
   const inConversation = !!state.conversation?.active

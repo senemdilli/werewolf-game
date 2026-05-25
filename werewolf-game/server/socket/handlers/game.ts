@@ -20,6 +20,10 @@ const DAY_DISCUSSION_MS = 2 * 60 * 1000
 const DAY_VOTE_MS = 60 * 1000
 const MAYOR_ELECTION_MS = 60 * 1000
 const DAY_RESULT_MS = 8 * 1000
+// Minimum visible duration for the night phase. If wolf+witch act faster than
+// this, transitionAfterNight is deferred so non-acting players can register
+// that night happened. Host phase:advance still bypasses.
+const NIGHT_MIN_MS = 8 * 1000
 
 // Arena pacing
 const ADVOCACY_WINDOW_MS = 30 * 1000
@@ -63,7 +67,8 @@ async function transitionToNight(io: GameServer, roomCode: string) {
   state = resetNightActions(state)
   state.phase = 'night'
   state.lastEliminated = null
-  state.phaseEndTime = null
+  // phaseEndTime here is the *earliest* moment the night may end, not a deadline.
+  state.phaseEndTime = Date.now() + NIGHT_MIN_MS
 
   for (const p of state.players) {
     if (p.role === 'werewolf') {
@@ -74,6 +79,35 @@ async function transitionToNight(io: GameServer, roomCode: string) {
   await saveGame(state)
   await broadcastState(io, roomCode)
   await persistSystem(io, state, `Night ${state.round} begins.`, 'NIGHT')
+
+  // Fallback: if actions finish before NIGHT_MIN_MS, the action handlers will
+  // see we're still under the floor and defer; this timer then finishes the
+  // night when the floor has passed.
+  const timer = setTimeout(async () => {
+    phaseTimers.delete(roomCode)
+    const s = await getGame(roomCode)
+    if (!s || s.phase !== 'night') return
+    if (areNightActionsDone(s)) await transitionAfterNight(io, roomCode)
+  }, NIGHT_MIN_MS)
+  phaseTimers.set(roomCode, timer)
+}
+
+// Called by night-action handlers. Honors NIGHT_MIN_MS so the night UI is
+// visible for at least that long; the floor-timer in transitionToNight picks
+// it up if actions finish early.
+async function maybeFinishNight(io: GameServer, roomCode: string) {
+  const state = await getGame(roomCode)
+  if (!state || state.phase !== 'night') return
+  if (!areNightActionsDone(state)) {
+    await broadcastState(io, roomCode)
+    return
+  }
+  const minEnd = state.phaseEndTime ?? 0
+  if (Date.now() < minEnd) {
+    await broadcastState(io, roomCode)
+    return
+  }
+  await transitionAfterNight(io, roomCode)
 }
 
 async function transitionToMayorElection(
@@ -544,7 +578,7 @@ async function startDayDiscussion(io: GameServer, state: GameState) {
 async function transitionAfterNight(io: GameServer, roomCode: string) {
   clearPhaseTimer(roomCode)
   const state = await getGame(roomCode)
-  if (!state) return
+  if (!state || state.phase !== 'night') return
 
   // killTarget was set when the wolves' vote resolved (classic: when all voted;
   // arena: after round 3). Trust it instead of re-deriving.
@@ -1102,8 +1136,7 @@ export function registerGameHandlers(io: GameServer, socket: GameSocket) {
       }
 
       await saveGame(state)
-      if (areNightActionsDone(state)) await transitionAfterNight(io, roomCode)
-      else await broadcastState(io, roomCode)
+      await maybeFinishNight(io, roomCode)
     } catch (err) { console.error('[night:werewolf_vote]', err) }
   })
 
@@ -1132,8 +1165,7 @@ export function registerGameHandlers(io: GameServer, socket: GameSocket) {
       socket.emit('seer:result', { targetName: target.name, isWerewolf: target.role === 'werewolf' })
 
       await saveGame(state)
-      if (areNightActionsDone(state)) await transitionAfterNight(io, roomCode)
-      else await broadcastState(io, roomCode)
+      await maybeFinishNight(io, roomCode)
     } catch (err) { console.error('[night:seer_investigate]', err) }
   })
 
@@ -1179,8 +1211,7 @@ export function registerGameHandlers(io: GameServer, socket: GameSocket) {
 
       state.nightActions.completed.witch = true
       await saveGame(state)
-      if (areNightActionsDone(state)) await transitionAfterNight(io, roomCode)
-      else await broadcastState(io, roomCode)
+      await maybeFinishNight(io, roomCode)
     } catch (err) { console.error('[night:witch_action]', err) }
   })
 

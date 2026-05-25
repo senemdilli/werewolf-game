@@ -86,8 +86,8 @@ export default function PlayerList({
                 <button
                   onClick={(e) => { e.stopPropagation(); onKick(p.id) }}
                   className="text-xs px-1.5 py-0.5 rounded border border-red-900 text-red-400 hover:bg-red-950/60 cursor-pointer"
-                  title={`Kick ${p.name}`}
-                  aria-label={`Kick ${p.name}`}
+                  title={`Remove ${p.name} from the lobby`}
+                  aria-label={`Remove ${p.name} from the lobby`}
                 >
                   ✕
                 </button>
