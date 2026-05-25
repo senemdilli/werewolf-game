@@ -47,6 +47,7 @@ const CONFIDENCES: { key: Confidence; label: string }[] = [
 
 type DimUpdate = { score: number; confidence: Confidence }
 type TargetUpdates = Partial<Record<TrustDimension, DimUpdate>>
+type Reasonings = Record<string, string>
 
 const EVENT_OTHER = '__OTHER__'
 
@@ -56,7 +57,7 @@ export default function LabelPanel({ socket, state, messages, autoOpenTrigger }:
   const [action, setAction] = useState<LabelAction>('other')
   const [actionArgs, setActionArgs] = useState('')
   const [targets, setTargets] = useState<Record<string, TargetUpdates>>({})
-  const [reasoning, setReasoning] = useState('')
+  const [reasonings, setReasonings] = useState<Reasonings>({})
   const [submitting, setSubmitting] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -82,16 +83,16 @@ export default function LabelPanel({ socket, state, messages, autoOpenTrigger }:
     setAction('other')
     setActionArgs('')
     setTargets({})
-    setReasoning('')
+    setReasonings({})
     setError(null)
   }
 
   // After a successful submit, keep the event + action selected so the user
   // can quickly add a label for another player about the same event without
-  // re-picking those fields. Only clear targets + reasoning.
+  // re-picking those fields. Only clear targets + reasonings.
   function clearForNextPlayer() {
     setTargets({})
-    setReasoning('')
+    setReasonings({})
     setError(null)
   }
 
@@ -102,6 +103,17 @@ export default function LabelPanel({ socket, state, messages, autoOpenTrigger }:
       else next[playerId] = {}
       return next
     })
+    // Drop any reasoning for a deselected target so it doesn't gate canSubmit.
+    setReasonings(prev => {
+      if (!prev[playerId]) return prev
+      const next = { ...prev }
+      delete next[playerId]
+      return next
+    })
+  }
+
+  function setReasoningFor(playerId: string, value: string) {
+    setReasonings(prev => ({ ...prev, [playerId]: value }))
   }
 
   function setDimension(playerId: string, dim: TrustDimension, update: DimUpdate | null) {
@@ -117,16 +129,16 @@ export default function LabelPanel({ socket, state, messages, autoOpenTrigger }:
 
   const canSubmit = useMemo(() => {
     if (submitting) return false
-    if (!reasoning.trim()) return false
     const targetIds = Object.keys(targets)
     if (targetIds.length === 0) return false
     for (const id of targetIds) {
       const t = targets[id]
       const updates = DIMENSIONS.filter(d => t[d.key])
       if (updates.length === 0) return false
+      if (!(reasonings[id] ?? '').trim()) return false
     }
     return true
-  }, [reasoning, targets, submitting])
+  }, [reasonings, targets, submitting])
 
   function requestBreak() {
     if (!state.labelingBreakAvailable) return
@@ -139,27 +151,47 @@ export default function LabelPanel({ socket, state, messages, autoOpenTrigger }:
     if (!canSubmit) return
     setSubmitting(true)
     setError(null)
-    const payload: LabelCreateInput = {
-      eventId: eventId === EVENT_OTHER ? null : eventId,
-      action,
-      actionArgs: actionArgs.trim() || null,
-      reasoning: reasoning.trim(),
-      targets: Object.entries(targets).map(([playerId, dims]) => ({
-        playerId,
-        updates: DIMENSIONS
-          .filter(d => dims[d.key])
-          .map(d => ({ dimension: d.key, ...(dims[d.key] as DimUpdate) })),
-      })),
-    }
-    socket.emit('label:create', payload, (r) => {
+
+    const targetIds = Object.keys(targets)
+    const baseEvent = eventId === EVENT_OTHER ? null : eventId
+    const baseArgs = actionArgs.trim() || null
+
+    // One label per target, each carrying its own reasoning.
+    const submits = targetIds.map(playerId => {
+      const payload: LabelCreateInput = {
+        eventId: baseEvent,
+        action,
+        actionArgs: baseArgs,
+        reasoning: (reasonings[playerId] ?? '').trim(),
+        targets: [{
+          playerId,
+          updates: DIMENSIONS
+            .filter(d => targets[playerId][d.key])
+            .map(d => ({ dimension: d.key, ...(targets[playerId][d.key] as DimUpdate) })),
+        }],
+      }
+      return new Promise<{ playerId: string; ok: boolean; error?: string }>(resolve => {
+        socket.emit('label:create', payload, r =>
+          resolve({ playerId, ok: r.success, error: r.error })
+        )
+      })
+    })
+
+    Promise.all(submits).then(results => {
       setSubmitting(false)
-      if (r.success) {
+      const failures = results.filter(r => !r.ok)
+      if (failures.length === 0) {
         clearForNextPlayer()
         setSaved(true)
         setTimeout(() => setSaved(false), 2500)
-      } else {
-        setError(r.error ?? 'Failed to save')
+        return
       }
+      // Show which targets failed so the user knows what to retry.
+      const failedNames = failures
+        .map(f => state.players.find(p => p.id === f.playerId)?.name ?? '?')
+        .join(', ')
+      const firstErr = failures[0].error ?? 'Failed to save'
+      setError(`${firstErr} (${failedNames})`)
     })
   }
 
@@ -263,6 +295,19 @@ export default function LabelPanel({ socket, state, messages, autoOpenTrigger }:
                 <div key={playerId} className="border border-slate-700 rounded-lg p-2 bg-slate-800/40">
                   <div className="text-xs text-amber-200 font-semibold mb-2">{p.name}</div>
                   <div className="flex flex-col gap-2">
+                    <div>
+                      <label className="text-[10px] uppercase tracking-wide text-slate-500 font-semibold">
+                        Reasoning
+                      </label>
+                      <textarea
+                        value={reasonings[playerId] ?? ''}
+                        onChange={e => setReasoningFor(playerId, e.target.value)}
+                        placeholder={`Why did your trust in ${p.name} change?`}
+                        maxLength={2000}
+                        rows={2}
+                        className="w-full mt-1 bg-slate-800 border border-slate-700 rounded px-2 py-1.5 text-sm text-slate-100 placeholder-slate-500 resize-none focus:outline-none focus:border-amber-600"
+                      />
+                    </div>
                     {DIMENSIONS.map(d => {
                       const cur = targets[playerId][d.key]
                       const on = !!cur
@@ -329,18 +374,6 @@ export default function LabelPanel({ socket, state, messages, autoOpenTrigger }:
                 </div>
               )
             })}
-
-            <div>
-              <label className="text-xs text-slate-400 font-semibold">Reasoning</label>
-              <textarea
-                value={reasoning}
-                onChange={e => setReasoning(e.target.value)}
-                placeholder="Why did your trust change?"
-                maxLength={2000}
-                rows={3}
-                className="w-full mt-1 bg-slate-800 border border-slate-700 rounded px-2 py-1.5 text-sm text-slate-100 placeholder-slate-500 resize-none focus:outline-none focus:border-amber-600"
-              />
-            </div>
 
             {error && (
               <div className="text-xs text-red-300 bg-red-950/40 border border-red-800 rounded px-2 py-1">

@@ -1,17 +1,19 @@
 'use client'
 
 import type { ClientGameState } from '@/types/game'
+import type { GameSocket } from '@/app/room/[code]/page'
 import Button from '@/components/ui/Button'
 import PlayerList from './PlayerList'
 
 interface Props {
   state: ClientGameState
+  socket: GameSocket
   onStart: () => void
   onReady: () => void
   starting: boolean
 }
 
-export default function Lobby({ state, onStart, onReady, starting }: Props) {
+export default function Lobby({ state, socket, onStart, onReady, starting }: Props) {
   const me = state.players.find(p => p.id === state.myId)
   const isHost = me?.isHost
   const iAmReady = me?.isReady ?? false
@@ -53,7 +55,12 @@ export default function Lobby({ state, onStart, onReady, starting }: Props) {
             <span className="text-xs text-amber-400">Need at least 4 players</span>
           )}
         </div>
-        <PlayerList players={state.players} myId={state.myId} showReady />
+        <PlayerList
+          players={state.players}
+          myId={state.myId}
+          showReady
+          onKick={isHost ? (id) => socket.emit('room:kick', id) : undefined}
+        />
       </div>
 
       <div className="w-full bg-slate-900 border border-slate-700 rounded-xl p-4">

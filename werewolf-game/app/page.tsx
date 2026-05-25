@@ -32,6 +32,12 @@ export default function Home() {
   useEffect(() => {
     sessionStorage.removeItem('ww_playerId')
     sessionStorage.removeItem('ww_roomCode')
+    // Surface a message that survived a redirect (e.g. host kicked us).
+    const lastError = sessionStorage.getItem('ww_lastError')
+    if (lastError) {
+      setError(lastError)
+      sessionStorage.removeItem('ww_lastError')
+    }
   }, [])
 
   function handleCreate() {
