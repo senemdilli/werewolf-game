@@ -138,6 +138,39 @@ export function registerRoomHandlers(io: GameServer, socket: GameSocket) {
     }
   })
 
+  socket.on('room:kick', async (targetPlayerId) => {
+    try {
+      const { playerId, roomCode } = socket.data
+      if (!playerId || !roomCode) return
+      const state = await getGame(roomCode)
+      if (!state || state.phase !== 'lobby') return
+
+      const requester = state.players.find(p => p.id === playerId)
+      if (!requester?.isHost) return
+      if (targetPlayerId === playerId) return
+
+      const target = state.players.find(p => p.id === targetPlayerId)
+      if (!target) return
+
+      // Tell the target they were kicked, then drop their socket so they can't
+      // reconnect to the same player slot.
+      const targetSocket = io.sockets.sockets.get(target.socketId)
+      targetSocket?.emit('room:kicked', 'You were removed from the room by the host.')
+
+      state.players = state.players.filter(p => p.id !== targetPlayerId)
+      await saveGame(state)
+
+      // Disconnect AFTER the saveGame so the disconnect handler's filter is a no-op.
+      targetSocket?.disconnect(true)
+
+      for (const p of state.players) {
+        io.to(p.socketId).emit('game:state', buildClientState(state, p.id))
+      }
+    } catch (err) {
+      console.error('[room:kick]', err)
+    }
+  })
+
   socket.on('disconnect', async () => {
     const { playerId, roomCode } = socket.data
     if (!playerId || !roomCode) return

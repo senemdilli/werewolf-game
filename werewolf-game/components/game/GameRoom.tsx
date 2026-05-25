@@ -78,6 +78,16 @@ export default function GameRoom({ roomCode, playerId }: Props) {
       setTimeout(() => setError(null), 4000)
     })
 
+    s.on('room:kicked', (reason) => {
+      // Host removed us from the lobby. Clear our session and bounce home with
+      // a message that survives the navigation via sessionStorage.
+      sessionStorage.removeItem('ww_playerId')
+      sessionStorage.removeItem('ww_roomCode')
+      sessionStorage.setItem('ww_lastError', reason)
+      disconnectSocket()
+      router.push('/')
+    })
+
     s.emit('room:rejoin', { roomCode, playerId }, ({ success, error }) => {
       if (!success) {
         setError(error || 'Failed to rejoin room')
@@ -89,6 +99,7 @@ export default function GameRoom({ roomCode, playerId }: Props) {
       s.off('chat:message')
       s.off('seer:result')
       s.off('error')
+      s.off('room:kicked')
     }
   }, [roomCode, playerId])
 
@@ -175,7 +186,7 @@ export default function GameRoom({ roomCode, playerId }: Props) {
 
       <main className="flex-1 flex flex-col">
         {state.phase === 'lobby' && socket && (
-          <Lobby state={state} onStart={handleStart} starting={starting} onReady={handleReady} />
+          <Lobby state={state} socket={socket} onStart={handleStart} starting={starting} onReady={handleReady} />
         )}
         {state.phase === 'role_reveal' && (
           <RoleReveal state={state} onAcknowledge={handleAcknowledge} acknowledged={acknowledged} />

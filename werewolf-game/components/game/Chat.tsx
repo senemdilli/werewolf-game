@@ -53,6 +53,7 @@ export default function Chat({ messages, onSend, canSend, placeholder }: Props) 
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    if (!canSend) return
     const trimmed = input.trim()
     if (!trimmed) return
     onSend(trimmed)
@@ -105,15 +106,15 @@ export default function Chat({ messages, onSend, canSend, placeholder }: Props) 
         <input
           value={input}
           onChange={e => setInput(e.target.value)}
-          disabled={!canSend}
-          placeholder={canSend ? (placeholder || 'Say something…') : 'You cannot chat right now'}
+          placeholder={placeholder || (canSend ? 'Say something…' : 'You cannot send right now')}
           maxLength={500}
-          className="flex-1 bg-slate-800 border border-slate-700 rounded px-3 py-1.5 text-sm text-slate-100 placeholder-slate-500 disabled:opacity-50 focus:outline-none focus:border-violet-500"
+          className="flex-1 bg-slate-800 border border-slate-700 rounded px-3 py-1.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-violet-500"
         />
         <button
           type="submit"
           disabled={!canSend || !input.trim()}
-          className="px-3 py-1.5 bg-violet-600 hover:bg-violet-700 disabled:bg-slate-700 disabled:text-slate-500 text-white text-sm rounded transition-colors"
+          title={!canSend ? 'You cannot send right now' : undefined}
+          className="px-3 py-1.5 bg-violet-600 hover:bg-violet-700 disabled:bg-slate-700 disabled:text-slate-500 disabled:cursor-not-allowed text-white text-sm rounded transition-colors"
         >
           Send
         </button>

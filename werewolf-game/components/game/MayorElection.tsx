@@ -24,7 +24,7 @@ export default function MayorElection({ state, socket, messages }: Props) {
   const isAlive = me?.isAlive ?? false
   const alivePlayers = state.players.filter(p => p.isAlive)
   const hasVoted = state.mayorVotes[state.myId] !== undefined
-  const dayMessages = messages.filter(m => m.phase !== 'night')
+  const dayMessages = messages.filter(m => m.phase !== 'night' || m.isSystem)
   const isArena = state.gameMode === 'arena'
   const inConversation = !!state.conversation?.active
   const inRunoff = !!state.mayorRunoff?.active

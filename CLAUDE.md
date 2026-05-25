@@ -1,13 +1,8 @@
-# Wolf IOSL 2026
+# Wolf IOSL 2026 — agent guide
 
-Team repo for the Werewolf game project.
+This is the umbrella repo. Two things live here:
 
-## Repo map
+- `design/` — pre-implementation proposals (rules, label taxonomy, trust-measurement design). Read these for *intent*; they may diverge from the shipped code.
+- `werewolf-game/` — the canonical implementation. When editing code here, `werewolf-game/AGENTS.md` has stack-specific conventions and gotchas.
 
-- `design/` — design docs and proposals: game rules, chat requirements, label taxonomy, structured game flow, trust-measurement notes
-- `werewolf-game/` — Next.js implementation of the game (app, server, prisma, Dockerfile, etc.)
-- `README.md` — top-level project overview
-
-## Working inside `werewolf-game/`
-
-When editing code under `werewolf-game/`, also load `werewolf-game/AGENTS.md` for stack-specific conventions (Next.js + Prisma + Socket.IO).
+For deploy: `scripts/mirror-to-github.sh` rewrites `werewolf-game/` as the root and force-pushes to GitHub for Railway to deploy from. See the script header for usage.

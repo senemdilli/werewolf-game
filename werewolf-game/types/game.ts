@@ -305,6 +305,7 @@ export interface ServerToClientEvents {
   'game:state': (state: ClientGameState) => void
   'chat:message': (msg: ChatMessage) => void
   'seer:result': (result: SeerResult) => void
+  'room:kicked': (reason: string) => void
   error: (message: string) => void
 }
 
@@ -313,6 +314,7 @@ export interface ClientToServerEvents {
   'room:join': (data: { roomCode: string; playerName: string }, cb: (r: { success: boolean; playerId?: string; error?: string }) => void) => void
   'room:rejoin': (data: { roomCode: string; playerId: string }, cb: (r: { success: boolean; error?: string }) => void) => void
   'room:ready': () => void
+  'room:kick': (targetPlayerId: string) => void
   'note:save': (content: string) => void
   'game:start': (cb: (r: { success: boolean; error?: string }) => void) => void
   'game:acknowledge_role': () => void
