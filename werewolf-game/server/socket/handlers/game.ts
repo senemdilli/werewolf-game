@@ -23,8 +23,6 @@ const DAY_RESULT_MS = 8 * 1000
 
 // Arena pacing
 const ADVOCACY_WINDOW_MS = 30 * 1000
-const BID_WINDOW_MS = 60 * 1000
-const SPEAK_WINDOW_MS = 30 * 1000
 const MAYOR_RUNOFF_MS = 30 * 1000
 const MAYOR_TIEBREAK_MS = 30 * 1000
 const MAYOR_DISCUSSION_ROUNDS = 4
@@ -175,6 +173,7 @@ async function startConversation(
   const state = await getGame(roomCode)
   if (!state) return
 
+  const bidWindowMs = (state.bidDuration || 60) * 1000
   state.conversation = {
     active: true,
     context,
@@ -182,7 +181,7 @@ async function startConversation(
     maxRounds,
     sub: 'bid',
     bids: {},
-    bidEndTime: Date.now() + BID_WINDOW_MS,
+    bidEndTime: Date.now() + bidWindowMs,
     speakerId: null,
     speakerName: null,
     speakerEndTime: null,
@@ -196,7 +195,7 @@ async function startConversation(
   const timer = setTimeout(() => {
     phaseTimers.delete(roomCode)
     resolveBid(io, roomCode)
-  }, BID_WINDOW_MS)
+  }, bidWindowMs)
   phaseTimers.set(roomCode, timer)
 }
 
@@ -205,6 +204,8 @@ async function resolveBid(io: GameServer, roomCode: string) {
   const state = await getGame(roomCode)
   if (!state || !state.conversation?.active || state.conversation.sub !== 'bid') return
   const c = state.conversation
+
+  const speakWindowMs = (state.speakDuration || 60) * 1000
 
   // Default un-submitted bids to 1 (alive players only).
   const alive = state.players.filter(p => p.isAlive)
@@ -227,7 +228,7 @@ async function resolveBid(io: GameServer, roomCode: string) {
   c.sub = 'speak'
   c.speakerId = speakerId
   c.speakerName = speaker?.name ?? '?'
-  c.speakerEndTime = Date.now() + SPEAK_WINDOW_MS
+  c.speakerEndTime = Date.now() + speakWindowMs
   c.bidEndTime = null
   await saveGame(state)
   await broadcastState(io, roomCode)
@@ -235,7 +236,7 @@ async function resolveBid(io: GameServer, roomCode: string) {
   const timer = setTimeout(() => {
     phaseTimers.delete(roomCode)
     endSpeak(io, roomCode)
-  }, SPEAK_WINDOW_MS)
+  }, speakWindowMs)
   phaseTimers.set(roomCode, timer)
 }
 
@@ -244,6 +245,9 @@ async function endSpeak(io: GameServer, roomCode: string) {
   const state = await getGame(roomCode)
   if (!state || !state.conversation?.active || state.conversation.sub !== 'speak') return
   const c = state.conversation
+
+  const speakWindowMs = (state.speakDuration || 60) * 1000
+  const bidWindowMs = (state.bidDuration || 60) * 1000
 
   if (c.speakerId && c.speakerName) {
     c.history.push({ round: c.round, speakerId: c.speakerId, speakerName: c.speakerName })
@@ -271,21 +275,21 @@ async function endSpeak(io: GameServer, roomCode: string) {
     c.bidEndTime = null
     c.speakerId = nextId
     c.speakerName = next?.name ?? '?'
-    c.speakerEndTime = Date.now() + SPEAK_WINDOW_MS
+    c.speakerEndTime = Date.now() + speakWindowMs
     await saveGame(state)
     await broadcastState(io, roomCode)
 
     const timer = setTimeout(() => {
       phaseTimers.delete(roomCode)
       endSpeak(io, roomCode)
-    }, SPEAK_WINDOW_MS)
+    }, speakWindowMs)
     phaseTimers.set(roomCode, timer)
     return
   }
 
   c.sub = 'bid'
   c.bids = {}
-  c.bidEndTime = Date.now() + BID_WINDOW_MS
+  c.bidEndTime = Date.now() + bidWindowMs
   c.speakerId = null
   c.speakerName = null
   c.speakerEndTime = null
@@ -295,7 +299,7 @@ async function endSpeak(io: GameServer, roomCode: string) {
   const timer = setTimeout(() => {
     phaseTimers.delete(roomCode)
     resolveBid(io, roomCode)
-  }, BID_WINDOW_MS)
+  }, bidWindowMs)
   phaseTimers.set(roomCode, timer)
 }
 

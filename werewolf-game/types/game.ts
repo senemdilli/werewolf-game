@@ -166,6 +166,8 @@ export interface GameState {
   roomCode: string
   gameMode: GameMode
   witchSelfHeal: WitchSelfHealSetting
+  speakDuration: number
+  bidDuration: number
   phase: Phase
   round: number
   players: Player[]
@@ -253,6 +255,8 @@ export interface ClientGameState {
   roomCode: string
   gameMode: GameMode
   witchSelfHeal: WitchSelfHealSetting
+  speakDuration: number
+  bidDuration: number
   phase: Phase
   round: number
   players: PublicPlayer[]
@@ -313,7 +317,7 @@ export interface ServerToClientEvents {
 }
 
 export interface ClientToServerEvents {
-  'room:create': (data: { playerName: string; gameMode: GameMode; witchSelfHeal?: WitchSelfHealSetting }, cb: (r: { roomCode: string; playerId: string }) => void) => void
+  'room:create': (data: { playerName: string; gameMode: GameMode; witchSelfHeal?: WitchSelfHealSetting; speakDuration?: number; bidDuration?: number }, cb: (r: { roomCode: string; playerId: string }) => void) => void
   'room:join': (data: { roomCode: string; playerName: string }, cb: (r: { success: boolean; playerId?: string; error?: string }) => void) => void
   'room:rejoin': (data: { roomCode: string; playerId: string }, cb: (r: { success: boolean; error?: string }) => void) => void
   'room:ready': () => void

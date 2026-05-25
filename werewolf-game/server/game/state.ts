@@ -14,6 +14,8 @@ export function createInitialState(
   hostName: string,
   gameMode: GameMode,
   witchSelfHeal: WitchSelfHealSetting,
+  speakDuration: number = 60,
+  bidDuration: number = 60,
 ): GameState {
   const hostId = uuidv4()
   return {
@@ -21,6 +23,8 @@ export function createInitialState(
     roomCode,
     gameMode,
     witchSelfHeal,
+    speakDuration,
+    bidDuration,
     phase: 'lobby',
     round: 0,
     players: [{
@@ -272,6 +276,8 @@ export function buildClientState(state: GameState, playerId: string): ClientGame
     roomCode: state.roomCode,
     gameMode: state.gameMode,
     witchSelfHeal: state.witchSelfHeal,
+    speakDuration: state.speakDuration,
+    bidDuration: state.bidDuration,
     phase: state.phase as Phase,
     round: state.round,
     players,

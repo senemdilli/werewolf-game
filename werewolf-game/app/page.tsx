@@ -21,6 +21,8 @@ export default function Home() {
   const [mode, setMode] = useState<Mode>('home')
   const [gameMode, setGameMode] = useState<GameMode>('classic')
   const [witchSelfHeal, setWitchSelfHeal] = useState<WitchSelfHealSetting>('first_round')
+  const [speakDuration, setSpeakDuration] = useState<number>(60)
+  const [bidDuration, setBidDuration] = useState<number>(60)
   const [showSettings, setShowSettings] = useState(false)
   const [name, setName] = useState('')
   const [code, setCode] = useState('')
@@ -38,11 +40,20 @@ export default function Home() {
     setError('')
 
     const socket = connectSocket()
-    socket.emit('room:create', { playerName: name.trim(), gameMode, witchSelfHeal }, ({ roomCode, playerId }) => {
-      sessionStorage.setItem('ww_playerId', playerId)
-      sessionStorage.setItem('ww_roomCode', roomCode)
-      router.push(`/room/${roomCode}`)
-    })
+    socket.emit(
+      'room:create',
+      {
+        playerName: name.trim(),
+        gameMode,
+        witchSelfHeal,
+        ...(gameMode === 'arena' ? { speakDuration, bidDuration } : {}),
+      },
+      ({ roomCode, playerId }) => {
+        sessionStorage.setItem('ww_playerId', playerId)
+        sessionStorage.setItem('ww_roomCode', roomCode)
+        router.push(`/room/${roomCode}`)
+      }
+    )
   }
 
   function handleJoin() {
@@ -209,6 +220,58 @@ export default function Home() {
                       </button>
                     </div>
                   </div>
+
+                  {gameMode === 'arena' && (
+                    <>
+                      {/* Bidding Time (Arena) */}
+                      <div>
+                        <div className="flex items-center gap-1.5 mb-2">
+                          <p className="text-xs font-semibold text-slate-400">Bidding Duration</p>
+                          <span className="text-[9px] px-1 bg-amber-950/40 text-amber-400 border border-amber-800/40 rounded uppercase font-bold">Arena Only</span>
+                        </div>
+                        <div className="grid grid-cols-3 gap-2">
+                          {[30, 60, 90].map((t) => (
+                            <button
+                              key={t}
+                              type="button"
+                              onClick={() => setBidDuration(t)}
+                              className={`text-center rounded-lg border py-1.5 transition-colors cursor-pointer text-xs font-semibold ${
+                                bidDuration === t
+                                  ? 'border-violet-500 bg-violet-950/40 text-violet-200'
+                                  : 'border-slate-700 bg-slate-800/40 text-slate-300 hover:border-slate-500'
+                              }`}
+                            >
+                              {t}s {t === 60 && <span className="opacity-60 text-[10px]">(Default)</span>}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Speaking Time (Arena) */}
+                      <div>
+                        <div className="flex items-center gap-1.5 mb-2">
+                          <p className="text-xs font-semibold text-slate-400">Speaking Duration</p>
+                          <span className="text-[9px] px-1 bg-amber-950/40 text-amber-400 border border-amber-800/40 rounded uppercase font-bold">Arena Only</span>
+                        </div>
+                        <div className="grid grid-cols-3 gap-2">
+                          {[30, 60, 90].map((t) => (
+                            <button
+                              key={t}
+                              type="button"
+                              onClick={() => setSpeakDuration(t)}
+                              className={`text-center rounded-lg border py-1.5 transition-colors cursor-pointer text-xs font-semibold ${
+                                speakDuration === t
+                                  ? 'border-violet-500 bg-violet-950/40 text-violet-200'
+                                  : 'border-slate-700 bg-slate-800/40 text-slate-300 hover:border-slate-500'
+                              }`}
+                            >
+                              {t}s {t === 60 && <span className="opacity-60 text-[10px]">(Default)</span>}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
             </div>
