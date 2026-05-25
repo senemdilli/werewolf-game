@@ -1101,6 +1101,20 @@ export function registerGameHandlers(io: GameServer, socket: GameSocket) {
         }
       }
 
+      if (state.nightActions.completed.werewolves) {
+        const witch = state.players.find(p => p.role === 'witch' && p.isAlive)
+        if (witch) {
+          const isSelfTargeted = state.nightActions.killTarget === witch.id
+          const isSelfHealDisabledBySetting = isSelfTargeted && (
+            state.witchSelfHeal === 'never' ||
+            (state.witchSelfHeal === 'first_round' && state.round > 1)
+          )
+          if (isSelfHealDisabledBySetting) {
+            state.nightActions.completed.witch = true
+          }
+        }
+      }
+
       await saveGame(state)
       if (areNightActionsDone(state)) await transitionAfterNight(io, roomCode)
       else await broadcastState(io, roomCode)
@@ -1145,6 +1159,7 @@ export function registerGameHandlers(io: GameServer, socket: GameSocket) {
 
       const witch = state.players.find(p => p.id === playerId)
       if (!witch || witch.role !== 'witch' || !witch.isAlive) return
+      if (state.nightActions.completed.witch) return
 
       // Witch can only act after wolves have decided their target
       const aliveWolves = state.players.filter(p => p.role === 'werewolf' && p.isAlive)
@@ -1152,6 +1167,13 @@ export function registerGameHandlers(io: GameServer, socket: GameSocket) {
       if (!wolvesActed) return
 
       if (heal && state.witchPotions.heal) {
+        if (heal === witch.id) {
+          const isSelfHealBanned =
+            state.witchSelfHeal === 'never' ||
+            (state.witchSelfHeal === 'first_round' && state.round > 1)
+          if (isSelfHealBanned) return // Reject self-heal
+        }
+
         const target = state.players.find(p => p.id === heal && p.isAlive)
         if (target) {
           state.nightActions.witchHeal = heal
@@ -1178,6 +1200,8 @@ export function registerGameHandlers(io: GameServer, socket: GameSocket) {
       }
 
       state.nightActions.completed.witch = true
+      clearPhaseTimer(roomCode)
+      state.phaseEndTime = null
       await saveGame(state)
       if (areNightActionsDone(state)) await transitionAfterNight(io, roomCode)
       else await broadcastState(io, roomCode)

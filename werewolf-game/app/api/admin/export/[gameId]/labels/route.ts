@@ -24,7 +24,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ gameId:
     game_mode: game.gameMode,
     winner: game.winner,
     exported_at: new Date().toISOString(),
-    labels: labels.map(l => {
+    labels: labels.map((l: any) => {
       // Group updates by target so each target appears once with all its dimensions.
       const byTarget = new Map<string, {
         target: { id: string; name: string; role: string }

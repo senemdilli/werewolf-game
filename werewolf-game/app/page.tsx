@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { connectSocket } from '@/lib/socket-client'
-import type { GameMode } from '@/types/game'
+import type { GameMode, WitchSelfHealSetting } from '@/types/game'
 
 const RANDOM_NAMES = [
   'Aldric', 'Beatrix', 'Casimir', 'Delara', 'Edmund',
@@ -20,6 +20,8 @@ export default function Home() {
   const router = useRouter()
   const [mode, setMode] = useState<Mode>('home')
   const [gameMode, setGameMode] = useState<GameMode>('classic')
+  const [witchSelfHeal, setWitchSelfHeal] = useState<WitchSelfHealSetting>('first_round')
+  const [showSettings, setShowSettings] = useState(false)
   const [name, setName] = useState('')
   const [code, setCode] = useState('')
   const [loading, setLoading] = useState(false)
@@ -36,7 +38,7 @@ export default function Home() {
     setError('')
 
     const socket = connectSocket()
-    socket.emit('room:create', { playerName: name.trim(), gameMode }, ({ roomCode, playerId }) => {
+    socket.emit('room:create', { playerName: name.trim(), gameMode, witchSelfHeal }, ({ roomCode, playerId }) => {
       sessionStorage.setItem('ww_playerId', playerId)
       sessionStorage.setItem('ww_roomCode', roomCode)
       router.push(`/room/${roomCode}`)
@@ -149,6 +151,66 @@ export default function Home() {
                 </button>
               </div>
               <a href="/how-to-play" className="block text-xs text-slate-500 hover:text-slate-300 mt-2 transition-colors">Compare rules →</a>
+            </div>
+
+            {/* Collapsible Game Settings */}
+            <div className="border-t border-slate-800/80 pt-4">
+              <button
+                type="button"
+                onClick={() => setShowSettings(!showSettings)}
+                className="w-full flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-slate-400 hover:text-slate-200 transition-colors cursor-pointer"
+              >
+                <span>⚙️ Game Settings</span>
+                <span className="text-slate-500 font-mono text-sm">
+                  {showSettings ? '▲' : '▼'}
+                </span>
+              </button>
+
+              {showSettings && (
+                <div className="mt-4 space-y-4 animate-fadeIn">
+                  <div>
+                    <p className="text-xs font-semibold text-slate-400 mb-2">Witch Self-Healing</p>
+                    <div className="grid grid-cols-3 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setWitchSelfHeal('always')}
+                        className={`text-left rounded-lg border px-3 py-2 transition-colors cursor-pointer flex flex-col justify-between h-22 ${
+                          witchSelfHeal === 'always'
+                            ? 'border-violet-500 bg-violet-950/40 text-violet-200'
+                            : 'border-slate-700 bg-slate-800/40 text-slate-300 hover:border-slate-500'
+                        }`}
+                      >
+                        <p className="text-xs font-semibold">Always</p>
+                        <p className="text-[10px] text-slate-400 mt-1 leading-tight">Can self-heal in any round.</p>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setWitchSelfHeal('first_round')}
+                        className={`text-left rounded-lg border px-3 py-2 transition-colors cursor-pointer flex flex-col justify-between h-22 ${
+                          witchSelfHeal === 'first_round'
+                            ? 'border-violet-500 bg-violet-950/40 text-violet-200'
+                            : 'border-slate-700 bg-slate-800/40 text-slate-300 hover:border-slate-500'
+                        }`}
+                      >
+                        <p className="text-xs font-semibold">Round 1 Only</p>
+                        <p className="text-[10px] text-slate-400 mt-1 leading-tight">Can only self-heal in Night 1.</p>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setWitchSelfHeal('never')}
+                        className={`text-left rounded-lg border px-3 py-2 transition-colors cursor-pointer flex flex-col justify-between h-22 ${
+                          witchSelfHeal === 'never'
+                            ? 'border-violet-500 bg-violet-950/40 text-violet-200'
+                            : 'border-slate-700 bg-slate-800/40 text-slate-300 hover:border-slate-500'
+                        }`}
+                      >
+                        <p className="text-xs font-semibold">Never</p>
+                        <p className="text-[10px] text-slate-400 mt-1 leading-tight">Can never self-heal.</p>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {error && <p className="text-red-400 text-sm">{error}</p>}

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { ClientGameState, Role } from '@/types/game'
 import { WOLF_VOTE_NOBODY } from '@/types/game'
 import type { GameSocket } from '@/app/room/[code]/page'
@@ -15,6 +15,18 @@ const rolePrompt: Record<Role, string> = {
   seer:     'Choose a player to investigate.',
   witch:    'The werewolves have made their move.',
   villager: '',
+}
+
+function WitchCountdown({ endTime }: { endTime: number }) {
+  const [left, setLeft] = useState(Math.max(0, Math.ceil((endTime - Date.now()) / 1000)))
+  useEffect(() => {
+    const tick = () => setLeft(Math.max(0, Math.ceil((endTime - Date.now()) / 1000)))
+    tick()
+    const id = setInterval(tick, 250)
+    return () => clearInterval(id)
+  }, [endTime])
+
+  return <span className="font-mono font-bold text-amber-400">{left}s</span>
 }
 
 interface Props {
@@ -156,18 +168,43 @@ export default function NightPhase({ state, socket, messages }: Props) {
 
             <div className="flex flex-col gap-2">
               {/* Heal option */}
-              {state.witchPotions?.heal && state.nightKillTarget && (
-                <button
-                  onClick={() => setWitchChoice(c => c === 'heal' ? null : 'heal')}
-                  className={`w-full text-left px-4 py-3 rounded-lg border text-sm transition-colors ${
-                    witchChoice === 'heal'
-                      ? 'border-emerald-500 bg-emerald-950/50 text-emerald-300'
-                      : 'border-slate-700 bg-slate-800/60 text-slate-300 hover:border-emerald-700'
-                  }`}
-                >
-                  💚 Use healing potion — save {state.nightKillTarget.name}
-                </button>
-              )}
+              {state.witchPotions?.heal && state.nightKillTarget && (() => {
+                const isSelfTargeted = state.nightKillTarget.id === state.myId
+                const isSelfHealBanned = isSelfTargeted && (
+                  state.witchSelfHeal === 'never' ||
+                  (state.witchSelfHeal === 'first_round' && state.round > 1)
+                )
+
+                if (isSelfHealBanned) {
+                  return (
+                    <div className="bg-amber-950/40 border border-amber-800 text-amber-200 px-4 py-3 rounded-lg text-xs leading-normal flex flex-col gap-1.5">
+                      <p>
+                        ⚠️ You are targeted, but self-healing is disabled ({
+                          state.witchSelfHeal === 'never' ? 'never' : 'round 1 only'
+                        }).
+                      </p>
+                      {state.phaseEndTime && (
+                        <p className="text-slate-400">
+                          You have <WitchCountdown endTime={state.phaseEndTime} /> to use your kill potion or skip.
+                        </p>
+                      )}
+                    </div>
+                  )
+                }
+
+                return (
+                  <button
+                    onClick={() => setWitchChoice(c => c === 'heal' ? null : 'heal')}
+                    className={`w-full text-left px-4 py-3 rounded-lg border text-sm transition-colors ${
+                      witchChoice === 'heal'
+                        ? 'border-emerald-500 bg-emerald-950/50 text-emerald-300'
+                        : 'border-slate-700 bg-slate-800/60 text-slate-300 hover:border-emerald-700'
+                    }`}
+                  >
+                    💚 Use healing potion — save {state.nightKillTarget.name}
+                  </button>
+                )
+              })()}
               {!state.witchPotions?.heal && (
                 <p className="text-xs text-slate-500 italic">Healing potion already used.</p>
               )}
@@ -228,11 +265,31 @@ export default function NightPhase({ state, socket, messages }: Props) {
           </div>
         )}
 
-        {state.nightActionsCompleted && isAlive && role !== 'villager' && (
-          <div className="bg-slate-900 border border-emerald-800 rounded-xl p-4 text-center">
-            <p className="text-emerald-400 text-sm">✓ Your action has been submitted. Waiting for others…</p>
-          </div>
-        )}
+        {state.nightActionsCompleted && isAlive && role !== 'villager' && (() => {
+          if (isWitch) {
+            const isSelfTargeted = state.nightKillTarget?.id === state.myId
+            const isSelfHealDisabledBySetting = isSelfTargeted && (
+              state.witchSelfHeal === 'never' ||
+              (state.witchSelfHeal === 'first_round' && state.round > 1)
+            )
+            if (isSelfHealDisabledBySetting) {
+              return (
+                <div className="bg-amber-950/40 border border-amber-800 text-amber-200 px-4 py-3 rounded-lg text-sm leading-normal flex flex-col gap-1.5 text-center">
+                  <p>
+                    ⚠️ You are targeted by the werewolves tonight. Since self-healing is disabled ({
+                      state.witchSelfHeal === 'never' ? 'never' : 'round 1 only'
+                    }), your turn is skipped.
+                  </p>
+                </div>
+              )
+            }
+          }
+          return (
+            <div className="bg-slate-900 border border-emerald-800 rounded-xl p-4 text-center">
+              <p className="text-emerald-400 text-sm">✓ Your action has been submitted. Waiting for others…</p>
+            </div>
+          )
+        })()}
 
         {isWerewolf && !isArenaMultiWolf && (
           <div className="bg-slate-900 border border-red-900 rounded-xl p-3">
