@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { ClientGameState, Role } from '@/types/game'
 import { WOLF_VOTE_NOBODY } from '@/types/game'
 import type { GameSocket } from '@/app/room/[code]/page'
@@ -9,6 +9,7 @@ import PlayerList from './PlayerList'
 import Chat from './Chat'
 import WerewolfArenaPanel from './WerewolfArenaPanel'
 import type { ChatMessage } from '@/types/game'
+import { play } from '@/lib/sounds'
 
 const rolePrompt: Record<Role, string> = {
   werewolf: 'Choose a villager to eliminate tonight.',
@@ -74,6 +75,15 @@ export default function NightPhase({ state, socket, messages }: Props) {
   }
 
   const canAct = isAlive && !state.nightActionsCompleted && role !== 'villager'
+
+  // Witch's panel opens only after the wolves have voted — that's a "your turn
+  // now" moment because she's been passively waiting. Fire once on the flip.
+  const witchTurnArmed = canAct && isWitch && state.wolvesActed === true
+  const witchTurnRef = useRef(false)
+  useEffect(() => {
+    if (witchTurnArmed && !witchTurnRef.current) play('your-turn')
+    witchTurnRef.current = witchTurnArmed
+  }, [witchTurnArmed])
 
   const selectablePlayers = alivePlayers.filter(p => {
     if (role === 'werewolf') return !state.werewolfTeammates?.includes(p.id) && p.id !== state.myId

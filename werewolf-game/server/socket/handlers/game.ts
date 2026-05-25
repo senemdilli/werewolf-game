@@ -1236,9 +1236,9 @@ export function registerGameHandlers(io: GameServer, socket: GameSocket) {
       }
 
       state.nightActions.completed.witch = true
-      clearPhaseTimer(roomCode)
-      state.phaseEndTime = null
       await saveGame(state)
+      // Don't clear phaseEndTime / phaseTimer here — they hold the NIGHT_MIN_MS
+      // floor set in transitionToNight; maybeFinishNight honors it.
       await maybeFinishNight(io, roomCode)
     } catch (err) { console.error('[night:witch_action]', err) }
   })
