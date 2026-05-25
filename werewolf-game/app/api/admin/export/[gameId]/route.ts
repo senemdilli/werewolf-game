@@ -28,7 +28,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ gameId:
     'type,game_id,room_code,game_mode,winner,round,phase,player_name,player_role,target_name,content,is_system,timestamp',
   ]
 
-  const playerRoleMap = new Map(players.map(p => [p.id, p.role]))
+  const playerRoleMap = new Map(players.map((p: any) => [p.id, p.role]))
 
   for (const msg of messages) {
     const playerRole = (msg.playerId ? playerRoleMap.get(msg.playerId) : null) ?? msg.role ?? ''

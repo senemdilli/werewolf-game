@@ -50,7 +50,7 @@ export default function GameRoom({ roomCode, playerId }: Props) {
   const [socket, setSocket] = useState<GameSocket | null>(null)
   const [state, setState] = useState<ClientGameState | null>(null)
   const [messages, setMessages] = useState<ChatMessage[]>([])
-  const [seerResults, setSeerResults] = useState<SeerResult[]>([])
+  const [seerResults, setSeerResults] = useState<(SeerResult & { id: string; endTime: number })[]>([])
   const [acknowledged, setAcknowledged] = useState(false)
   const [starting, setStarting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -65,6 +65,7 @@ export default function GameRoom({ roomCode, playerId }: Props) {
 
     s.on('game:state', (newState) => {
       setState(newState)
+      if (newState.phase === 'lobby') setSeerResults([])
       if (newState.phase !== 'role_reveal') setAcknowledged(false)
       if (newState.phase !== 'lobby' && newState.phase !== 'game_over') setStarting(false)
     })
@@ -74,7 +75,12 @@ export default function GameRoom({ roomCode, playerId }: Props) {
     })
 
     s.on('seer:result', (result) => {
-      setSeerResults(prev => [...prev, result])
+      const id = `${Date.now()}-${Math.random()}`
+      const endTime = Date.now() + 10000
+      setSeerResults(prev => [...prev, { ...result, id, endTime }])
+      setTimeout(() => {
+        setSeerResults(prev => prev.filter(item => item.id !== id))
+      }, 10000)
     })
 
     s.on('error', (msg) => {
@@ -207,19 +213,14 @@ export default function GameRoom({ roomCode, playerId }: Props) {
         <LabelingBreakBanner endTime={state.labelingBreak.endTime} />
       )}
 
-      {seerResults.length > 0 && state.phase === 'night' && (
-        <div className="fixed top-4 right-4 z-50 space-y-2">
-          {seerResults.slice(-3).map((r, i) => (
-            <div
-              key={i}
-              className={`px-4 py-2 rounded-lg border text-sm shadow-lg ${
-                r.isWerewolf
-                  ? 'bg-red-950 border-red-700 text-red-200'
-                  : 'bg-blue-950 border-blue-700 text-blue-200'
-              }`}
-            >
-              🔮 {r.targetName} is{r.isWerewolf ? '' : ' not'} a werewolf
-            </div>
+      {seerResults.length > 0 && state.phase !== 'lobby' && state.phase !== 'game_over' && (
+        <div className="fixed top-4 right-4 z-50 flex flex-col gap-2 max-w-xs w-full pointer-events-none">
+          {seerResults.slice(-3).map((r) => (
+            <SeerResultCard
+              key={r.id}
+              result={r}
+              onDismiss={() => setSeerResults(prev => prev.filter(item => item.id !== r.id))}
+            />
           ))}
         </div>
       )}
@@ -266,6 +267,58 @@ export default function GameRoom({ roomCode, playerId }: Props) {
           autoOpenTrigger={labelAutoOpenTrigger}
         />
       )}
+    </div>
+  )
+}
+
+function SeerResultCard({
+  result,
+  onDismiss
+}: {
+  result: SeerResult & { id: string; endTime: number }
+  onDismiss: () => void
+}) {
+  const [timeLeft, setTimeLeft] = useState(Math.max(0, Math.ceil((result.endTime - Date.now()) / 1000)))
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const remaining = Math.max(0, Math.ceil((result.endTime - Date.now()) / 1000))
+      setTimeLeft(remaining)
+    }, 250)
+    return () => clearInterval(interval)
+  }, [result.endTime])
+
+  return (
+    <div
+      className={`pointer-events-auto flex items-center justify-between gap-3 px-4 py-3 rounded-xl border text-sm shadow-lg backdrop-blur-md transition-all duration-300 animate-fade-in ${
+        result.isWerewolf
+          ? 'bg-red-950/80 border-red-700/60 text-red-200'
+          : 'bg-indigo-950/80 border-indigo-700/60 text-indigo-200'
+      }`}
+    >
+      <div className="flex items-start gap-2">
+        <span className="text-base select-none">🔮</span>
+        <div className="leading-snug flex-1">
+          <div className="flex items-center gap-2">
+            <p className="font-semibold text-[10px] opacity-70 uppercase tracking-wider text-slate-400">Investigation Result</p>
+            <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-slate-800/80 text-slate-400 font-mono font-bold select-none leading-none">
+              {timeLeft}s
+            </span>
+          </div>
+          <p className="mt-0.5 text-slate-200">
+            <span className="font-bold text-slate-100">{result.targetName}</span>
+            {result.isWerewolf ? ' is a werewolf!' : ' is a human.'}
+          </p>
+        </div>
+      </div>
+      <button
+        type="button"
+        onClick={onDismiss}
+        className="text-lg leading-none p-1 -mr-1 opacity-50 hover:opacity-100 transition-opacity cursor-pointer select-none text-slate-400"
+        title="Dismiss result"
+      >
+        &times;
+      </button>
     </div>
   )
 }

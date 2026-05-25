@@ -20,7 +20,7 @@ function uniquifyName(name: string, taken: string[]): string {
 }
 
 export function registerRoomHandlers(io: GameServer, socket: GameSocket) {
-  socket.on('room:create', async ({ playerName, gameMode }, cb) => {
+  socket.on('room:create', async ({ playerName, gameMode, witchSelfHeal, speakDuration, bidDuration }, cb) => {
     try {
       let roomCode = generateRoomCode()
       let existing = await getGame(roomCode)
@@ -30,7 +30,12 @@ export function registerRoomHandlers(io: GameServer, socket: GameSocket) {
       }
 
       const safeMode = gameMode === 'arena' ? 'arena' : 'classic'
-      const state = createInitialState(roomCode, socket.id, playerName, safeMode)
+      const safeSelfHeal = ['always', 'first_round', 'never'].includes(witchSelfHeal ?? '')
+        ? witchSelfHeal!
+        : 'first_round'
+      const safeSpeak = [30, 60, 90].includes(speakDuration ?? 0) ? speakDuration! : 60
+      const safeBid = [30, 60, 90].includes(bidDuration ?? 0) ? bidDuration! : 60
+      const state = createInitialState(roomCode, socket.id, playerName, safeMode, safeSelfHeal, safeSpeak, safeBid)
       const hostId = state.players[0].id
 
       await saveGame(state)

@@ -13,6 +13,8 @@ export type Phase =
 export type GameMode = 'classic' | 'arena'
 export const DEFAULT_GAME_MODE: GameMode = 'classic'
 
+export type WitchSelfHealSetting = 'always' | 'first_round' | 'never'
+
 export type DayVoteOutcome = 'eliminated' | 'tie' | 'skipped'
 
 export const SKIP_VOTE = 'skip' as const
@@ -163,6 +165,9 @@ export interface GameState {
   id: string
   roomCode: string
   gameMode: GameMode
+  witchSelfHeal: WitchSelfHealSetting
+  speakDuration: number
+  bidDuration: number
   phase: Phase
   round: number
   players: Player[]
@@ -249,6 +254,9 @@ export interface ClientGameState {
   id: string
   roomCode: string
   gameMode: GameMode
+  witchSelfHeal: WitchSelfHealSetting
+  speakDuration: number
+  bidDuration: number
   phase: Phase
   round: number
   players: PublicPlayer[]
@@ -310,7 +318,7 @@ export interface ServerToClientEvents {
 }
 
 export interface ClientToServerEvents {
-  'room:create': (data: { playerName: string; gameMode: GameMode }, cb: (r: { roomCode: string; playerId: string }) => void) => void
+  'room:create': (data: { playerName: string; gameMode: GameMode; witchSelfHeal?: WitchSelfHealSetting; speakDuration?: number; bidDuration?: number }, cb: (r: { roomCode: string; playerId: string }) => void) => void
   'room:join': (data: { roomCode: string; playerName: string }, cb: (r: { success: boolean; playerId?: string; error?: string }) => void) => void
   'room:rejoin': (data: { roomCode: string; playerId: string }, cb: (r: { success: boolean; error?: string }) => void) => void
   'room:ready': () => void

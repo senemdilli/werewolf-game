@@ -2,6 +2,7 @@ import { redis } from '@/lib/redis'
 import type {
   GameState, ClientGameState, PublicPlayer, Phase, GameMode,
   WolfArenaView, ConversationView, AdvocacyView, MayorRunoffView,
+  WitchSelfHealSetting,
 } from '@/types/game'
 import { v4 as uuidv4 } from 'uuid'
 
@@ -12,12 +13,18 @@ export function createInitialState(
   hostSocketId: string,
   hostName: string,
   gameMode: GameMode,
+  witchSelfHeal: WitchSelfHealSetting,
+  speakDuration: number = 60,
+  bidDuration: number = 60,
 ): GameState {
   const hostId = uuidv4()
   return {
     id: uuidv4(),
     roomCode,
     gameMode,
+    witchSelfHeal,
+    speakDuration,
+    bidDuration,
     phase: 'lobby',
     round: 0,
     players: [{
@@ -268,6 +275,9 @@ export function buildClientState(state: GameState, playerId: string): ClientGame
     id: state.id,
     roomCode: state.roomCode,
     gameMode: state.gameMode,
+    witchSelfHeal: state.witchSelfHeal,
+    speakDuration: state.speakDuration,
+    bidDuration: state.bidDuration,
     phase: state.phase as Phase,
     round: state.round,
     players,
