@@ -12,6 +12,10 @@ const RANDOM_NAMES = [
   'Petra', 'Rowena', 'Stellan', 'Tamsin', 'Ulric',
   'Vesper', 'Wren', 'Xander', 'Yara', 'Zephyr',
   'Alaric', 'Briar', 'Corvus', 'Dusk', 'Ember',
+  'Alistair', 'Celeste', 'Dorian', 'Elara', 'Gideon',
+  'Isla', 'Jasper', 'Maeve', 'Nikolai', 'Ophelia',
+  'Roxanne', 'Seraphina', 'Tristan', 'Valerie', 'Valerius',
+  'Caelum', 'Freya', 'Garrick', 'Leona', 'Soren',
 ]
 
 type Mode = 'home' | 'create' | 'join'
@@ -42,7 +46,11 @@ export default function Home() {
   }, [])
 
   function handleCreate() {
-    if (!name.trim()) return setError('Enter your name')
+    let finalName = name.trim()
+    if (!finalName) {
+      finalName = RANDOM_NAMES[Math.floor(Math.random() * RANDOM_NAMES.length)]
+      setName(finalName)
+    }
     setLoading(true)
     setError('')
 
@@ -50,7 +58,7 @@ export default function Home() {
     socket.emit(
       'room:create',
       {
-        playerName: name.trim(),
+        playerName: finalName,
         gameMode,
         witchSelfHeal,
         isSandbox,
@@ -65,13 +73,17 @@ export default function Home() {
   }
 
   function handleJoin() {
-    if (!name.trim()) return setError('Enter your name')
+    let finalName = name.trim()
+    if (!finalName) {
+      finalName = RANDOM_NAMES[Math.floor(Math.random() * RANDOM_NAMES.length)]
+      setName(finalName)
+    }
     if (!code.trim()) return setError('Enter a room code')
     setLoading(true)
     setError('')
 
     const socket = connectSocket()
-    socket.emit('room:join', { roomCode: code.trim().toUpperCase(), playerName: name.trim() }, (res) => {
+    socket.emit('room:join', { roomCode: code.trim().toUpperCase(), playerName: finalName }, (res) => {
       if (!res.success) {
         setError(res.error || 'Failed to join')
         setLoading(false)
