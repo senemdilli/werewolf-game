@@ -357,7 +357,7 @@ export default function LabelPanel({ socket, state, messages, autoOpenTrigger }:
       }
 
       // 2. Establish direct real-time WebSocket connection to Deepgram
-      const wsUrl = `wss://api.deepgram.com/v1/listen?model=nova-2&smart_format=true&interim_results=true&language=${speechLanguage}&numerals=true`
+      const wsUrl = `wss://api.deepgram.com/v1/listen?model=nova-3&smart_format=true&interim_results=true&language=${speechLanguage}&numerals=true`
       const ws = new WebSocket(wsUrl, ['token', token])
       wsRef.current[playerId] = ws
 

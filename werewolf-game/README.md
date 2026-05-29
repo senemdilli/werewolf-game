@@ -105,6 +105,20 @@ App will be on <http://localhost:3000>.
 
 Detailed rules are also available in-app at `/how-to-play`.
 
+## Sandbox Mode & Voice-to-Text (Speech-to-Text)
+
+### Sandbox Mode (Solo Playtesting)
+Hosts can toggle **Sandbox Mode** when creating a room. When active, any empty player slots are automatically populated with simulated bots (`Bot Lyra`, `Bot Edmund`, `Bot Casimir`) when the game starts. 
+- Bots automatically perform their night actions, day voting, and other gameplay decisions.
+- Allows a developer or researcher to solo-playtest the entire multi-phase game loop in a single browser window.
+
+### Voice-to-Text (Speech-to-Text)
+The trust-labeling panel (`LabelPanel.tsx`) integrates a real-time speech-to-text reasoning helper. Speak your thoughts naturally, and they will be transcribed directly into the reasoning text area.
+- **Model**: Powered by Deepgram's state-of-the-art **Nova-3** model for low-latency, highly accurate word-by-word streaming.
+- **Language Selection**: A toggle between English (`EN`) and German (`DE`) is built directly into the UI. Explicitly selecting the language prevents phonetic translation errors (e.g., Deepgram transcribing German speech into phonetically similar but nonsensical English words).
+- **Network Resilience**: Operates via a real-time WebSocket connection. If the client is behind a restrictive university or corporate firewall (or VPN) that blocks WebSockets, it automatically and gracefully falls back to a chunked **HTTP POST fallback API** (`/api/speech-to-text`) which dynamically routes the correct language header.
+- **AI Silence Detection**: Automatically stops recording after 6 seconds of silence to conserve API credits and provide a hands-free UX.
+
 ## Research data
 
 The admin dashboard (`/admin`, login at `/admin/login`) lists every game with a one-click CSV export. Each row has a `type` column:

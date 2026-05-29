@@ -11,12 +11,13 @@ export async function POST(request: Request) {
     }
 
     const contentType = request.headers.get('content-type') || 'audio/webm'
+    const speechLanguage = request.headers.get('x-speech-language') || 'en'
     const audioBuffer = await request.arrayBuffer()
 
     const url = new URL('https://api.deepgram.com/v1/listen')
-    url.searchParams.set('model', 'nova-2')
+    url.searchParams.set('model', 'nova-3')
     url.searchParams.set('smart_format', 'true')
-    url.searchParams.set('language', 'multi')
+    url.searchParams.set('language', speechLanguage)
     url.searchParams.set('numerals', 'true')
 
     const response = await fetch(url.toString(), {
