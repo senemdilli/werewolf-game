@@ -62,6 +62,7 @@ export default function LabelPanel({ socket, state, messages, autoOpenTrigger }:
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  const [speechLanguage, setSpeechLanguage] = useState<'en' | 'de'>('en')
   const [isRecording, setIsRecording] = useState<Record<string, boolean>>({})
   const mediaRecorderRef = useRef<Record<string, MediaRecorder>>({})
   const wsRef = useRef<Record<string, WebSocket | null>>({})
@@ -69,6 +70,7 @@ export default function LabelPanel({ socket, state, messages, autoOpenTrigger }:
   const streamsRef = useRef<Record<string, MediaStream>>({})
   const audioChunksRef = useRef<Record<string, Blob[]>>({})
   const useFallbackRef = useRef<Record<string, boolean>>({})
+  const silenceTimeoutRef = useRef<Record<string, any>>({})
 
   // Cleanup media recording, WebSockets, and audio streams on unmount
   useEffect(() => {
@@ -87,6 +89,11 @@ export default function LabelPanel({ socket, state, messages, autoOpenTrigger }:
         try {
           streamsRef.current[playerId]?.getTracks().forEach(track => track.stop())
         } catch (e) {}
+      })
+      Object.keys(silenceTimeoutRef.current).forEach(playerId => {
+        if (silenceTimeoutRef.current[playerId]) {
+          clearTimeout(silenceTimeoutRef.current[playerId])
+        }
       })
     }
   }, [])
@@ -130,6 +137,12 @@ export default function LabelPanel({ socket, state, messages, autoOpenTrigger }:
         streamsRef.current[playerId]?.getTracks().forEach(track => track.stop())
       } catch (e) {}
     })
+    Object.keys(silenceTimeoutRef.current).forEach(playerId => {
+      if (silenceTimeoutRef.current[playerId]) {
+        clearTimeout(silenceTimeoutRef.current[playerId])
+      }
+    })
+    silenceTimeoutRef.current = {}
     mediaRecorderRef.current = {}
     wsRef.current = {}
     streamsRef.current = {}
@@ -160,6 +173,12 @@ export default function LabelPanel({ socket, state, messages, autoOpenTrigger }:
         streamsRef.current[playerId]?.getTracks().forEach(track => track.stop())
       } catch (e) {}
     })
+    Object.keys(silenceTimeoutRef.current).forEach(playerId => {
+      if (silenceTimeoutRef.current[playerId]) {
+        clearTimeout(silenceTimeoutRef.current[playerId])
+      }
+    })
+    silenceTimeoutRef.current = {}
     mediaRecorderRef.current = {}
     wsRef.current = {}
     streamsRef.current = {}
@@ -173,6 +192,10 @@ export default function LabelPanel({ socket, state, messages, autoOpenTrigger }:
       if (next[playerId]) {
         delete next[playerId]
         // Stop media recording, close WebSocket, and stop stream if active when deselecting the target
+        if (silenceTimeoutRef.current[playerId]) {
+          clearTimeout(silenceTimeoutRef.current[playerId])
+          delete silenceTimeoutRef.current[playerId]
+        }
         if (mediaRecorderRef.current[playerId]) {
           try {
             mediaRecorderRef.current[playerId]?.stop()
@@ -272,6 +295,7 @@ export default function LabelPanel({ socket, state, messages, autoOpenTrigger }:
         method: 'POST',
         headers: {
           'Content-Type': mediaRecorder?.mimeType || 'audio/webm',
+          'X-Speech-Language': speechLanguage,
         },
         body: audioBlob,
       })
@@ -299,6 +323,16 @@ export default function LabelPanel({ socket, state, messages, autoOpenTrigger }:
     }
   }
 
+  function resetSilenceTimer(playerId: string) {
+    if (silenceTimeoutRef.current[playerId]) {
+      clearTimeout(silenceTimeoutRef.current[playerId])
+    }
+    silenceTimeoutRef.current[playerId] = setTimeout(() => {
+      console.log(`Silence detected for ${playerId}, auto-stopping...`)
+      stopRecording(playerId)
+    }, 6000) // 6 seconds of silence
+  }
+
   async function startRecording(playerId: string) {
     try {
       setError(null)
@@ -323,11 +357,12 @@ export default function LabelPanel({ socket, state, messages, autoOpenTrigger }:
       }
 
       // 2. Establish direct real-time WebSocket connection to Deepgram
-      const wsUrl = `wss://api.deepgram.com/v1/listen?model=nova-2&smart_format=true&interim_results=true&language=en`
+      const wsUrl = `wss://api.deepgram.com/v1/listen?model=nova-2&smart_format=true&interim_results=true&language=${speechLanguage}&numerals=true`
       const ws = new WebSocket(wsUrl, ['token', token])
       wsRef.current[playerId] = ws
 
       ws.onopen = async () => {
+        resetSilenceTimer(playerId)
         try {
           const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
           streamsRef.current[playerId] = stream
@@ -373,6 +408,8 @@ export default function LabelPanel({ socket, state, messages, autoOpenTrigger }:
           const transcript = data.channel?.alternatives?.[0]?.transcript || ''
           if (!transcript.trim()) return
 
+          resetSilenceTimer(playerId)
+
           const isFinal = data.is_final
 
           setReasonings(prev => {
@@ -388,7 +425,7 @@ export default function LabelPanel({ socket, state, messages, autoOpenTrigger }:
               const nextText = baseText + (baseText ? ' ' : '') + transcript.trim()
               return { ...prev, [playerId]: nextText }
             } else {
-              const interimStr = ' 🎙️ ' + transcript.trim()
+              const interimStr = ' ' + transcript.trim()
               currentInterimRef.current[playerId] = interimStr
               return { ...prev, [playerId]: baseText + interimStr }
             }
@@ -404,6 +441,11 @@ export default function LabelPanel({ socket, state, messages, autoOpenTrigger }:
       }
 
       ws.onclose = () => {
+        if (silenceTimeoutRef.current[playerId]) {
+          clearTimeout(silenceTimeoutRef.current[playerId])
+          delete silenceTimeoutRef.current[playerId]
+        }
+
         if (useFallbackRef.current[playerId]) {
           transcribeHttpAudio(playerId)
         } else {
@@ -438,6 +480,10 @@ export default function LabelPanel({ socket, state, messages, autoOpenTrigger }:
   }
 
   function stopRecording(playerId: string) {
+    if (silenceTimeoutRef.current[playerId]) {
+      clearTimeout(silenceTimeoutRef.current[playerId])
+      delete silenceTimeoutRef.current[playerId]
+    }
     if (mediaRecorderRef.current[playerId]) {
       try {
         mediaRecorderRef.current[playerId]?.stop()
@@ -640,38 +686,75 @@ export default function LabelPanel({ socket, state, messages, autoOpenTrigger }:
                     <div>
                       <div className="flex items-center justify-between mb-1">
                         <label className="text-[10px] uppercase tracking-wide text-slate-500 font-semibold">
-                          Reasoning
+                          Reasoning {isRecording[playerId] && <span className="text-red-400 normal-case animate-pulse ml-2">(Live recording...)</span>}
                         </label>
-                        <button
-                          type="button"
-                          onClick={() => toggleSpeechRecording(playerId)}
-                          className={`flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded cursor-pointer transition-all duration-200 ${
-                            isRecording[playerId]
-                              ? 'bg-red-950 border border-red-800 text-red-400 font-medium animate-pulse'
-                              : 'bg-slate-800 border border-slate-700 text-slate-400 hover:text-amber-300 hover:border-amber-700/60'
-                          }`}
-                          title={isRecording[playerId] ? 'Stop voice recording' : 'Speak reasoning'}
-                        >
-                          {isRecording[playerId] ? (
-                            <>
-                              <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping inline-block" />
-                              <span>Stop/Mute</span>
-                            </>
-                          ) : (
-                            <>
-                              <span>🎙️</span>
-                              <span>Voice</span>
-                            </>
-                          )}
-                        </button>
+                        <div className="flex items-center gap-1.5">
+                          <div className="flex bg-slate-900 border border-slate-800 rounded p-0.5 text-[9px] font-semibold text-slate-400">
+                            <button
+                              type="button"
+                              onClick={() => setSpeechLanguage('en')}
+                              disabled={isRecording[playerId]}
+                              className={`px-1.5 py-0.5 rounded transition-all ${
+                                speechLanguage === 'en'
+                                  ? 'bg-amber-950/40 border border-amber-900/60 text-amber-200'
+                                  : isRecording[playerId]
+                                    ? 'opacity-30 cursor-not-allowed text-slate-600'
+                                    : 'cursor-pointer hover:text-slate-200'
+                              }`}
+                            >
+                              EN
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setSpeechLanguage('de')}
+                              disabled={isRecording[playerId]}
+                              className={`px-1.5 py-0.5 rounded transition-all ${
+                                speechLanguage === 'de'
+                                  ? 'bg-amber-950/40 border border-amber-900/60 text-amber-200'
+                                  : isRecording[playerId]
+                                    ? 'opacity-30 cursor-not-allowed text-slate-600'
+                                    : 'cursor-pointer hover:text-slate-200'
+                              }`}
+                            >
+                              DE
+                            </button>
+                          </div>
+                          
+                          <button
+                            type="button"
+                            onClick={() => toggleSpeechRecording(playerId)}
+                            className={`flex items-center gap-1.5 text-xs px-2.5 py-1 rounded cursor-pointer transition-all duration-200 ${
+                              isRecording[playerId]
+                                ? 'bg-red-950 border border-red-800 text-red-400 font-semibold animate-pulse scale-105'
+                                : 'bg-slate-800 border border-slate-700 text-slate-300 hover:text-amber-300 hover:border-amber-700/60 hover:bg-slate-750'
+                            }`}
+                            title={isRecording[playerId] ? 'Stop voice recording' : `Speak reasoning in ${speechLanguage === 'en' ? 'English' : 'German'}`}
+                          >
+                            {isRecording[playerId] ? (
+                              <>
+                                <span className="w-2 h-2 rounded-full bg-red-500 animate-ping inline-block" />
+                                <span>Stop/Mute</span>
+                              </>
+                            ) : (
+                              <>
+                                <span className="text-sm">🎙️</span>
+                                <span>Voice Input</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
                       </div>
                       <textarea
                         value={reasonings[playerId] ?? ''}
                         onChange={e => setReasoningFor(playerId, e.target.value)}
                         placeholder={`Why did your trust in ${p.name} change?`}
                         maxLength={2000}
-                        rows={3}
-                        className="w-full mt-1 bg-slate-800 border border-slate-700 rounded px-2 py-1.5 text-sm text-slate-100 placeholder-slate-500 resize-y min-h-[60px] focus:outline-none focus:border-amber-600"
+                        rows={5}
+                        className={`w-full mt-1 bg-slate-800 border rounded px-2 py-1.5 text-sm text-slate-100 placeholder-slate-500 resize-y min-h-[100px] focus:outline-none ${
+                          isRecording[playerId]
+                            ? 'border-red-500/80 shadow-[0_0_8px_rgba(239,68,68,0.2)] animate-pulse'
+                            : 'border-slate-700 focus:border-amber-600'
+                        }`}
                       />
                     </div>
                     {DIMENSIONS.map(d => {

@@ -16,7 +16,8 @@ export async function POST(request: Request) {
     const url = new URL('https://api.deepgram.com/v1/listen')
     url.searchParams.set('model', 'nova-2')
     url.searchParams.set('smart_format', 'true')
-    url.searchParams.set('language', 'en')
+    url.searchParams.set('language', 'multi')
+    url.searchParams.set('numerals', 'true')
 
     const response = await fetch(url.toString(), {
       method: 'POST',
