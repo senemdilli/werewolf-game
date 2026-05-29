@@ -2,9 +2,10 @@ import { redis } from '@/lib/redis'
 import type {
   GameState, ClientGameState, PublicPlayer, Phase, GameMode,
   WolfArenaView, ConversationView, AdvocacyView, MayorRunoffView,
-  WitchSelfHealSetting,
+  WitchSelfHealSetting, Role,
 } from '@/types/game'
 import { v4 as uuidv4 } from 'uuid'
+import { resolveWerewolfKill } from '@/server/game/roles'
 
 const GAME_TTL = 60 * 60 * 24
 
@@ -16,6 +17,7 @@ export function createInitialState(
   witchSelfHeal: WitchSelfHealSetting,
   speakDuration: number = 60,
   bidDuration: number = 60,
+  isSandbox: boolean = false,
 ): GameState {
   const hostId = uuidv4()
   return {
@@ -64,6 +66,7 @@ export function createInitialState(
     pendingMayorTiebreak: null,
     labelingBreak: null,
     labelingBreakUsed: [],
+    isSandbox,
   }
 }
 
@@ -74,7 +77,148 @@ export async function getGame(roomCode: string): Promise<GameState | null> {
 }
 
 export async function saveGame(state: GameState): Promise<void> {
+  autoSimulateBotActions(state)
   await redis.setex(`game:${state.roomCode}`, GAME_TTL, JSON.stringify(state))
+}
+
+function autoSimulateBotActions(state: GameState) {
+  if (!state.isSandbox) return
+
+  const alivePlayers = state.players.filter(p => p.isAlive)
+  const bots = alivePlayers.filter(p => p.isBot)
+
+  if (bots.length === 0) return
+
+  // 1. Role reveal auto-acknowledgement
+  if (state.phase === 'role_reveal') {
+    for (const b of bots) {
+      b.roleAcknowledged = true
+    }
+  }
+
+  // 2. Night phase actions
+  else if (state.phase === 'night') {
+    const aliveWolves = alivePlayers.filter(p => p.role === 'werewolf')
+    const botWolves = bots.filter(p => p.role === 'werewolf')
+    
+    // Auto-submit werewolf bot votes
+    for (const w of botWolves) {
+      if (!state.nightActions.werewolfVotes[w.id]) {
+        const targets = alivePlayers.filter(p => p.role !== 'werewolf')
+        if (targets.length > 0) {
+          const target = targets[Math.floor(Math.random() * targets.length)]
+          state.nightActions.werewolfVotes[w.id] = target.id
+        } else {
+          state.nightActions.werewolfVotes[w.id] = 'nobody'
+        }
+      }
+    }
+
+    // If all wolves voted, resolve werewolf actions
+    if (aliveWolves.every(w => !!state.nightActions.werewolfVotes[w.id])) {
+      state.nightActions.completed.werewolves = true
+      if (!state.nightActions.killTarget) {
+        state.nightActions.killTarget = resolveWerewolfKill(state.nightActions.werewolfVotes)
+      }
+    }
+
+    // Seer bot action
+    const botSeers = bots.filter(p => p.role === 'seer')
+    for (const s of botSeers) {
+      if (!state.nightActions.seerTarget) {
+        const targets = alivePlayers.filter(p => p.id !== s.id)
+        if (targets.length > 0) {
+          const target = targets[Math.floor(Math.random() * targets.length)]
+          state.nightActions.seerTarget = target.id
+        }
+        state.nightActions.completed.seer = true
+      }
+    }
+
+    // Witch bot action (only after wolves acted!)
+    if (state.nightActions.completed.werewolves) {
+      const botWitches = bots.filter(p => p.role === 'witch')
+      for (const w of botWitches) {
+        if (!state.nightActions.completed.witch) {
+          // Heal potion
+          if (state.nightActions.killTarget && state.witchPotions.heal) {
+            const isSelf = state.nightActions.killTarget === w.id
+            const canSelfHeal = !isSelf || state.witchSelfHeal === 'always' || (state.witchSelfHeal === 'first_round' && state.round === 1)
+            
+            if (canSelfHeal && Math.random() > 0.3) {
+              state.nightActions.witchHeal = state.nightActions.killTarget
+              state.witchPotions.heal = false
+            }
+          }
+          
+          // Kill potion
+          if (!state.nightActions.witchHeal && state.witchPotions.kill && Math.random() > 0.8) {
+            const targets = alivePlayers.filter(p => p.id !== w.id)
+            if (targets.length > 0) {
+              const target = targets[Math.floor(Math.random() * targets.length)]
+              state.nightActions.witchKill = target.id
+              state.witchPotions.kill = false
+            }
+          }
+          
+          state.nightActions.completed.witch = true
+        }
+      }
+    }
+  }
+
+  // 3. Mayor election / Bidding / Advocacy
+  else if (state.phase === 'mayor_election' || state.phase === 'day_discussion') {
+    // Arena bids
+    if (state.conversation && state.conversation.active && state.conversation.sub === 'bid') {
+      for (const b of bots) {
+        if (state.conversation.bids[b.id] === undefined) {
+          state.conversation.bids[b.id] = Math.floor(Math.random() * 5) + 1
+        }
+      }
+    }
+    
+    // Mayor votes
+    if (state.phase === 'mayor_election' && !state.conversation?.active && !state.mayorRunoff?.active) {
+      for (const b of bots) {
+        if (!state.mayorVotes[b.id]) {
+          const targets = alivePlayers
+          const target = targets[Math.floor(Math.random() * targets.length)]
+          state.mayorVotes[b.id] = target.id
+        }
+      }
+    }
+
+    // Runoff votes
+    if (state.mayorRunoff && state.mayorRunoff.active) {
+      for (const b of bots) {
+        if (state.mayorRunoff.votes[b.id] === undefined) {
+          const candidates = state.mayorRunoff.candidates
+          const target = candidates[Math.floor(Math.random() * candidates.length)]
+          state.mayorRunoff.votes[b.id] = target
+        }
+      }
+    }
+  }
+
+  // 4. Day vote
+  else if (state.phase === 'day_vote') {
+    for (const b of bots) {
+      if (!state.dayVotes.votes[b.id]) {
+        if (Math.random() > 0.2) {
+          const targets = alivePlayers.filter(p => p.id !== b.id)
+          if (targets.length > 0) {
+            const target = targets[Math.floor(Math.random() * targets.length)]
+            state.dayVotes.votes[b.id] = target.id
+          } else {
+            state.dayVotes.votes[b.id] = 'skip'
+          }
+        } else {
+          state.dayVotes.votes[b.id] = 'skip'
+        }
+      }
+    }
+  }
 }
 
 export async function deleteGame(roomCode: string): Promise<void> {
@@ -151,6 +295,7 @@ export function buildClientState(state: GameState, playerId: string): ClientGame
       hasVoted: p.id in state.dayVotes.votes,
       isMayor: p.id === state.mayorId,
       isReady: p.isReady,
+      isBot: p.isBot,
     }
   })
 
@@ -305,5 +450,6 @@ export function buildClientState(state: GameState, playerId: string): ClientGame
     mayorTiebreakPending,
     labelingBreak,
     labelingBreakAvailable,
+    isSandbox: state.isSandbox,
   }
 }

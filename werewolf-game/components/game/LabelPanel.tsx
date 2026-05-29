@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useRef } from 'react'
 import type {
   ClientGameState, ChatMessage, LabelAction, LabelCreateInput,
   TrustDimension, Confidence, Phase,
@@ -62,6 +62,35 @@ export default function LabelPanel({ socket, state, messages, autoOpenTrigger }:
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  const [isRecording, setIsRecording] = useState<Record<string, boolean>>({})
+  const mediaRecorderRef = useRef<Record<string, MediaRecorder>>({})
+  const wsRef = useRef<Record<string, WebSocket | null>>({})
+  const currentInterimRef = useRef<Record<string, string>>({})
+  const streamsRef = useRef<Record<string, MediaStream>>({})
+  const audioChunksRef = useRef<Record<string, Blob[]>>({})
+  const useFallbackRef = useRef<Record<string, boolean>>({})
+
+  // Cleanup media recording, WebSockets, and audio streams on unmount
+  useEffect(() => {
+    return () => {
+      Object.keys(mediaRecorderRef.current).forEach(playerId => {
+        try {
+          mediaRecorderRef.current[playerId]?.stop()
+        } catch (e) {}
+      })
+      Object.keys(wsRef.current).forEach(playerId => {
+        try {
+          wsRef.current[playerId]?.close()
+        } catch (e) {}
+      })
+      Object.keys(streamsRef.current).forEach(playerId => {
+        try {
+          streamsRef.current[playerId]?.getTracks().forEach(track => track.stop())
+        } catch (e) {}
+      })
+    }
+  }, [])
+
   const me = state.players.find(p => p.id === state.myId)
   const isAlive = me?.isAlive ?? false
   const candidates = state.players.filter(p => p.isAlive && p.id !== state.myId)
@@ -85,6 +114,27 @@ export default function LabelPanel({ socket, state, messages, autoOpenTrigger }:
     setTargets({})
     setReasonings({})
     setError(null)
+    // Stop all active recordings, WebSockets, and streams
+    Object.keys(mediaRecorderRef.current).forEach(playerId => {
+      try {
+        mediaRecorderRef.current[playerId]?.stop()
+      } catch (e) {}
+    })
+    Object.keys(wsRef.current).forEach(playerId => {
+      try {
+        wsRef.current[playerId]?.close()
+      } catch (e) {}
+    })
+    Object.keys(streamsRef.current).forEach(playerId => {
+      try {
+        streamsRef.current[playerId]?.getTracks().forEach(track => track.stop())
+      } catch (e) {}
+    })
+    mediaRecorderRef.current = {}
+    wsRef.current = {}
+    streamsRef.current = {}
+    currentInterimRef.current = {}
+    setIsRecording({})
   }
 
   // After a successful submit, keep the event + action selected so the user
@@ -94,13 +144,54 @@ export default function LabelPanel({ socket, state, messages, autoOpenTrigger }:
     setTargets({})
     setReasonings({})
     setError(null)
+    // Stop all active recordings, WebSockets, and streams
+    Object.keys(mediaRecorderRef.current).forEach(playerId => {
+      try {
+        mediaRecorderRef.current[playerId]?.stop()
+      } catch (e) {}
+    })
+    Object.keys(wsRef.current).forEach(playerId => {
+      try {
+        wsRef.current[playerId]?.close()
+      } catch (e) {}
+    })
+    Object.keys(streamsRef.current).forEach(playerId => {
+      try {
+        streamsRef.current[playerId]?.getTracks().forEach(track => track.stop())
+      } catch (e) {}
+    })
+    mediaRecorderRef.current = {}
+    wsRef.current = {}
+    streamsRef.current = {}
+    currentInterimRef.current = {}
+    setIsRecording({})
   }
 
   function toggleTarget(playerId: string) {
     setTargets(prev => {
       const next = { ...prev }
-      if (next[playerId]) delete next[playerId]
-      else next[playerId] = {}
+      if (next[playerId]) {
+        delete next[playerId]
+        // Stop media recording, close WebSocket, and stop stream if active when deselecting the target
+        if (mediaRecorderRef.current[playerId]) {
+          try {
+            mediaRecorderRef.current[playerId]?.stop()
+          } catch (e) {}
+        }
+        if (wsRef.current[playerId]) {
+          try {
+            wsRef.current[playerId]?.close()
+          } catch (e) {}
+        }
+        if (streamsRef.current[playerId]) {
+          try {
+            streamsRef.current[playerId]?.getTracks().forEach(track => track.stop())
+            delete streamsRef.current[playerId]
+          } catch (e) {}
+        }
+      } else {
+        next[playerId] = {}
+      }
       return next
     })
     // Drop any reasoning for a deselected target so it doesn't gate canSubmit.
@@ -108,12 +199,263 @@ export default function LabelPanel({ socket, state, messages, autoOpenTrigger }:
       if (!prev[playerId]) return prev
       const next = { ...prev }
       delete next[playerId]
+      if (currentInterimRef.current[playerId]) {
+        delete currentInterimRef.current[playerId]
+      }
       return next
     })
   }
 
   function setReasoningFor(playerId: string, value: string) {
     setReasonings(prev => ({ ...prev, [playerId]: value }))
+  }
+
+  async function startHttpRecording(playerId: string) {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      streamsRef.current[playerId] = stream
+
+      let options = { mimeType: 'audio/webm' }
+      let mediaRecorder: MediaRecorder
+      try {
+        mediaRecorder = new MediaRecorder(stream, options)
+      } catch (e) {
+        mediaRecorder = new MediaRecorder(stream)
+      }
+
+      audioChunksRef.current[playerId] = []
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current[playerId].push(event.data)
+        }
+      }
+
+      mediaRecorder.onstop = () => {
+        transcribeHttpAudio(playerId)
+      }
+
+      mediaRecorderRef.current[playerId] = mediaRecorder
+      mediaRecorder.start()
+      setIsRecording(prev => ({ ...prev, [playerId]: true }))
+    } catch (err) {
+      console.error(err)
+      setError('Could not access microphone.')
+    }
+  }
+
+  async function transcribeHttpAudio(playerId: string) {
+    setIsRecording(prev => ({ ...prev, [playerId]: false }))
+    
+    // Stop tracks
+    if (streamsRef.current[playerId]) {
+      try {
+        streamsRef.current[playerId].getTracks().forEach(track => track.stop())
+        delete streamsRef.current[playerId]
+      } catch (e) {}
+    }
+
+    if (!audioChunksRef.current[playerId] || audioChunksRef.current[playerId].length === 0) {
+      return
+    }
+
+    const mediaRecorder = mediaRecorderRef.current[playerId]
+    const audioBlob = new Blob(audioChunksRef.current[playerId], { type: mediaRecorder?.mimeType || 'audio/webm' })
+
+    setReasonings(prev => ({ 
+      ...prev, 
+      [playerId]: (prev[playerId] ?? '') + (prev[playerId] ? ' ' : '') + '🎙️ [Transcribing...]' 
+    }))
+
+    try {
+      const response = await fetch('/api/speech-to-text', {
+        method: 'POST',
+        headers: {
+          'Content-Type': mediaRecorder?.mimeType || 'audio/webm',
+        },
+        body: audioBlob,
+      })
+
+      const data = await response.json()
+
+      setReasonings(prev => {
+        const current = prev[playerId] ?? ''
+        const cleanText = current.replace('🎙️ [Transcribing...]', '').trim()
+        if (data.transcript) {
+          return { ...prev, [playerId]: (cleanText + (cleanText ? ' ' : '') + data.transcript).trim() }
+        }
+        if (data.error) {
+          setError(`Transcription error: ${data.error}`)
+        }
+        return { ...prev, [playerId]: cleanText }
+      })
+    } catch (err: any) {
+      console.error(err)
+      setError('Failed to contact speech-to-text service')
+      setReasonings(prev => {
+        const current = prev[playerId] ?? ''
+        return { ...prev, [playerId]: current.replace('🎙️ [Transcribing...]', '').trim() }
+      })
+    }
+  }
+
+  async function startRecording(playerId: string) {
+    try {
+      setError(null)
+      currentInterimRef.current[playerId] = ''
+      audioChunksRef.current[playerId] = []
+      useFallbackRef.current[playerId] = false
+
+      // 1. Fetch short-lived token from Next.js server
+      let token = ''
+      try {
+        const tokenResponse = await fetch('/api/speech-token')
+        const tokenData = await tokenResponse.json()
+        token = tokenData.token
+      } catch (e) {
+        console.error('Failed to get token, falling back to HTTP', e)
+        useFallbackRef.current[playerId] = true
+      }
+
+      if (useFallbackRef.current[playerId] || !token) {
+        startHttpRecording(playerId)
+        return
+      }
+
+      // 2. Establish direct real-time WebSocket connection to Deepgram
+      const wsUrl = `wss://api.deepgram.com/v1/listen?model=nova-2&smart_format=true&interim_results=true&language=en`
+      const ws = new WebSocket(wsUrl, ['token', token])
+      wsRef.current[playerId] = ws
+
+      ws.onopen = async () => {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+          streamsRef.current[playerId] = stream
+
+          let options = { mimeType: 'audio/webm' }
+          let mediaRecorder: MediaRecorder
+          try {
+            mediaRecorder = new MediaRecorder(stream, options)
+          } catch (e) {
+            // Fallback for Safari/iOS
+            mediaRecorder = new MediaRecorder(stream)
+          }
+
+          mediaRecorder.ondataavailable = (event) => {
+            if (event.data.size > 0) {
+              audioChunksRef.current[playerId].push(event.data)
+              if (ws.readyState === WebSocket.OPEN && !useFallbackRef.current[playerId]) {
+                ws.send(event.data)
+              }
+            }
+          }
+
+          mediaRecorder.onstop = () => {
+            if (ws.readyState === WebSocket.OPEN && !useFallbackRef.current[playerId]) {
+              ws.send(JSON.stringify({ type: 'CloseStream' }))
+            }
+          }
+
+          mediaRecorderRef.current[playerId] = mediaRecorder
+          // Stream raw audio chunks every 100 milliseconds for low-latency feedback!
+          mediaRecorder.start(100)
+          setIsRecording(prev => ({ ...prev, [playerId]: true }))
+        } catch (err: any) {
+          console.error('Error starting MediaRecorder:', err)
+          setError('Microphone access denied.')
+          ws.close()
+        }
+      }
+
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data)
+          const transcript = data.channel?.alternatives?.[0]?.transcript || ''
+          if (!transcript.trim()) return
+
+          const isFinal = data.is_final
+
+          setReasonings(prev => {
+            const currentText = prev[playerId] ?? ''
+            const oldInterim = currentInterimRef.current[playerId] || ''
+            let baseText = currentText
+            if (oldInterim && baseText.endsWith(oldInterim)) {
+              baseText = baseText.substring(0, baseText.length - oldInterim.length).trim()
+            }
+
+            if (isFinal) {
+              currentInterimRef.current[playerId] = ''
+              const nextText = baseText + (baseText ? ' ' : '') + transcript.trim()
+              return { ...prev, [playerId]: nextText }
+            } else {
+              const interimStr = ' 🎙️ ' + transcript.trim()
+              currentInterimRef.current[playerId] = interimStr
+              return { ...prev, [playerId]: baseText + interimStr }
+            }
+          })
+        } catch (e) {
+          console.error('Error parsing WebSocket message:', e)
+        }
+      }
+
+      ws.onerror = (err) => {
+        console.warn('WebSocket failed (firewall/VPN/scopes), using HTTP fallback...', err)
+        useFallbackRef.current[playerId] = true
+      }
+
+      ws.onclose = () => {
+        if (useFallbackRef.current[playerId]) {
+          transcribeHttpAudio(playerId)
+        } else {
+          setIsRecording(prev => ({ ...prev, [playerId]: false }))
+          
+          // Remove any lingering interim text from the input when closing
+          setReasonings(prev => {
+            const currentText = prev[playerId] ?? ''
+            const oldInterim = currentInterimRef.current[playerId] || ''
+            if (oldInterim && currentText.endsWith(oldInterim)) {
+              return { ...prev, [playerId]: currentText.substring(0, currentText.length - oldInterim.length).trim() }
+            }
+            return prev
+          })
+          currentInterimRef.current[playerId] = ''
+          
+          // Release tracks
+          if (streamsRef.current[playerId]) {
+            try {
+              streamsRef.current[playerId].getTracks().forEach(track => track.stop())
+              delete streamsRef.current[playerId]
+            } catch (e) {}
+          }
+        }
+      }
+
+    } catch (err: any) {
+      console.error(err)
+      setError('Real-time connection failed. Falling back to HTTP...')
+      startHttpRecording(playerId)
+    }
+  }
+
+  function stopRecording(playerId: string) {
+    if (mediaRecorderRef.current[playerId]) {
+      try {
+        mediaRecorderRef.current[playerId]?.stop()
+      } catch (e) {}
+    }
+    if (wsRef.current[playerId]) {
+      try {
+        wsRef.current[playerId]?.close()
+      } catch (e) {}
+    }
+  }
+
+  function toggleSpeechRecording(playerId: string) {
+    if (isRecording[playerId]) {
+      stopRecording(playerId)
+    } else {
+      startRecording(playerId)
+    }
   }
 
   function setDimension(playerId: string, dim: TrustDimension, update: DimUpdate | null) {
@@ -296,16 +638,40 @@ export default function LabelPanel({ socket, state, messages, autoOpenTrigger }:
                   <div className="text-xs text-amber-200 font-semibold mb-2">{p.name}</div>
                   <div className="flex flex-col gap-2">
                     <div>
-                      <label className="text-[10px] uppercase tracking-wide text-slate-500 font-semibold">
-                        Reasoning
-                      </label>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="text-[10px] uppercase tracking-wide text-slate-500 font-semibold">
+                          Reasoning
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => toggleSpeechRecording(playerId)}
+                          className={`flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded cursor-pointer transition-all duration-200 ${
+                            isRecording[playerId]
+                              ? 'bg-red-950 border border-red-800 text-red-400 font-medium animate-pulse'
+                              : 'bg-slate-800 border border-slate-700 text-slate-400 hover:text-amber-300 hover:border-amber-700/60'
+                          }`}
+                          title={isRecording[playerId] ? 'Stop voice recording' : 'Speak reasoning'}
+                        >
+                          {isRecording[playerId] ? (
+                            <>
+                              <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping inline-block" />
+                              <span>Stop/Mute</span>
+                            </>
+                          ) : (
+                            <>
+                              <span>🎙️</span>
+                              <span>Voice</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
                       <textarea
                         value={reasonings[playerId] ?? ''}
                         onChange={e => setReasoningFor(playerId, e.target.value)}
                         placeholder={`Why did your trust in ${p.name} change?`}
                         maxLength={2000}
-                        rows={2}
-                        className="w-full mt-1 bg-slate-800 border border-slate-700 rounded px-2 py-1.5 text-sm text-slate-100 placeholder-slate-500 resize-none focus:outline-none focus:border-amber-600"
+                        rows={3}
+                        className="w-full mt-1 bg-slate-800 border border-slate-700 rounded px-2 py-1.5 text-sm text-slate-100 placeholder-slate-500 resize-y min-h-[60px] focus:outline-none focus:border-amber-600"
                       />
                     </div>
                     {DIMENSIONS.map(d => {

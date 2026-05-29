@@ -23,6 +23,7 @@ export default function Home() {
   const [witchSelfHeal, setWitchSelfHeal] = useState<WitchSelfHealSetting>('first_round')
   const [speakDuration, setSpeakDuration] = useState<number>(60)
   const [bidDuration, setBidDuration] = useState<number>(60)
+  const [isSandbox, setIsSandbox] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
   const [name, setName] = useState('')
   const [code, setCode] = useState('')
@@ -52,6 +53,7 @@ export default function Home() {
         playerName: name.trim(),
         gameMode,
         witchSelfHeal,
+        isSandbox,
         ...(gameMode === 'arena' ? { speakDuration, bidDuration } : {}),
       },
       ({ roomCode, playerId }) => {
@@ -185,6 +187,23 @@ export default function Home() {
 
               {showSettings && (
                 <div className="mt-4 space-y-4 animate-fadeIn">
+                  {/* Sandbox Mode Switch */}
+                  <div className="flex items-center justify-between pb-3 border-b border-slate-800/60">
+                    <div>
+                      <p className="text-xs font-semibold text-slate-300">🧪 Sandbox Mode</p>
+                      <p className="text-[10px] text-slate-500 leading-tight mt-0.5">Adds 3 automated bot players for instant solo testing.</p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={isSandbox}
+                        onChange={e => setIsSandbox(e.target.checked)}
+                        className="sr-only peer"
+                      />
+                      <div className="relative w-9 h-5 bg-slate-800 border border-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[3px] after:left-[3px] after:bg-slate-400 after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-violet-600 peer-checked:after:bg-white peer-checked:after:border-white"></div>
+                    </label>
+                  </div>
+
                   <div>
                     <p className="text-xs font-semibold text-slate-400 mb-2">Witch Self-Healing</p>
                     <div className="grid grid-cols-3 gap-2">

@@ -78,6 +78,7 @@ export interface Player {
   isHost: boolean
   roleAcknowledged: boolean
   isReady: boolean
+  isBot?: boolean
 }
 
 export interface WolfArenaRound {
@@ -194,6 +195,7 @@ export interface GameState {
   labelingBreak: LabelingBreakState | null
   // Keys of phase+round combos that have already used their one break (e.g. "day_discussion:2")
   labelingBreakUsed: string[]
+  isSandbox?: boolean
 }
 
 export interface PublicPlayer {
@@ -205,6 +207,7 @@ export interface PublicPlayer {
   hasVoted?: boolean
   isMayor?: boolean
   isReady?: boolean
+  isBot?: boolean
 }
 
 export interface WolfArenaView {
@@ -290,6 +293,7 @@ export interface ClientGameState {
   labelingBreak?: { endTime: number } | null
   // Whether the current player could request a break right now (validated server-side)
   labelingBreakAvailable?: boolean
+  isSandbox?: boolean
 }
 
 export interface ChatMessage {
@@ -318,7 +322,7 @@ export interface ServerToClientEvents {
 }
 
 export interface ClientToServerEvents {
-  'room:create': (data: { playerName: string; gameMode: GameMode; witchSelfHeal?: WitchSelfHealSetting; speakDuration?: number; bidDuration?: number }, cb: (r: { roomCode: string; playerId: string }) => void) => void
+  'room:create': (data: { playerName: string; gameMode: GameMode; witchSelfHeal?: WitchSelfHealSetting; speakDuration?: number; bidDuration?: number; isSandbox?: boolean }, cb: (r: { roomCode: string; playerId: string }) => void) => void
   'room:join': (data: { roomCode: string; playerName: string }, cb: (r: { success: boolean; playerId?: string; error?: string }) => void) => void
   'room:rejoin': (data: { roomCode: string; playerId: string }, cb: (r: { success: boolean; error?: string }) => void) => void
   'room:ready': () => void
