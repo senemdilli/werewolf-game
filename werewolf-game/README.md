@@ -9,6 +9,8 @@ A multiplayer Werewolf (Mafia) social deduction game. Built as a research tool f
 - **Full game loop**: lobby → role reveal → night → mayor election → day discussion → day vote → day result → repeat
 - **Skip vote**: the village can collectively choose not to eliminate anyone
 - **Private notes**: each player can record their suspicions per phase/round (visible only to them, stored for research)
+- **Voice-to-Text (Speech-to-Text)**: Speak your reasonings in the labeling panel. Supports low-latency real-time streaming, quick EN/DE language switching, a robust automatic HTTP fallback for firewalled networks, and 6-second AI silence detection.
+- **Sandbox/Testing Mode**: Host can toggle sandbox mode at room creation to automatically fill empty spots with bots, allowing solo-testing of all game phases without needing 4 tabs.
 - **Werewolf-only night chat** routed through a private Socket.IO room
 - **Seer investigations** delivered as private events that don't pass through chat
 - **Witch potions**: one heal, one kill — each usable once per game, with full visibility of the werewolves' chosen victim
@@ -88,6 +90,7 @@ App will be on <http://localhost:3000>.
 | `DATABASE_URL` | PostgreSQL connection string |
 | `REDIS_URL` | Redis connection string |
 | `ADMIN_SECRET` | Password for the `/admin` dashboard |
+| `DEEPGRAM_API_KEY` | Deepgram API Key for Voice-to-Text transcription (optional, enables speech recognition) |
 | `NEXT_PUBLIC_APP_URL` | Public origin — used for the Socket.IO CORS allowlist |
 | `PORT` | HTTP port (Railway sets this automatically) |
 
