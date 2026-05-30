@@ -98,6 +98,21 @@ export default function LabelPanel({ socket, state, messages, autoOpenTrigger }:
     }
   }, [])
 
+  // Listen for global stop-all-recordings event (e.g. from the Chat input)
+  useEffect(() => {
+    const handleStopAll = () => {
+      Object.keys(isRecording).forEach(playerId => {
+        if (isRecording[playerId]) {
+          stopRecording(playerId)
+        }
+      })
+    }
+    window.addEventListener('stop-all-recordings', handleStopAll)
+    return () => {
+      window.removeEventListener('stop-all-recordings', handleStopAll)
+    }
+  }, [isRecording])
+
   const me = state.players.find(p => p.id === state.myId)
   const isAlive = me?.isAlive ?? false
   const candidates = state.players.filter(p => p.isAlive && p.id !== state.myId)
@@ -339,6 +354,9 @@ export default function LabelPanel({ socket, state, messages, autoOpenTrigger }:
       currentInterimRef.current[playerId] = ''
       audioChunksRef.current[playerId] = []
       useFallbackRef.current[playerId] = false
+
+      // Trigger global event to stop all other recordings in other panels/chats
+      window.dispatchEvent(new CustomEvent('stop-all-recordings'))
 
       // 1. Fetch short-lived token from Next.js server
       let token = ''
