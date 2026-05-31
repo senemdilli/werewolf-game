@@ -28,7 +28,7 @@ export default function Lobby({ state, socket, onStart, onReady, starting }: Pro
         <p className="text-slate-400 mt-1">
           Room code: <span className="font-mono font-bold text-violet-400 text-xl">{state.roomCode}</span>
         </p>
-        <div className="flex justify-center mt-2">
+        <div className="flex justify-center gap-2 mt-2">
           {state.gameMode === 'arena' ? (
             <span className="inline-block text-xs font-semibold uppercase tracking-wide px-2 py-1 rounded bg-amber-950/60 border border-amber-800 text-amber-300">
               Arena mode
@@ -36,6 +36,11 @@ export default function Lobby({ state, socket, onStart, onReady, starting }: Pro
           ) : (
             <span className="inline-block text-xs font-semibold uppercase tracking-wide px-2 py-1 rounded bg-violet-950/60 border border-violet-800 text-violet-300">
               Classic mode
+            </span>
+          )}
+          {state.isSandbox && (
+            <span className="inline-block text-xs font-semibold uppercase tracking-wide px-2 py-1 rounded bg-rose-950/60 border border-rose-800 text-rose-300 animate-pulse">
+              🧪 Sandbox Mode
             </span>
           )}
         </div>

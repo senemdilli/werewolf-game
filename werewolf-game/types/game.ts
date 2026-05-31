@@ -51,6 +51,7 @@ export interface Player {
   isHost: boolean
   roleAcknowledged: boolean
   isReady: boolean
+  isBot?: boolean
 }
 
 export interface WolfArenaRound {
@@ -165,6 +166,8 @@ export interface GameState {
   // both set this to true. The checkpoint resolves once every alive player has
   // a true entry here.
   labelDecisions: Record<string, boolean>
+  // Testing/sandbox mode: when true, bot players auto-act on every saveGame.
+  isSandbox?: boolean
 }
 
 export interface PublicPlayer {
@@ -176,6 +179,7 @@ export interface PublicPlayer {
   hasVoted?: boolean
   isMayor?: boolean
   isReady?: boolean
+  isBot?: boolean
 }
 
 export interface WolfArenaView {
@@ -264,6 +268,7 @@ export interface ClientGameState {
   // Counts for the "X of N ready" progress chip.
   labelDecidedCount: number
   labelDecidedTotal: number
+  isSandbox?: boolean
 }
 
 export interface ChatMessage {
@@ -292,7 +297,7 @@ export interface ServerToClientEvents {
 }
 
 export interface ClientToServerEvents {
-  'room:create': (data: { playerName: string; gameMode: GameMode; witchSelfHeal?: WitchSelfHealSetting; speakDuration?: number; bidDuration?: number }, cb: (r: { roomCode: string; playerId: string }) => void) => void
+  'room:create': (data: { playerName: string; gameMode: GameMode; witchSelfHeal?: WitchSelfHealSetting; speakDuration?: number; bidDuration?: number; isSandbox?: boolean }, cb: (r: { roomCode: string; playerId: string }) => void) => void
   'room:join': (data: { roomCode: string; playerName: string }, cb: (r: { success: boolean; playerId?: string; error?: string }) => void) => void
   'room:rejoin': (data: { roomCode: string; playerId: string }, cb: (r: { success: boolean; error?: string }) => void) => void
   'room:ready': () => void

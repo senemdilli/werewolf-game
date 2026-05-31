@@ -9,6 +9,8 @@ A multiplayer Werewolf (Mafia) social deduction game. Built as a research tool f
 - **Full game loop**: lobby → role reveal → night → mayor election → day discussion → day vote → day result → repeat
 - **Skip vote**: the village can collectively choose not to eliminate anyone
 - **Private notes**: each player can record their suspicions per phase/round (visible only to them, stored for research)
+- **Voice-to-Text (Speech-to-Text)**: Speak your reasonings in the labeling panel. Supports low-latency real-time streaming, quick EN/DE language switching, a robust automatic HTTP fallback for firewalled networks, and 6-second AI silence detection.
+- **Sandbox/Testing Mode**: Host can toggle sandbox mode at room creation to automatically fill empty spots with bots, allowing solo-testing of all game phases without needing 4 tabs.
 - **Werewolf-only night chat** routed through a private Socket.IO room
 - **Seer investigations** delivered as private events that don't pass through chat
 - **Witch potions**: one heal, one kill — each usable once per game, with full visibility of the werewolves' chosen victim
@@ -88,6 +90,7 @@ App will be on <http://localhost:3000>.
 | `DATABASE_URL` | PostgreSQL connection string |
 | `REDIS_URL` | Redis connection string |
 | `ADMIN_SECRET` | Password for the `/admin` dashboard |
+| `DEEPGRAM_API_KEY` | Deepgram API Key for Voice-to-Text transcription (optional, enables speech recognition) |
 | `NEXT_PUBLIC_APP_URL` | Public origin — used for the Socket.IO CORS allowlist |
 | `PORT` | HTTP port (Railway sets this automatically) |
 
@@ -101,6 +104,20 @@ App will be on <http://localhost:3000>.
 6. **Win**: villagers when all werewolves are eliminated; werewolves when they equal or outnumber the rest.
 
 Detailed rules are also available in-app at `/how-to-play`.
+
+## Sandbox Mode & Voice-to-Text (Speech-to-Text)
+
+### Sandbox Mode (Solo Playtesting)
+Hosts can toggle **Sandbox Mode** when creating a room. When active, any empty player slots are automatically populated with simulated bots (`Bot Lyra`, `Bot Edmund`, `Bot Casimir`) when the game starts. 
+- Bots automatically perform their night actions, day voting, and other gameplay decisions.
+- Allows a developer or researcher to solo-playtest the entire multi-phase game loop in a single browser window.
+
+### Voice-to-Text (Speech-to-Text)
+The trust-labeling panel (`LabelPanel.tsx`) integrates a real-time speech-to-text reasoning helper. Speak your thoughts naturally, and they will be transcribed directly into the reasoning text area.
+- **Model**: Powered by Deepgram's state-of-the-art **Nova-3** model for low-latency, highly accurate word-by-word streaming.
+- **Language Selection**: A toggle between English (`EN`) and German (`DE`) is built directly into the UI. Explicitly selecting the language prevents phonetic translation errors (e.g., Deepgram transcribing German speech into phonetically similar but nonsensical English words).
+- **Network Resilience**: Operates via a real-time WebSocket connection. If the client is behind a restrictive university or corporate firewall (or VPN) that blocks WebSockets, it automatically and gracefully falls back to a chunked **HTTP POST fallback API** (`/api/speech-to-text`) which dynamically routes the correct language header.
+- **AI Silence Detection**: Automatically stops recording after 6 seconds of silence to conserve API credits and provide a hands-free UX.
 
 ## Research data
 

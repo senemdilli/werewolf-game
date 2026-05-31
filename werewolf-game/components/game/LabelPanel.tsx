@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type {
   ClientGameState, LabelSubmitInput,
   TrustDimension, Confidence, LabelCheckpoint,
@@ -42,16 +42,61 @@ export default function LabelPanel({ socket, state }: Props) {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  // Voice input state (per-target Deepgram streaming).
+  const [speechLanguage, setSpeechLanguage] = useState<'en' | 'de'>('en')
+  const [isRecording, setIsRecording] = useState<Record<string, boolean>>({})
+  const mediaRecorderRef = useRef<Record<string, MediaRecorder>>({})
+  const wsRef = useRef<Record<string, WebSocket | null>>({})
+  const currentInterimRef = useRef<Record<string, string>>({})
+  const streamsRef = useRef<Record<string, MediaStream>>({})
+  const audioChunksRef = useRef<Record<string, Blob[]>>({})
+  const useFallbackRef = useRef<Record<string, boolean>>({})
+  const silenceTimeoutRef = useRef<Record<string, ReturnType<typeof setTimeout> | null>>({})
+
   // Form state resets naturally because GameRoom keys this component by
   // checkpoint + round (a new key → React remounts → fresh useState).
+
+  // Tear down any live media when the modal unmounts (between checkpoints,
+  // or when the round ends).
+  useEffect(() => {
+    const recorders = mediaRecorderRef.current
+    const sockets = wsRef.current
+    const streams = streamsRef.current
+    const timers = silenceTimeoutRef.current
+    return () => {
+      for (const r of Object.values(recorders)) { try { r?.stop() } catch { /* noop */ } }
+      for (const s of Object.values(sockets)) { try { s?.close() } catch { /* noop */ } }
+      for (const s of Object.values(streams)) {
+        try { s?.getTracks().forEach(t => t.stop()) } catch { /* noop */ }
+      }
+      for (const t of Object.values(timers)) { if (t) clearTimeout(t) }
+    }
+  }, [])
+
+  // Cross-component handshake: when Chat starts its own recording it dispatches
+  // 'stop-all-recordings', and vice versa. Keeps only one mic live at a time.
+  useEffect(() => {
+    const handler = () => {
+      Object.keys(isRecording).forEach(playerId => {
+        if (isRecording[playerId]) stopRecording(playerId)
+      })
+    }
+    window.addEventListener('stop-all-recordings', handler)
+    return () => window.removeEventListener('stop-all-recordings', handler)
+  }, [isRecording])
 
   const candidates = state.players.filter(p => p.isAlive && p.id !== state.myId)
 
   function toggleTarget(playerId: string) {
     setTargets(prev => {
       const next = { ...prev }
-      if (next[playerId]) delete next[playerId]
-      else next[playerId] = { reasoning: '', updates: {} }
+      if (next[playerId]) {
+        delete next[playerId]
+        // Deselecting a target: end any live mic for them.
+        if (isRecording[playerId]) stopRecording(playerId)
+      } else {
+        next[playerId] = { reasoning: '', updates: {} }
+      }
       return next
     })
   }
@@ -63,6 +108,18 @@ export default function LabelPanel({ socket, state }: Props) {
     }))
   }
 
+  // Append text into a target's reasoning, optionally trimming the previous
+  // interim chunk first. Used by both interim and final transcript events.
+  function patchReasoning(
+    playerId: string,
+    update: (current: string) => string,
+  ) {
+    setTargets(prev => {
+      const cur = prev[playerId] ?? { reasoning: '', updates: {} }
+      return { ...prev, [playerId]: { ...cur, reasoning: update(cur.reasoning) } }
+    })
+  }
+
   function setDimension(playerId: string, dim: TrustDimension, update: DimUpdate | null) {
     setTargets(prev => {
       const cur = prev[playerId] ?? { reasoning: '', updates: {} }
@@ -71,6 +128,214 @@ export default function LabelPanel({ socket, state }: Props) {
       else updates[dim] = update
       return { ...prev, [playerId]: { ...cur, updates } }
     })
+  }
+
+  function resetSilenceTimer(playerId: string) {
+    const existing = silenceTimeoutRef.current[playerId]
+    if (existing) clearTimeout(existing)
+    silenceTimeoutRef.current[playerId] = setTimeout(() => stopRecording(playerId), 6000)
+  }
+
+  async function transcribeHttpAudio(playerId: string) {
+    setIsRecording(prev => ({ ...prev, [playerId]: false }))
+
+    const stream = streamsRef.current[playerId]
+    if (stream) {
+      try { stream.getTracks().forEach(t => t.stop()) } catch { /* noop */ }
+      delete streamsRef.current[playerId]
+    }
+
+    const chunks = audioChunksRef.current[playerId]
+    if (!chunks || chunks.length === 0) return
+    const recorder = mediaRecorderRef.current[playerId]
+    const blob = new Blob(chunks, { type: recorder?.mimeType || 'audio/webm' })
+
+    patchReasoning(playerId, cur => `${cur}${cur ? ' ' : ''}🎙️ [Transcribing...]`)
+
+    try {
+      const res = await fetch('/api/speech-to-text', {
+        method: 'POST',
+        headers: {
+          'Content-Type': recorder?.mimeType || 'audio/webm',
+          'X-Speech-Language': speechLanguage,
+        },
+        body: blob,
+      })
+      const data = await res.json()
+      patchReasoning(playerId, cur => {
+        const cleaned = cur.replace('🎙️ [Transcribing...]', '').trim()
+        if (data.transcript) return (cleaned + (cleaned ? ' ' : '') + data.transcript).trim()
+        if (data.error) setError(`Transcription error: ${data.error}`)
+        return cleaned
+      })
+    } catch (err) {
+      console.error(err)
+      setError('Failed to contact speech-to-text service')
+      patchReasoning(playerId, cur => cur.replace('🎙️ [Transcribing...]', '').trim())
+    }
+  }
+
+  async function startHttpRecording(playerId: string) {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      streamsRef.current[playerId] = stream
+      let mediaRecorder: MediaRecorder
+      try {
+        mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' })
+      } catch {
+        mediaRecorder = new MediaRecorder(stream)
+      }
+      audioChunksRef.current[playerId] = []
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) audioChunksRef.current[playerId].push(e.data)
+      }
+      mediaRecorder.onstop = () => transcribeHttpAudio(playerId)
+      mediaRecorderRef.current[playerId] = mediaRecorder
+      mediaRecorder.start()
+      setIsRecording(prev => ({ ...prev, [playerId]: true }))
+    } catch (err) {
+      console.error(err)
+      setError('Could not access microphone.')
+    }
+  }
+
+  async function startRecording(playerId: string) {
+    try {
+      setError(null)
+      currentInterimRef.current[playerId] = ''
+      audioChunksRef.current[playerId] = []
+      useFallbackRef.current[playerId] = false
+
+      // Only one mic at a time across the page.
+      window.dispatchEvent(new CustomEvent('stop-all-recordings'))
+
+      let token = ''
+      try {
+        const tokenRes = await fetch('/api/speech-token')
+        const tokenData = await tokenRes.json()
+        token = tokenData.token
+      } catch (e) {
+        console.error('Failed to get token, falling back to HTTP', e)
+        useFallbackRef.current[playerId] = true
+      }
+
+      if (useFallbackRef.current[playerId] || !token) {
+        await startHttpRecording(playerId)
+        return
+      }
+
+      const wsUrl = `wss://api.deepgram.com/v1/listen?model=nova-3&smart_format=true&interim_results=true&language=${speechLanguage}&numerals=true`
+      const ws = new WebSocket(wsUrl, ['token', token])
+      wsRef.current[playerId] = ws
+
+      ws.onopen = async () => {
+        resetSilenceTimer(playerId)
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+          streamsRef.current[playerId] = stream
+          let mediaRecorder: MediaRecorder
+          try {
+            mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' })
+          } catch {
+            mediaRecorder = new MediaRecorder(stream)
+          }
+          mediaRecorder.ondataavailable = (event) => {
+            if (event.data.size > 0) {
+              audioChunksRef.current[playerId].push(event.data)
+              if (ws.readyState === WebSocket.OPEN && !useFallbackRef.current[playerId]) {
+                ws.send(event.data)
+              }
+            }
+          }
+          mediaRecorder.onstop = () => {
+            if (ws.readyState === WebSocket.OPEN && !useFallbackRef.current[playerId]) {
+              ws.send(JSON.stringify({ type: 'CloseStream' }))
+            }
+          }
+          mediaRecorderRef.current[playerId] = mediaRecorder
+          mediaRecorder.start(100)
+          setIsRecording(prev => ({ ...prev, [playerId]: true }))
+        } catch (err) {
+          console.error('Error starting MediaRecorder:', err)
+          setError('Microphone access denied.')
+          ws.close()
+        }
+      }
+
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data)
+          const transcript: string = data.channel?.alternatives?.[0]?.transcript || ''
+          if (!transcript.trim()) return
+          resetSilenceTimer(playerId)
+          const isFinal: boolean = !!data.is_final
+          patchReasoning(playerId, cur => {
+            const oldInterim = currentInterimRef.current[playerId] || ''
+            let base = cur
+            if (oldInterim && base.endsWith(oldInterim)) {
+              base = base.substring(0, base.length - oldInterim.length).trim()
+            }
+            if (isFinal) {
+              currentInterimRef.current[playerId] = ''
+              return base + (base ? ' ' : '') + transcript.trim()
+            }
+            const interimStr = ' ' + transcript.trim()
+            currentInterimRef.current[playerId] = interimStr
+            return base + interimStr
+          })
+        } catch (e) {
+          console.error('Error parsing WebSocket message:', e)
+        }
+      }
+
+      ws.onerror = (err) => {
+        console.warn('WebSocket failed (firewall/VPN/scopes), using HTTP fallback...', err)
+        useFallbackRef.current[playerId] = true
+      }
+
+      ws.onclose = () => {
+        const t = silenceTimeoutRef.current[playerId]
+        if (t) { clearTimeout(t); silenceTimeoutRef.current[playerId] = null }
+
+        if (useFallbackRef.current[playerId]) {
+          transcribeHttpAudio(playerId)
+          return
+        }
+        setIsRecording(prev => ({ ...prev, [playerId]: false }))
+        // Drop any lingering interim text.
+        patchReasoning(playerId, cur => {
+          const oldInterim = currentInterimRef.current[playerId] || ''
+          if (oldInterim && cur.endsWith(oldInterim)) {
+            return cur.substring(0, cur.length - oldInterim.length).trim()
+          }
+          return cur
+        })
+        currentInterimRef.current[playerId] = ''
+        const stream = streamsRef.current[playerId]
+        if (stream) {
+          try { stream.getTracks().forEach(t => t.stop()) } catch { /* noop */ }
+          delete streamsRef.current[playerId]
+        }
+      }
+    } catch (err) {
+      console.error(err)
+      setError('Real-time connection failed. Falling back to HTTP...')
+      await startHttpRecording(playerId)
+    }
+  }
+
+  function stopRecording(playerId: string) {
+    const t = silenceTimeoutRef.current[playerId]
+    if (t) { clearTimeout(t); silenceTimeoutRef.current[playerId] = null }
+    const recorder = mediaRecorderRef.current[playerId]
+    if (recorder) { try { recorder.stop() } catch { /* noop */ } }
+    const ws = wsRef.current[playerId]
+    if (ws) { try { ws.close() } catch { /* noop */ } }
+  }
+
+  function toggleSpeechRecording(playerId: string) {
+    if (isRecording[playerId]) stopRecording(playerId)
+    else startRecording(playerId)
   }
 
   const canSubmit = useMemo(() => {
@@ -184,21 +449,83 @@ export default function LabelPanel({ socket, state }: Props) {
               const p = state.players.find(pp => pp.id === playerId)
               if (!p) return null
               const t = targets[playerId]
+              const recording = !!isRecording[playerId]
               return (
                 <div key={playerId} className="border border-slate-700 rounded-lg p-3 bg-slate-800/40 flex flex-col gap-3">
                   <div className="text-sm text-amber-200 font-semibold">{p.name}</div>
 
                   <div>
-                    <label className="text-[10px] uppercase tracking-wide text-slate-500 font-semibold">
-                      Reasoning
-                    </label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-[10px] uppercase tracking-wide text-slate-500 font-semibold">
+                        Reasoning {recording && <span className="text-red-400 normal-case animate-pulse ml-2">(Live recording...)</span>}
+                      </label>
+                      <div className="flex items-center gap-1.5">
+                        <div className="flex bg-slate-900 border border-slate-800 rounded p-0.5 text-[9px] font-semibold text-slate-400">
+                          <button
+                            type="button"
+                            onClick={() => setSpeechLanguage('en')}
+                            disabled={recording}
+                            className={`px-1.5 py-0.5 rounded transition-all ${
+                              speechLanguage === 'en'
+                                ? 'bg-amber-950/40 border border-amber-900/60 text-amber-200'
+                                : recording
+                                  ? 'opacity-30 cursor-not-allowed text-slate-600'
+                                  : 'cursor-pointer hover:text-slate-200'
+                            }`}
+                          >
+                            EN
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setSpeechLanguage('de')}
+                            disabled={recording}
+                            className={`px-1.5 py-0.5 rounded transition-all ${
+                              speechLanguage === 'de'
+                                ? 'bg-amber-950/40 border border-amber-900/60 text-amber-200'
+                                : recording
+                                  ? 'opacity-30 cursor-not-allowed text-slate-600'
+                                  : 'cursor-pointer hover:text-slate-200'
+                            }`}
+                          >
+                            DE
+                          </button>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => toggleSpeechRecording(playerId)}
+                          className={`flex items-center gap-1.5 text-xs px-2.5 py-1 rounded cursor-pointer transition-all duration-200 ${
+                            recording
+                              ? 'bg-red-950 border border-red-800 text-red-400 font-semibold animate-pulse scale-105'
+                              : 'bg-slate-800 border border-slate-700 text-slate-300 hover:text-amber-300 hover:border-amber-700/60'
+                          }`}
+                          title={recording ? 'Stop voice recording' : `Speak reasoning in ${speechLanguage === 'en' ? 'English' : 'German'}`}
+                        >
+                          {recording ? (
+                            <>
+                              <span className="w-2 h-2 rounded-full bg-red-500 animate-ping inline-block" />
+                              <span>Stop</span>
+                            </>
+                          ) : (
+                            <>
+                              <span className="text-sm">🎙️</span>
+                              <span>Voice</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </div>
                     <textarea
                       value={t.reasoning}
                       onChange={e => setReasoning(playerId, e.target.value)}
                       placeholder={`Why did your trust in ${p.name} change?`}
                       maxLength={2000}
-                      rows={2}
-                      className="w-full mt-1 bg-slate-800 border border-slate-700 rounded px-2.5 py-1.5 text-sm text-slate-100 placeholder-slate-500 resize-none focus:outline-none focus:border-amber-600"
+                      rows={3}
+                      className={`w-full bg-slate-800 border rounded px-2.5 py-1.5 text-sm text-slate-100 placeholder-slate-500 resize-none focus:outline-none ${
+                        recording
+                          ? 'border-red-500/80 shadow-[0_0_8px_rgba(239,68,68,0.2)] animate-pulse'
+                          : 'border-slate-700 focus:border-amber-600'
+                      }`}
                     />
                   </div>
 
