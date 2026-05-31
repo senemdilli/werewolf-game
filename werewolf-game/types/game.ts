@@ -23,32 +23,8 @@ export type Winner = 'villagers' | 'werewolves' | null
 
 export type TrustDimension = 'alignment' | 'information' | 'consistency'
 export type Confidence = 'low' | 'medium' | 'high'
-export type LabelAction =
-  | 'voted_to_exile'
-  | 'voted_for_mayor'
-  | 'accused_of_werewolf'
-  | 'accused_of_lying'
-  | 'claimed_role'
-  | 'defended'
-  | 'supported'
-  | 'betrayed'
-  | 'contradicted_themselves'
-  | 'did_not_respond'
-  | 'other'
 
-export const LABEL_ACTIONS: LabelAction[] = [
-  'voted_to_exile',
-  'voted_for_mayor',
-  'accused_of_werewolf',
-  'accused_of_lying',
-  'claimed_role',
-  'defended',
-  'supported',
-  'betrayed',
-  'contradicted_themselves',
-  'did_not_respond',
-  'other',
-]
+export type LabelCheckpoint = 'before_discussion' | 'before_voting' | 'after_voting'
 
 export interface LabelTrustUpdateInput {
   dimension: TrustDimension
@@ -58,14 +34,11 @@ export interface LabelTrustUpdateInput {
 
 export interface LabelTargetInput {
   playerId: string
+  reasoning: string
   updates: LabelTrustUpdateInput[]
 }
 
-export interface LabelCreateInput {
-  eventId: string | null
-  action: LabelAction
-  actionArgs?: string | null
-  reasoning: string
+export interface LabelSubmitInput {
   targets: LabelTargetInput[]
 }
 
@@ -156,11 +129,6 @@ export interface MayorRunoffState {
   endTime: number | null
 }
 
-export interface LabelingBreakState {
-  active: boolean
-  endTime: number
-}
-
 export interface GameState {
   id: string
   roomCode: string
@@ -190,10 +158,13 @@ export interface GameState {
   mayorRunoff: MayorRunoffState | null
   // Arena day vote: when set, mayor will break a tie from a closed vote
   pendingMayorTiebreak: string[] | null
-  // Anonymous labeling break (delays current phase deadline so players can fill labels)
-  labelingBreak: LabelingBreakState | null
-  // Keys of phase+round combos that have already used their one break (e.g. "day_discussion:2")
-  labelingBreakUsed: string[]
+  // Active trust-labeling checkpoint (null when no checkpoint is open).
+  // While set, the active phase timer is paused and the UI shows a modal.
+  labelCheckpoint: LabelCheckpoint | null
+  // Per-player decision flag for the current checkpoint. Submitting or skipping
+  // both set this to true. The checkpoint resolves once every alive player has
+  // a true entry here.
+  labelDecisions: Record<string, boolean>
 }
 
 export interface PublicPlayer {
@@ -286,10 +257,13 @@ export interface ClientGameState {
   mayorTiebreakCandidates?: string[] | null
   // Public flag — true while the mayor is deciding a tied day-vote
   mayorTiebreakPending?: boolean
-  // Labeling break info (visible to all players)
-  labelingBreak?: { endTime: number } | null
-  // Whether the current player could request a break right now (validated server-side)
-  labelingBreakAvailable?: boolean
+  // Active labeling checkpoint (null when no checkpoint open).
+  labelCheckpoint: LabelCheckpoint | null
+  // Whether the current player has already decided (submitted or skipped) in this checkpoint.
+  labelMeDecided: boolean
+  // Counts for the "X of N ready" progress chip.
+  labelDecidedCount: number
+  labelDecidedTotal: number
 }
 
 export interface ChatMessage {
@@ -336,6 +310,6 @@ export interface ClientToServerEvents {
   'mayor:tiebreak_decision': (targetId: string | null) => void
   'conversation:bid': (bid: number) => void
   'phase:advance': () => void
-  'label:create': (data: LabelCreateInput, cb: (r: { success: boolean; error?: string }) => void) => void
-  'label:request_break': (cb: (r: { success: boolean; error?: string }) => void) => void
+  'label:submit': (data: LabelSubmitInput, cb: (r: { success: boolean; error?: string }) => void) => void
+  'label:skip': (cb: (r: { success: boolean; error?: string }) => void) => void
 }

@@ -53,18 +53,10 @@ enum Confidence {
   HIGH
 }
 
-enum LabelAction {
-  VOTED_TO_EXILE
-  VOTED_FOR_MAYOR
-  ACCUSED_OF_WEREWOLF
-  ACCUSED_OF_LYING
-  CLAIMED_ROLE
-  DEFENDED
-  SUPPORTED
-  BETRAYED
-  CONTRADICTED_THEMSELVES
-  DID_NOT_RESPOND
-  OTHER
+enum LabelCheckpoint {
+  BEFORE_DISCUSSION
+  BEFORE_VOTING
+  AFTER_VOTING
 }
 
 model Game {
@@ -103,7 +95,7 @@ model Player {
   actionsReceived  NightAction[]      @relation("Target")
   notes            PlayerNote[]
   labelsAuthored   Label[]            @relation("LabelObserver")
-  labelsAsTarget   LabelTrustUpdate[] @relation("LabelTarget")
+  labelsAsTarget   LabelTarget[]      @relation("LabelTargetPlayer")
 
   @@map("players")
 }
@@ -122,7 +114,6 @@ model Message {
 
   game   Game    @relation(fields: [gameId], references: [id])
   player Player? @relation(fields: [playerId], references: [id])
-  labels Label[]
 
   @@map("messages")
 }
@@ -160,36 +151,43 @@ model NightAction {
 }
 
 model Label {
-  id         String      @id @default(uuid())
-  gameId     String      @map("game_id")
-  observerId String      @map("observer_id")
-  eventId    String?     @map("event_id")
-  action     LabelAction
-  actionArgs String?     @map("action_args")
-  reasoning  String
-  phase      Phase
+  id         String          @id @default(uuid())
+  gameId     String          @map("game_id")
+  observerId String          @map("observer_id")
+  checkpoint LabelCheckpoint
   round      Int
-  createdAt  DateTime    @default(now()) @map("created_at")
+  createdAt  DateTime        @default(now()) @map("created_at")
 
-  game         Game               @relation(fields: [gameId], references: [id])
-  observer     Player             @relation("LabelObserver", fields: [observerId], references: [id])
-  event        Message?           @relation(fields: [eventId], references: [id])
-  trustUpdates LabelTrustUpdate[]
+  game     Game          @relation(fields: [gameId], references: [id])
+  observer Player        @relation("LabelObserver", fields: [observerId], references: [id])
+  targets  LabelTarget[]
 
   @@map("labels")
 }
 
+model LabelTarget {
+  id        String @id @default(uuid())
+  labelId   String @map("label_id")
+  targetId  String @map("target_id")
+  reasoning String
+
+  label   Label              @relation(fields: [labelId], references: [id], onDelete: Cascade)
+  target  Player             @relation("LabelTargetPlayer", fields: [targetId], references: [id])
+  updates LabelTrustUpdate[]
+
+  @@unique([labelId, targetId])
+  @@map("label_targets")
+}
+
 model LabelTrustUpdate {
-  id         String         @id @default(uuid())
-  labelId    String         @map("label_id")
-  targetId   String         @map("target_id")
-  dimension  TrustDimension
-  score      Int
-  confidence Confidence
+  id            String         @id @default(uuid())
+  labelTargetId String         @map("label_target_id")
+  dimension     TrustDimension
+  score         Int
+  confidence    Confidence
 
-  label  Label  @relation(fields: [labelId], references: [id], onDelete: Cascade)
-  target Player @relation("LabelTarget", fields: [targetId], references: [id])
+  labelTarget LabelTarget @relation(fields: [labelTargetId], references: [id], onDelete: Cascade)
 
-  @@unique([labelId, targetId, dimension])
+  @@unique([labelTargetId, dimension])
   @@map("label_trust_updates")
 }

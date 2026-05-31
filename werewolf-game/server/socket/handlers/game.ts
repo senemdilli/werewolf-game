@@ -1,5 +1,5 @@
 import type { Server, Socket } from 'socket.io'
-import type { ServerToClientEvents, ClientToServerEvents, Role, GameState, WolfArenaState, ConversationContext, DayVoteOutcome, ChatMessage, Phase } from '@/types/game'
+import type { ServerToClientEvents, ClientToServerEvents, Role, GameState, WolfArenaState, ConversationContext, DayVoteOutcome, ChatMessage, Phase, LabelCheckpoint } from '@/types/game'
 import { SKIP_VOTE, WOLF_VOTE_NOBODY } from '@/types/game'
 import {
   getGame, saveGame, resetNightActions,
@@ -31,13 +31,6 @@ const MAYOR_RUNOFF_MS = 30 * 1000
 const MAYOR_TIEBREAK_MS = 30 * 1000
 const MAYOR_DISCUSSION_ROUNDS = 4
 const DAY_DISCUSSION_ROUNDS = 8
-
-// Anonymous labeling break: pushes the current phase's deadline back so
-// players can fill in trust labels. One break per phase+round.
-const LABELING_BREAK_MS = 30 * 1000
-const BREAK_PHASES = new Set<Phase>([
-  'day_discussion', 'day_vote', 'mayor_election', 'day_result',
-])
 
 const phaseTimers = new Map<string, ReturnType<typeof setTimeout>>()
 
@@ -558,25 +551,45 @@ async function resolveMayorRunoff(io: GameServer, roomCode: string) {
 async function startDayDiscussion(io: GameServer, state: GameState) {
   state.phase = 'day_discussion'
   state.dayVotes = { votes: {} }
+  state.phaseEndTime = null
+  await saveGame(state)
+  await broadcastState(io, state.roomCode)
+
+  // R1 has no "before_discussion" checkpoint (nobody has spoken yet to label
+  // against). R2+ enters the checkpoint here; the discussion timer / arena
+  // conversation begins only after every alive player has decided.
+  if (state.round >= 2) {
+    await enterLabelCheckpoint(io, state.roomCode, 'before_discussion')
+    return
+  }
+  await startDayDiscussionTimer(io, state.roomCode)
+}
+
+// Starts the actual discussion timer (classic) or arena conversation. Split
+// from startDayDiscussion so the before_discussion checkpoint can defer this.
+async function startDayDiscussionTimer(io: GameServer, roomCode: string) {
+  clearPhaseTimer(roomCode)
+  const state = await getGame(roomCode)
+  if (!state || state.phase !== 'day_discussion') return
 
   if (state.gameMode === 'arena') {
     state.phaseEndTime = null
     await saveGame(state)
-    await broadcastState(io, state.roomCode)
+    await broadcastState(io, roomCode)
     await persistSystem(io, state, `Day ${state.round} discussion begins. ${DAY_DISCUSSION_ROUNDS} bid-to-speak rounds.`, 'DAY')
-    await startConversation(io, state.roomCode, 'day', DAY_DISCUSSION_ROUNDS)
+    await startConversation(io, roomCode, 'day', DAY_DISCUSSION_ROUNDS)
     return
   }
 
   state.phaseEndTime = Date.now() + DAY_DISCUSSION_MS
   await saveGame(state)
-  await broadcastState(io, state.roomCode)
+  await broadcastState(io, roomCode)
 
   const timer = setTimeout(() => {
-    phaseTimers.delete(state.roomCode)
-    transitionToDayVote(io, state.roomCode)
+    phaseTimers.delete(roomCode)
+    transitionToDayVote(io, roomCode)
   }, DAY_DISCUSSION_MS)
-  phaseTimers.set(state.roomCode, timer)
+  phaseTimers.set(roomCode, timer)
 }
 
 async function transitionAfterNight(io: GameServer, roomCode: string) {
@@ -673,7 +686,23 @@ async function transitionAfterNight(io: GameServer, roomCode: string) {
 async function transitionToDayVote(io: GameServer, roomCode: string) {
   clearPhaseTimer(roomCode)
   const state = await getGame(roomCode)
-  if (!state || state.phase !== 'day_discussion') return
+  if (!state) return
+  // Allowed entry phases: day_discussion (normal) or day_vote with the
+  // before_voting checkpoint cleared (called from maybeResolveCheckpoint).
+  if (state.phase !== 'day_discussion' && state.phase !== 'day_vote') return
+
+  // Insert the before_voting checkpoint before actually opening the vote.
+  // The phase is set to day_vote so the underlying UI shows the vote board
+  // behind the modal, but the timer is suppressed until the checkpoint clears.
+  if (state.phase === 'day_discussion' && !state.labelCheckpoint) {
+    state.phase = 'day_vote'
+    state.dayVotes = { votes: {} }
+    state.phaseEndTime = null
+    await saveGame(state)
+    await broadcastState(io, roomCode)
+    await enterLabelCheckpoint(io, roomCode, 'before_voting')
+    return
+  }
 
   state.phase = 'day_vote'
   state.dayVotes = { votes: {} }
@@ -810,7 +839,18 @@ async function applyDayElimination(
   phaseTimers.set(roomCode, timer)
 }
 
+// Entry point from the day_result timer / host phase:advance. Inserts the
+// after_voting checkpoint before actually proceeding.
 async function transitionAfterDayResult(io: GameServer, roomCode: string) {
+  clearPhaseTimer(roomCode)
+  const state = await getGame(roomCode)
+  if (!state || state.phase !== 'day_result') return
+  await enterLabelCheckpoint(io, roomCode, 'after_voting')
+}
+
+// Actual "go to night or mayor re-election" logic, called from
+// maybeResolveCheckpoint once the after_voting checkpoint clears.
+async function proceedFromDayResult(io: GameServer, roomCode: string) {
   clearPhaseTimer(roomCode)
   const state = await getGame(roomCode)
   if (!state || state.phase !== 'day_result') return
@@ -893,75 +933,55 @@ async function getDbPlayerId(gameId: string, name: string): Promise<string> {
   return p?.id ?? ''
 }
 
-// Maps the current phase to the function that should fire when its timer
-// expires. Used to (re)schedule the phase deadline after a labeling break.
-function schedulePhaseTimer(io: GameServer, roomCode: string, state: GameState) {
-  if (!state.phaseEndTime) return
-  const delay = Math.max(0, state.phaseEndTime - Date.now())
-  let fn: (() => void) | null = null
-  switch (state.phase) {
-    case 'day_discussion':
-      fn = () => { transitionToDayVote(io, roomCode) }
-      break
-    case 'day_vote':
-      fn = () => { resolveVoteAndAdvance(io, roomCode) }
-      break
-    case 'mayor_election':
-      // Only classic mayor election uses phaseEndTime in this way. In Arena,
-      // when the conversation is active, phaseEndTime is null; once it ends
-      // and the vote opens, phaseEndTime is set and this branch handles it.
-      fn = () => { finalizeMayorElection(io, roomCode) }
-      break
-    case 'day_result':
-      fn = () => { transitionAfterDayResult(io, roomCode) }
-      break
-  }
-  if (!fn) return
-  const timer = setTimeout(() => {
-    phaseTimers.delete(roomCode)
-    fn!()
-  }, delay)
-  phaseTimers.set(roomCode, timer)
-}
+// ── Labeling checkpoints ─────────────────────────────────────────────────────
+// A checkpoint pauses the active phase (no timer running) and shows a modal
+// labeling form to every alive player. The game advances once every alive
+// player has either submitted labels or pressed Skip.
 
-async function startLabelingBreak(io: GameServer, roomCode: string): Promise<{ ok: boolean; error?: string }> {
-  const state = await getGame(roomCode)
-  if (!state) return { ok: false, error: 'Game not found' }
-  if (!BREAK_PHASES.has(state.phase)) return { ok: false, error: 'Breaks are not allowed in this phase' }
-  if (state.labelingBreak?.active) return { ok: false, error: 'A labeling break is already in progress' }
-  if (state.conversation?.active || state.advocacy?.active || state.mayorRunoff?.active || state.pendingMayorTiebreak) {
-    return { ok: false, error: 'Cannot pause during the current sub-phase' }
-  }
-  const key = `${state.phase}:${state.round}`
-  const used = state.labelingBreakUsed ?? []
-  if (used.includes(key)) return { ok: false, error: 'A break has already been used this phase' }
-
+async function enterLabelCheckpoint(
+  io: GameServer,
+  roomCode: string,
+  checkpoint: LabelCheckpoint,
+): Promise<void> {
   clearPhaseTimer(roomCode)
-
-  const now = Date.now()
-  const breakEnd = now + LABELING_BREAK_MS
-  state.phaseEndTime = (state.phaseEndTime ?? now) + LABELING_BREAK_MS
-  state.labelingBreak = { active: true, endTime: breakEnd }
-  state.labelingBreakUsed = [...used, key]
-
+  const state = await getGame(roomCode)
+  if (!state) return
+  state.labelCheckpoint = checkpoint
+  state.labelDecisions = {}
+  state.phaseEndTime = null
   await saveGame(state)
   await broadcastState(io, roomCode)
-  await persistSystem(io, state, 'A labeling break has been called. The phase deadline is pushed back 30 seconds.', 'DAY')
+}
 
-  // After the break ends, clear the flag, then reschedule the phase timer for
-  // the remaining (now extended) time.
-  const breakTimer = setTimeout(async () => {
-    phaseTimers.delete(roomCode)
-    const s = await getGame(roomCode)
-    if (!s) return
-    s.labelingBreak = null
-    await saveGame(s)
+// Returns true if all alive players have submitted or skipped.
+function checkpointSatisfied(state: GameState): boolean {
+  return state.players
+    .filter(p => p.isAlive)
+    .every(p => !!state.labelDecisions[p.id])
+}
+
+// Called from label:submit / label:skip after marking the caller decided.
+// Advances to the appropriate next phase when everyone is ready.
+export async function maybeResolveCheckpoint(io: GameServer, roomCode: string): Promise<void> {
+  const state = await getGame(roomCode)
+  if (!state || !state.labelCheckpoint) return
+  if (!checkpointSatisfied(state)) {
     await broadcastState(io, roomCode)
-    schedulePhaseTimer(io, roomCode, s)
-  }, LABELING_BREAK_MS)
-  phaseTimers.set(roomCode, breakTimer)
+    return
+  }
+  const cp = state.labelCheckpoint
+  state.labelCheckpoint = null
+  state.labelDecisions = {}
+  await saveGame(state)
+  await broadcastState(io, roomCode)
 
-  return { ok: true }
+  if (cp === 'before_discussion') {
+    await startDayDiscussionTimer(io, roomCode)
+  } else if (cp === 'before_voting') {
+    await transitionToDayVote(io, roomCode)
+  } else if (cp === 'after_voting') {
+    await proceedFromDayResult(io, roomCode)
+  }
 }
 
 // ── Handler registration ──────────────────────────────────────────────────────
@@ -1295,6 +1315,17 @@ export function registerGameHandlers(io: GameServer, socket: GameSocket) {
       const player = state.players.find(p => p.id === playerId)
       if (!player?.isHost) return
 
+      // Host escape hatch: if a labeling checkpoint is stuck (someone AFK),
+      // mark everyone alive as decided and let it resolve.
+      if (state.labelCheckpoint) {
+        for (const p of state.players) {
+          if (p.isAlive) state.labelDecisions[p.id] = true
+        }
+        await saveGame(state)
+        await maybeResolveCheckpoint(io, roomCode)
+        return
+      }
+
       if (state.phase === 'night') await transitionAfterNight(io, roomCode)
       else if (state.phase === 'mayor_advocacy') await advanceAdvocacy(io, roomCode, false)
       else if (state.phase === 'mayor_election') {
@@ -1367,23 +1398,5 @@ export function registerGameHandlers(io: GameServer, socket: GameSocket) {
       if (targetId !== null && !state.pendingMayorTiebreak.includes(targetId)) return
       await applyMayorTiebreak(io, roomCode, targetId)
     } catch (err) { console.error('[mayor:tiebreak_decision]', err) }
-  })
-
-  socket.on('label:request_break', async (cb) => {
-    const ack = typeof cb === 'function' ? cb : () => {}
-    try {
-      const { playerId, roomCode } = socket.data
-      if (!playerId || !roomCode) return ack({ success: false, error: 'Not in a room' })
-      const state = await getGame(roomCode)
-      if (!state) return ack({ success: false, error: 'No game' })
-      const player = state.players.find(p => p.id === playerId)
-      if (!player?.isAlive) return ack({ success: false, error: 'Only alive players can request a break' })
-      const r = await startLabelingBreak(io, roomCode)
-      if (!r.ok) return ack({ success: false, error: r.error })
-      ack({ success: true })
-    } catch (err) {
-      console.error('[label:request_break]', err)
-      ack({ success: false, error: 'Failed to start break' })
-    }
   })
 }

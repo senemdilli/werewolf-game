@@ -1,5 +1,7 @@
 import { prisma } from '@/lib/prisma'
 
+type LabelCheckpoint = 'BEFORE_DISCUSSION' | 'BEFORE_VOTING' | 'AFTER_VOTING'
+
 export async function GET(_req: Request, { params }: { params: Promise<{ gameId: string }> }) {
   const { gameId } = await params
 
@@ -9,14 +11,36 @@ export async function GET(_req: Request, { params }: { params: Promise<{ gameId:
       where: { gameId },
       include: {
         observer: true,
-        event: true,
-        trustUpdates: { include: { target: true } },
+        targets: {
+          include: {
+            target: true,
+            updates: true,
+          },
+        },
       },
-      orderBy: { createdAt: 'asc' },
+      orderBy: [{ round: 'asc' }, { createdAt: 'asc' }],
     }),
   ])
 
   if (!game) return Response.json({ error: 'Game not found' }, { status: 404 })
+
+  // Group labels by round → checkpoint for analysis-friendly shape.
+  type LabelRow = (typeof labels)[number]
+  type Grouped = Record<string, Record<string, LabelRow[]>>
+  const grouped: Grouped = {}
+  for (const l of labels) {
+    const roundKey = String(l.round)
+    const cpKey = l.checkpoint
+    grouped[roundKey] ??= {}
+    grouped[roundKey][cpKey] ??= []
+    grouped[roundKey][cpKey].push(l)
+  }
+
+  const rounds = Object.keys(grouped)
+    .map(n => parseInt(n, 10))
+    .sort((a, b) => a - b)
+
+  const ORDER: LabelCheckpoint[] = ['BEFORE_DISCUSSION', 'BEFORE_VOTING', 'AFTER_VOTING']
 
   const payload = {
     game_id: game.id,
@@ -24,47 +48,41 @@ export async function GET(_req: Request, { params }: { params: Promise<{ gameId:
     game_mode: game.gameMode,
     winner: game.winner,
     exported_at: new Date().toISOString(),
-    labels: labels.map((l: any) => {
-      // Group updates by target so each target appears once with all its dimensions.
-      const byTarget = new Map<string, {
-        target: { id: string; name: string; role: string }
-        alignment?: { score: number; confidence: string }
-        information?: { score: number; confidence: string }
-        consistency?: { score: number; confidence: string }
-      }>()
-      for (const u of l.trustUpdates) {
-        let row = byTarget.get(u.targetId)
-        if (!row) {
-          row = {
-            target: { id: u.target.id, name: u.target.name, role: u.target.role },
-          }
-          byTarget.set(u.targetId, row)
-        }
-        const dimKey = u.dimension.toLowerCase() as 'alignment' | 'information' | 'consistency'
-        row[dimKey] = { score: u.score, confidence: u.confidence }
-      }
-
-      return {
-        id: l.id,
-        created_at: l.createdAt.toISOString(),
-        phase: l.phase,
-        round: l.round,
-        observer: { id: l.observer.id, name: l.observer.name, role: l.observer.role },
-        event: l.event
-          ? {
-              id: l.event.id,
-              is_system: l.event.isSystem,
-              content: l.event.content,
-              phase: l.event.phase,
-              round: l.event.round,
-            }
-          : null,
-        action: l.action,
-        action_args: l.actionArgs,
-        reasoning: l.reasoning,
-        trust_updates: [...byTarget.values()],
-      }
-    }),
+    rounds: rounds.map(round => ({
+      round,
+      checkpoints: ORDER
+        .filter(cp => grouped[String(round)]?.[cp])
+        .map(cp => ({
+          checkpoint: cp,
+          labels: grouped[String(round)][cp].map(l => ({
+            id: l.id,
+            created_at: l.createdAt.toISOString(),
+            observer: { id: l.observer.id, name: l.observer.name, role: l.observer.role },
+            targets: l.targets.map(t => ({
+              player: { id: t.target.id, name: t.target.name, role: t.target.role },
+              reasoning: t.reasoning,
+              alignment: t.updates.find(u => u.dimension === 'ALIGNMENT')
+                ? {
+                    score: t.updates.find(u => u.dimension === 'ALIGNMENT')!.score,
+                    confidence: t.updates.find(u => u.dimension === 'ALIGNMENT')!.confidence,
+                  }
+                : undefined,
+              information: t.updates.find(u => u.dimension === 'INFORMATION')
+                ? {
+                    score: t.updates.find(u => u.dimension === 'INFORMATION')!.score,
+                    confidence: t.updates.find(u => u.dimension === 'INFORMATION')!.confidence,
+                  }
+                : undefined,
+              consistency: t.updates.find(u => u.dimension === 'CONSISTENCY')
+                ? {
+                    score: t.updates.find(u => u.dimension === 'CONSISTENCY')!.score,
+                    confidence: t.updates.find(u => u.dimension === 'CONSISTENCY')!.confidence,
+                  }
+                : undefined,
+            })),
+          })),
+        })),
+    })),
   }
 
   return new Response(JSON.stringify(payload, null, 2), {

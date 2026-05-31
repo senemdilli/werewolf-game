@@ -62,8 +62,8 @@ export function createInitialState(
     advocacy: null,
     mayorRunoff: null,
     pendingMayorTiebreak: null,
-    labelingBreak: null,
-    labelingBreakUsed: [],
+    labelCheckpoint: null,
+    labelDecisions: {},
   }
 }
 
@@ -251,25 +251,15 @@ export function buildClientState(state: GameState, playerId: string): ClientGame
       : null
   const mayorTiebreakPending = !!state.pendingMayorTiebreak
 
-  // Labeling break info — visible to everyone; the "available" flag is
-  // per-player (only alive players may request).
-  const BREAK_PHASES = new Set<Phase>([
-    'day_discussion', 'day_vote', 'mayor_election', 'day_result',
-  ])
-  const breakKey = `${state.phase}:${state.round}`
-  const labelingBreakUsed = state.labelingBreakUsed ?? []
-  const labelingBreak = state.labelingBreak?.active
-    ? { endTime: state.labelingBreak.endTime }
-    : null
-  const labelingBreakAvailable =
-    !!me?.isAlive &&
-    BREAK_PHASES.has(state.phase) &&
-    !labelingBreak &&
-    !labelingBreakUsed.includes(breakKey) &&
-    !state.conversation?.active &&
-    !state.advocacy?.active &&
-    !state.mayorRunoff?.active &&
-    !state.pendingMayorTiebreak
+  // Labeling checkpoint info — exposed to all clients. Per-player decision
+  // tracked for UI gating; counts surface to the "X of N ready" chip.
+  const labelCheckpoint = state.labelCheckpoint
+  const aliveIds = state.players.filter(p => p.isAlive).map(p => p.id)
+  const labelDecidedTotal = aliveIds.length
+  const labelDecidedCount = labelCheckpoint
+    ? aliveIds.filter(id => state.labelDecisions[id]).length
+    : 0
+  const labelMeDecided = !!(labelCheckpoint && me && state.labelDecisions[me.id])
 
   return {
     id: state.id,
@@ -303,7 +293,9 @@ export function buildClientState(state: GameState, playerId: string): ClientGame
     mayorRunoff,
     mayorTiebreakCandidates,
     mayorTiebreakPending,
-    labelingBreak,
-    labelingBreakAvailable,
+    labelCheckpoint,
+    labelMeDecided,
+    labelDecidedCount,
+    labelDecidedTotal,
   }
 }

@@ -18,28 +18,6 @@ import LabelPanel from './LabelPanel'
 import MuteToggle from './MuteToggle'
 import { play } from '@/lib/sounds'
 
-const LABELABLE_PHASES = new Set([
-  'mayor_advocacy', 'mayor_election', 'day_discussion', 'day_vote', 'day_result',
-])
-
-function LabelingBreakBanner({ endTime }: { endTime: number }) {
-  const [left, setLeft] = useState(Math.max(0, Math.ceil((endTime - Date.now()) / 1000)))
-  useEffect(() => {
-    const tick = () => setLeft(Math.max(0, Math.ceil((endTime - Date.now()) / 1000)))
-    tick()
-    const id = setInterval(tick, 250)
-    return () => clearInterval(id)
-  }, [endTime])
-  return (
-    <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-amber-950 border border-amber-700 text-amber-100 px-4 py-2 rounded-lg text-sm shadow-lg flex items-center gap-3">
-      <span className="font-semibold">🏷️ Labeling break</span>
-      <span className="text-amber-200">
-        Phase deadline paused — <span className="font-mono">{left}s</span> remaining
-      </span>
-    </div>
-  )
-}
-
 interface Props {
   roomCode: string
   playerId: string
@@ -54,8 +32,6 @@ export default function GameRoom({ roomCode, playerId }: Props) {
   const [acknowledged, setAcknowledged] = useState(false)
   const [starting, setStarting] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [labelAutoOpenTrigger, setLabelAutoOpenTrigger] = useState<string | null>(null)
-  const lastProcessedSystemMsgRef = useRef<string | null>(null)
   const prevPhaseRef = useRef<string | null>(null)
   const lastCuedMsgIdRef = useRef<string | null>(null)
 
@@ -112,21 +88,6 @@ export default function GameRoom({ roomCode, playerId }: Props) {
       s.off('room:kicked')
     }
   }, [roomCode, playerId])
-
-  // Auto-open the Labels panel when a new daytime system announcement arrives
-  // during a labelable phase. Track the last-seen system message so we don't
-  // re-trigger on re-renders.
-  useEffect(() => {
-    if (!state || !LABELABLE_PHASES.has(state.phase)) return
-    for (let i = messages.length - 1; i >= 0; i--) {
-      const m = messages[i]
-      if (!m.isSystem || !LABELABLE_PHASES.has(m.phase)) continue
-      if (m.id === lastProcessedSystemMsgRef.current) return
-      lastProcessedSystemMsgRef.current = m.id
-      setLabelAutoOpenTrigger(m.id)
-      return
-    }
-  }, [messages, state])
 
   // Phase-transition audio cues. Fires once per phase change (not on every render).
   useEffect(() => {
@@ -209,10 +170,6 @@ export default function GameRoom({ roomCode, playerId }: Props) {
         </div>
       )}
 
-      {state.labelingBreak && (
-        <LabelingBreakBanner endTime={state.labelingBreak.endTime} />
-      )}
-
       {seerResults.length > 0 && state.phase !== 'lobby' && state.phase !== 'game_over' && (
         <div className="fixed top-4 right-4 z-50 flex flex-col gap-2 max-w-xs w-full pointer-events-none">
           {seerResults.slice(-3).map((r) => (
@@ -259,12 +216,11 @@ export default function GameRoom({ roomCode, playerId }: Props) {
         />
       )}
 
-      {socket && LABELABLE_PHASES.has(state.phase) && (
+      {socket && state.labelCheckpoint && (
         <LabelPanel
+          key={`${state.labelCheckpoint}-${state.round}`}
           socket={socket}
           state={state}
-          messages={messages}
-          autoOpenTrigger={labelAutoOpenTrigger}
         />
       )}
     </div>
