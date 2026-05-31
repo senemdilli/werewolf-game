@@ -8,6 +8,9 @@ services:
       REDIS_URL: redis://redis:6379
       NODE_ENV: production
       ADMIN_SECRET: dacnEk-vidba7-bitzac
+      # Forwarded from `.env` next to this compose file (which compose loads
+      # by default). Voice routes (app/api/speech-*) require this.
+      DEEPGRAM_API_KEY: ${DEEPGRAM_API_KEY:-}
     depends_on:
       postgres:
         condition: service_healthy
