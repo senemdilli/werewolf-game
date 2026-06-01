@@ -7,6 +7,7 @@ import Button from '@/components/ui/Button'
 import PlayerList from './PlayerList'
 import Chat from './Chat'
 import ConversationPanel from './ConversationPanel'
+import { safeDateNow } from '@/lib/clock'
 
 interface Props {
   state: ClientGameState
@@ -35,7 +36,7 @@ export default function MayorElection({ state, socket, messages }: Props) {
   useEffect(() => {
     if (!state.phaseEndTime) { setTimeLeft(null); return }
     const tick = () => {
-      const remaining = Math.max(0, state.phaseEndTime! - Date.now())
+      const remaining = Math.max(0, state.phaseEndTime! - safeDateNow())
       setTimeLeft(Math.ceil(remaining / 1000))
     }
     tick()

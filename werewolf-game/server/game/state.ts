@@ -241,7 +241,14 @@ export function resetNightActions(state: GameState): GameState {
   const wolfArena =
     state.gameMode === 'arena' && aliveWolves.length > 1
       ? {
-          order: [...aliveWolves.map(w => w.id)].sort(() => Math.random() - 0.5),
+          order: (() => {
+            const arr = aliveWolves.map(w => w.id)
+            for (let i = arr.length - 1; i > 0; i--) {
+              const j = Math.floor(Math.random() * (i + 1));
+              [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr
+          })(),
           round: 1,
           turn: 0,
           currentVotes: {},
@@ -450,5 +457,6 @@ export function buildClientState(state: GameState, playerId: string): ClientGame
     labelDecidedCount,
     labelDecidedTotal,
     isSandbox: state.isSandbox,
+    serverTime: Date.now(),
   }
 }

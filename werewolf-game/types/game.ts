@@ -269,6 +269,7 @@ export interface ClientGameState {
   labelDecidedCount: number
   labelDecidedTotal: number
   isSandbox?: boolean
+  serverTime: number
 }
 
 export interface ChatMessage {

@@ -10,6 +10,7 @@ import Chat from './Chat'
 import WerewolfArenaPanel from './WerewolfArenaPanel'
 import type { ChatMessage } from '@/types/game'
 import { play } from '@/lib/sounds'
+import { safeDateNow } from '@/lib/clock'
 
 const rolePrompt: Record<Role, string> = {
   werewolf: 'Choose a villager to eliminate tonight.',
@@ -26,9 +27,9 @@ const roleBadge: Record<Role, { emoji: string; label: string; cls: string }> = {
 }
 
 function WitchCountdown({ endTime }: { endTime: number }) {
-  const [left, setLeft] = useState(Math.max(0, Math.ceil((endTime - Date.now()) / 1000)))
+  const [left, setLeft] = useState(Math.max(0, Math.ceil((endTime - safeDateNow()) / 1000)))
   useEffect(() => {
-    const tick = () => setLeft(Math.max(0, Math.ceil((endTime - Date.now()) / 1000)))
+    const tick = () => setLeft(Math.max(0, Math.ceil((endTime - safeDateNow()) / 1000)))
     tick()
     const id = setInterval(tick, 250)
     return () => clearInterval(id)

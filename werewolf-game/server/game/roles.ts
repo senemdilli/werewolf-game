@@ -4,8 +4,13 @@ import { SKIP_VOTE } from '@/types/game'
 export function assignRoles(players: Player[]): Player[] {
   const count = players.length
   const roles = buildRoleList(count)
-  const shuffled = roles.sort(() => Math.random() - 0.5)
-  return players.map((p, i) => ({ ...p, role: shuffled[i] }))
+  
+  for (let i = roles.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [roles[i], roles[j]] = [roles[j], roles[i]];
+  }
+
+  return players.map((p, i) => ({ ...p, role: roles[i] }))
 }
 
 function buildRoleList(count: number): Role[] {

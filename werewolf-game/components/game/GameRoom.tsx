@@ -17,6 +17,7 @@ import NotePanel from './NotePanel'
 import LabelPanel from './LabelPanel'
 import MuteToggle from './MuteToggle'
 import { play } from '@/lib/sounds'
+import { setClockOffset } from '@/lib/clock'
 
 interface Props {
   roomCode: string
@@ -40,6 +41,9 @@ export default function GameRoom({ roomCode, playerId }: Props) {
     setSocket(s)
 
     s.on('game:state', (newState) => {
+      if (newState.serverTime) {
+        setClockOffset(newState.serverTime - Date.now())
+      }
       setState(newState)
       if (newState.phase === 'lobby') setSeerResults([])
       if (newState.phase !== 'role_reveal') setAcknowledged(false)

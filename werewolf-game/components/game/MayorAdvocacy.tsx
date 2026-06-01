@@ -5,6 +5,7 @@ import type { ClientGameState, ChatMessage } from '@/types/game'
 import type { GameSocket } from '@/app/room/[code]/page'
 import Chat from './Chat'
 import { play } from '@/lib/sounds'
+import { safeDateNow } from '@/lib/clock'
 
 interface Props {
   state: ClientGameState
@@ -16,7 +17,7 @@ function useSecondsLeft(endTime: number | null): number {
   const [s, setS] = useState(0)
   useEffect(() => {
     if (!endTime) { setS(0); return }
-    const tick = () => setS(Math.max(0, Math.ceil((endTime - Date.now()) / 1000)))
+    const tick = () => setS(Math.max(0, Math.ceil((endTime - safeDateNow()) / 1000)))
     tick()
     const id = setInterval(tick, 250)
     return () => clearInterval(id)

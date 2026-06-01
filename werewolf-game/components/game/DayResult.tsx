@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import type { ClientGameState } from '@/types/game'
 import type { GameSocket } from '@/app/room/[code]/page'
 import Button from '@/components/ui/Button'
+import { safeDateNow } from '@/lib/clock'
 
 interface Props {
   state: ClientGameState
@@ -17,7 +18,7 @@ export default function DayResult({ state, socket }: Props) {
 
   useEffect(() => {
     if (!state.phaseEndTime) return
-    const tick = () => setRemaining(Math.max(0, Math.ceil((state.phaseEndTime! - Date.now()) / 1000)))
+    const tick = () => setRemaining(Math.max(0, Math.ceil((state.phaseEndTime! - safeDateNow()) / 1000)))
     tick()
     const id = setInterval(tick, 250)
     return () => clearInterval(id)

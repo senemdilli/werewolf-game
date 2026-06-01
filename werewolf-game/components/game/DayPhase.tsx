@@ -7,6 +7,7 @@ import type { GameSocket } from '@/app/room/[code]/page'
 import Button from '@/components/ui/Button'
 import Chat from './Chat'
 import ConversationPanel from './ConversationPanel'
+import { safeDateNow } from '@/lib/clock'
 
 interface Props {
   state: ClientGameState
@@ -19,7 +20,7 @@ function useCountdown(endTime: number | null) {
 
   useEffect(() => {
     if (!endTime) return
-    const tick = () => setRemaining(Math.max(0, endTime - Date.now()))
+    const tick = () => setRemaining(Math.max(0, endTime - safeDateNow()))
     tick()
     const id = setInterval(tick, 500)
     return () => clearInterval(id)

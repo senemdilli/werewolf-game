@@ -116,7 +116,11 @@ async function transitionToMayorElection(
   if (state.gameMode === 'arena') {
     // Arena: advocacy → conversation (4 rounds) → vote
     const aliveIds = state.players.filter(p => p.isAlive).map(p => p.id)
-    const order = [...aliveIds].sort(() => Math.random() - 0.5)
+    const order = [...aliveIds]
+    for (let i = order.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [order[i], order[j]] = [order[j], order[i]];
+    }
     state.phase = 'mayor_advocacy'
     state.advocacy = {
       active: true,
