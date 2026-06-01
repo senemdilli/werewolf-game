@@ -3,10 +3,14 @@
 class AgentConfig:
     """Configuration for an agent."""
 
+    # Basic Information
     name: str
-    description: str
+    role: str
+
+    # LLM Configuration
     llm_model: str
     llm_temperature: float
     llm_max_tokens: int
-    system_prompt: str
+
+    # Tools
     tools: list[str]
