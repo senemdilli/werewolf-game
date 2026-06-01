@@ -33,8 +33,8 @@ export function registerRoomHandlers(io: GameServer, socket: GameSocket) {
       const safeSelfHeal = ['always', 'first_round', 'never'].includes(witchSelfHeal ?? '')
         ? witchSelfHeal!
         : 'first_round'
-      const safeSpeak = [30, 60, 90].includes(speakDuration ?? 0) ? speakDuration! : 60
-      const safeBid = [30, 60, 90].includes(bidDuration ?? 0) ? bidDuration! : 60
+      const safeSpeak = typeof speakDuration === 'number' && speakDuration >= 15 && speakDuration <= 100 ? speakDuration : 60
+      const safeBid = typeof bidDuration === 'number' && bidDuration >= 15 && bidDuration <= 100 ? bidDuration : 30
       const state = createInitialState(roomCode, socket.id, playerName, safeMode, safeSelfHeal, safeSpeak, safeBid, !!isSandbox)
       const hostId = state.players[0].id
 

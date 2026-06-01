@@ -129,6 +129,7 @@ async function transitionToMayorElection(
     await persistSystem(io, state, 'Mayor election begins. Each player makes one statement, in turn.', 'DAY')
     await broadcastState(io, roomCode)
     scheduleAdvocacyTimer(io, roomCode)
+    void checkAndTriggerBotSpeech(io, roomCode)
     return
   }
 
@@ -185,6 +186,7 @@ async function advanceAdvocacy(io: GameServer, roomCode: string, fromTimer: bool
   await saveGame(state)
   await broadcastState(io, roomCode)
   scheduleAdvocacyTimer(io, roomCode)
+  void checkAndTriggerBotSpeech(io, roomCode)
   void fromTimer
 }
 
@@ -200,7 +202,7 @@ async function startConversation(
   const state = await getGame(roomCode)
   if (!state) return
 
-  const bidWindowMs = (state.bidDuration || 60) * 1000
+  const bidWindowMs = (state.bidDuration || 30) * 1000
   state.conversation = {
     active: true,
     context,
@@ -265,6 +267,7 @@ async function resolveBid(io: GameServer, roomCode: string) {
     endSpeak(io, roomCode)
   }, speakWindowMs)
   phaseTimers.set(roomCode, timer)
+  void checkAndTriggerBotSpeech(io, roomCode)
 }
 
 async function endSpeak(io: GameServer, roomCode: string) {
@@ -274,7 +277,7 @@ async function endSpeak(io: GameServer, roomCode: string) {
   const c = state.conversation
 
   const speakWindowMs = (state.speakDuration || 60) * 1000
-  const bidWindowMs = (state.bidDuration || 60) * 1000
+  const bidWindowMs = (state.bidDuration || 30) * 1000
 
   if (c.speakerId && c.speakerName) {
     c.history.push({ round: c.round, speakerId: c.speakerId, speakerName: c.speakerName })
@@ -311,6 +314,7 @@ async function endSpeak(io: GameServer, roomCode: string) {
       endSpeak(io, roomCode)
     }, speakWindowMs)
     phaseTimers.set(roomCode, timer)
+    void checkAndTriggerBotSpeech(io, roomCode)
     return
   }
 
@@ -353,6 +357,107 @@ async function finishConversation(io: GameServer, roomCode: string) {
     // 'day' → day vote
     await saveGame(state)
     await transitionToDayVote(io, roomCode)
+  }
+}
+
+async function simulateBotChatMessage(
+  io: GameServer,
+  roomCode: string,
+  bot: GameState['players'][0],
+  content: string
+) {
+  const state = await getGame(roomCode)
+  if (!state) return
+
+  const msgId = 'msg-' + Math.random().toString(36).substring(2) + Date.now().toString(36)
+  const msg: ChatMessage = {
+    id: msgId,
+    playerId: bot.id,
+    playerName: bot.name,
+    role: null,
+    content,
+    phase: state.phase as Phase,
+    round: state.round,
+    isSystem: false,
+    timestamp: Date.now(),
+  }
+
+  io.to(`room:${roomCode}`).emit('chat:message', msg)
+
+  if (state.dbGameId) {
+    const dbPhase = state.phase === 'night' ? 'NIGHT' : 'DAY'
+    const dbPlayer = await prisma.player.findFirst({ where: { gameId: state.dbGameId, name: bot.name } })
+    if (dbPlayer) {
+      await prisma.message.create({
+        data: {
+          gameId: state.dbGameId,
+          playerId: dbPlayer.id,
+          playerName: bot.name,
+          role: bot.role?.toUpperCase() as any,
+          content,
+          phase: dbPhase,
+          round: state.round,
+        },
+      }).catch(err => console.error('[bot chat persist]', err))
+    }
+  }
+
+  await onSpeakerMessage(io, roomCode, bot.id, content)
+}
+
+export async function checkAndTriggerBotSpeech(io: GameServer, roomCode: string) {
+  const state = await getGame(roomCode)
+  if (!state || !state.isSandbox) return
+
+  // 1. Mayor advocacy phase
+  if (state.phase === 'mayor_advocacy' && state.advocacy?.active) {
+    const currentId = state.advocacy.order[state.advocacy.turn]
+    const speaker = state.players.find(p => p.id === currentId)
+    if (speaker && speaker.isBot && speaker.isAlive) {
+      setTimeout(async () => {
+        const s = await getGame(roomCode)
+        if (!s || s.phase !== 'mayor_advocacy' || !s.advocacy?.active) return
+        if (s.advocacy.order[s.advocacy.turn] !== currentId) return
+
+        const statements = [
+          "I believe I would make an excellent Mayor. Villagers, trust me!",
+          "Let's win this together, villagers! I will lead us to victory",
+          "I will cooperate fully and guarantee honest votes",
+          "Trust my consistency. I am on the villagers' side!",
+          "I have no hidden agenda. Vote for me!"
+        ]
+        const text = statements[Math.floor(Math.random() * statements.length)]
+        await simulateBotChatMessage(io, roomCode, speaker, text)
+      }, 1500)
+    }
+  }
+
+  // 2. Arena Discussion speaking sub-phase
+  else if (state.conversation?.active && state.conversation.sub === 'speak') {
+    const currentId = state.conversation.speakerId
+    if (!currentId) return
+    const speaker = state.players.find(p => p.id === currentId)
+    if (speaker && speaker.isBot && speaker.isAlive) {
+      setTimeout(async () => {
+        const s = await getGame(roomCode)
+        if (!s || !s.conversation?.active || s.conversation.sub !== 'speak') return
+        if (s.conversation.speakerId !== currentId) return
+
+        const mentions = s.players.filter(p => p.isAlive && p.id !== currentId)
+        const targetPlayer = mentions.length > 0 ? mentions[Math.floor(Math.random() * mentions.length)] : null
+        
+        const opinions = [
+          `I suspect ${targetPlayer ? targetPlayer.name : "someone"} is acting very inconsistently`,
+          `I trust ${targetPlayer ? targetPlayer.name : "our group"} and believe they are on the villagers' side`,
+          `Let's focus our attention on ${targetPlayer ? targetPlayer.name : "suspicious players"}`,
+          `I am Villager. I want to hear what ${targetPlayer ? targetPlayer.name : "others"} have to say`,
+          `My alignment is Villager. ${targetPlayer ? targetPlayer.name : "You"} should show more transparency`,
+          `I don't think we should rush. ${targetPlayer ? targetPlayer.name : "Let's"} analyze the actions`
+        ]
+        const text = opinions[Math.floor(Math.random() * opinions.length)]
+        await simulateBotChatMessage(io, roomCode, speaker, text)
+      }, 1500)
+    }
   }
 }
 

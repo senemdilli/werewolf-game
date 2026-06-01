@@ -16,7 +16,7 @@ export function createInitialState(
   gameMode: GameMode,
   witchSelfHeal: WitchSelfHealSetting,
   speakDuration: number = 60,
-  bidDuration: number = 60,
+  bidDuration: number = 30,
   isSandbox: boolean = false,
 ): GameState {
   const hostId = uuidv4()
@@ -217,6 +217,13 @@ function autoSimulateBotActions(state: GameState) {
           state.dayVotes.votes[b.id] = 'skip'
         }
       }
+    }
+  }
+
+  // 5. Auto-skip trust-labeling checkpoints for bots
+  if (state.labelCheckpoint) {
+    for (const b of bots) {
+      state.labelDecisions[b.id] = true
     }
   }
 }
