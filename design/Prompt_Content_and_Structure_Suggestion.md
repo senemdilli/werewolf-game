@@ -5,44 +5,44 @@
 
 ### 1. Global Game State
 <ul style="list-style-type: none;">
-  <li>• ground truth
+  <li>ground truth
    </li>
-  <li>• contains all information about past events and messages of the current ongoing game in detail
+  <li>contains all information about past events and messages of the current ongoing game in detail
   </li>
 </ul>
 
 ### 2. Observation Filter
 <ul style="list-style-type: none;">
-  <li>• individual for every player/role
+  <li>individual for every player/role
   </li>
-  <li>• proportion of the ground truth that the individual players can perceive, e.g. only the witch knows if heal potion still available 
+  <li>proportion of the ground truth that the individual players can perceive, e.g. only the witch knows if heal potion still available 
    </li>
-   <li>• up to date, aggregated state of the game -> no history 
+   <li>up to date, aggregated state of the game -> no history 
    </li>
 </ul>
 
 
 ### 3. Memory Retrieval
 <ul style="list-style-type: none;">
-  <li>• individual for every player
+  <li>individual for every player
   </li>
-  <li>• proportion of the ground truth that the individual player can remember -> history
+  <li>proportion of the ground truth that the individual player can remember -> history
    </li>
-  <li>• should replicate human memory and contain incomplete information about events that reach far back or would be to insignificant for humans to remember
+  <li>should replicate human memory and contain incomplete information about events that reach far back or would be to insignificant for humans to remember
   </li>
 </ul>
 
 ### 4. Belief State
 <ul style="list-style-type: none;">
-  <li>• individual for every player
+  <li>individual for every player
   </li>
-  <li>• current relationship of trust towards all players e.g. trust scores, confidence scores, (maybe role hypothesis)
+  <li>current relationship of trust towards all players e.g. trust scores, confidence scores, (maybe role hypothesis)
    </li>
 </ul>
 
 ### 5. Prompt Assemby
 <ul style="list-style-type: none;">
-  <li>• forming of the context window based on all the building blocks
+  <li>forming of the context window based on all the building blocks
    </li>
 </ul>
 
