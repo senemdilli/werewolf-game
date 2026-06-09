@@ -10,6 +10,7 @@ enum GameStatus {
   WAITING
   IN_PROGRESS
   FINISHED
+  CANCELED
 }
 
 enum Winner {
@@ -70,6 +71,8 @@ model Game {
   startedAt    DateTime?  @map("started_at")
   endedAt      DateTime?  @map("ended_at")
   createdAt    DateTime   @default(now()) @map("created_at")
+  isSandbox    Boolean    @default(false) @map("is_sandbox")
+  isArchived   Boolean    @default(false) @map("is_archived")
 
   players      Player[]
   messages     Message[]

@@ -1107,6 +1107,7 @@ export async function startGame(io: GameServer, roomCode: string): Promise<void>
       roomCode,
       gameMode: state.gameMode === 'arena' ? 'ARENA' : 'CLASSIC',
       status: 'IN_PROGRESS',
+      isSandbox: state.isSandbox,
       playerCount: state.players.length,
       startedAt: new Date(),
       players: {
