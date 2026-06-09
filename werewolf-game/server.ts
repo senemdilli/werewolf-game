@@ -21,6 +21,8 @@ app.prepare().catch((err) => { console.error('Next.js failed to prepare:', err);
     },
   })
 
+  ;(global as any).io = io
+
   setupSocketHandlers(io)
 
   httpServer.listen(port, () => {
