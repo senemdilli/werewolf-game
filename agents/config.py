@@ -1,5 +1,7 @@
 """Player agent configuration class."""
 
+import json
+
 from pathlib import Path
 
 from roles import Role
@@ -9,7 +11,7 @@ from agents.prompts import *
 
 PROMPTS_DIR = Path(__file__).parent / "prompts"
 
-class PlayerAgentConfig(BaseModel):
+class AgentConfig(BaseModel):
     """Configuration schema for a player."""
 
     # Basic Information
@@ -25,28 +27,12 @@ class PlayerAgentConfig(BaseModel):
     # Tools
     tools : list[str] = Field(default_factory=list, description="List of tools available to the agent")
 
-    def __init__(
-        self,
-        # Basic Information
-        name: str,
-        role: Role,
-
-        # LLM Configuration
-        llm_model: str = "gpt-4o-mini",
-        llm_temperature: float = 0.7,
-        llm_max_tokens: int = 2048,
-
-        # Tools
-        tools: list[str] = [],
-    )-> None:
-        
-        self.name = name
-        self.role = role
-        self.prompt = generate_prompt(role, tools)
-        self.llm_model = llm_model
-        self.llm_temperature = llm_temperature
-        self.llm_max_tokens = llm_max_tokens
-        self.tools = tools
+    @classmethod
+    def from_json(cls, json_path: Path):
+        """Load agent configuration from a JSON file."""
+        with open(json_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        return cls(**data)
 
 def generate_prompt(role: Role, tools: list[str]) -> str:
     """Generate the initial prompt for the agent based on its role and tools."""
