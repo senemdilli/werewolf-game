@@ -550,8 +550,20 @@ async function finalizeMayorElection(io: GameServer, roomCode: string) {
     const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1])
 
     if (sorted.length === 0) {
-      // No one voted: skip and proceed without electing a mayor.
-      await persistSystem(io, state, 'No one voted. No Mayor elected.', 'DAY')
+      // Nobody voted → pick a random alive player so the game always has a Mayor.
+      const alive = state.players.filter(p => p.isAlive)
+      if (alive.length > 0) {
+        const pick = alive[Math.floor(Math.random() * alive.length)]
+        state.mayorId = pick.id
+        state.mayorElected = true
+        await persistSystem(
+          io, state,
+          `No one voted. ${pick.name} was randomly selected as Mayor. The Mayor breaks ties in day votes.`,
+          'DAY',
+        )
+      } else {
+        await persistSystem(io, state, 'No one voted. No Mayor elected.', 'DAY')
+      }
       await proceedAfterMayorElection(io, state)
       return
     }
@@ -600,13 +612,26 @@ async function finalizeMayorElection(io: GameServer, roomCode: string) {
   }
 
   // Classic
-  const winnerId = resolveMayorElection(state.mayorVotes)
+  let winnerId = resolveMayorElection(state.mayorVotes)
+  let randomlyChosen = false
+
+  if (!winnerId) {
+    // Nobody voted → pick a random alive player so the game always has a Mayor.
+    const alive = state.players.filter(p => p.isAlive)
+    if (alive.length > 0) {
+      winnerId = alive[Math.floor(Math.random() * alive.length)].id
+      randomlyChosen = true
+    }
+  }
 
   if (winnerId) {
     state.mayorId = winnerId
     const name = state.players.find(p => p.id === winnerId)?.name ?? 'Someone'
     state.mayorElected = true
-    await persistSystem(io, state, `${name} has been elected Mayor. Their vote counts double.`, 'DAY')
+    const msg = randomlyChosen
+      ? `No one voted. ${name} was randomly selected as Mayor. Their vote counts double.`
+      : `${name} has been elected Mayor. Their vote counts double.`
+    await persistSystem(io, state, msg, 'DAY')
   }
 
   await proceedAfterMayorElection(io, state)
