@@ -12,10 +12,22 @@ interface Props {
   state: ClientGameState
 }
 
-const DIMENSIONS: { key: TrustDimension; label: string; hint: string }[] = [
-  { key: 'alignment', label: 'Alignment', hint: 'On my team?' },
-  { key: 'information', label: 'Information', hint: 'Reliable claims?' },
-  { key: 'consistency', label: 'Consistency', hint: 'Coherent over time?' },
+const DIMENSIONS: { key: TrustDimension; label: string; question: string }[] = [
+  {
+    key: 'alignment',
+    label: 'Alignment trust',
+    question: 'Do I believe this player’s goals are compatible with mine?',
+  },
+  {
+    key: 'information',
+    label: 'Information trust',
+    question: 'Do I believe this player gives accurate or useful information?',
+  },
+  {
+    key: 'consistency',
+    label: 'Consistency trust',
+    question: 'Do I believe this player behaves predictably over time?',
+  },
 ]
 
 const CONFIDENCES: { key: Confidence; label: string }[] = [
@@ -23,6 +35,16 @@ const CONFIDENCES: { key: Confidence; label: string }[] = [
   { key: 'medium', label: 'Med' },
   { key: 'high', label: 'High' },
 ]
+
+const SCORE_LABELS: Record<number, string> = {
+  1: 'Strong distrust',
+  2: 'Distrust',
+  3: 'Slight distrust',
+  4: 'Neutral',
+  5: 'Slight trust',
+  6: 'Trust',
+  7: 'Strong trust',
+}
 
 const CHECKPOINT_TITLES: Record<LabelCheckpoint, string> = {
   before_discussion: 'Before discussion',
@@ -539,25 +561,30 @@ export default function LabelPanel({ socket, state }: Props) {
                             onClick={() =>
                               setDimension(playerId, d.key, on ? null : { score: 4, confidence: 'medium' })
                             }
-                            className={`text-xs text-left px-2 py-1 rounded border cursor-pointer ${
+                            className={`text-xs text-left px-2 py-1.5 rounded border cursor-pointer ${
                               on
                                 ? 'bg-amber-950/40 border-amber-700 text-amber-200'
                                 : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-amber-800'
                             }`}
                           >
-                            {on ? '✓' : '+'} {d.label} <span className="text-slate-500">— {d.hint}</span>
+                            <div className="font-semibold">{on ? '✓' : '+'} {d.label}</div>
+                            <div className="text-[11px] text-slate-500 mt-0.5 leading-snug">{d.question}</div>
                           </button>
                           {on && (
                             <div className="pl-2 flex flex-col gap-1.5">
                               <div className="flex flex-col gap-0.5">
-                                <div className="text-[10px] uppercase tracking-wide text-slate-500 font-semibold">
-                                  Score <span className="text-slate-600 normal-case">(1 = low trust · 7 = high)</span>
+                                <div className="text-[10px] uppercase tracking-wide text-slate-500 font-semibold flex items-center justify-between gap-2">
+                                  <span>Score</span>
+                                  <span className="text-amber-300/80 normal-case font-semibold tracking-normal">
+                                    {cur.score} — {SCORE_LABELS[cur.score]}
+                                  </span>
                                 </div>
                                 <div className="grid grid-cols-7 gap-0.5">
                                   {[1, 2, 3, 4, 5, 6, 7].map(n => (
                                     <button
                                       key={n}
                                       onClick={() => setDimension(playerId, d.key, { ...cur, score: n })}
+                                      title={`${n} — ${SCORE_LABELS[n]}`}
                                       className={`py-0.5 rounded text-xs font-mono cursor-pointer ${
                                         cur.score === n
                                           ? 'bg-amber-700 text-amber-50'
