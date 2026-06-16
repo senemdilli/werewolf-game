@@ -296,6 +296,7 @@ export interface SeerResult {
 export interface ServerToClientEvents {
   'game:state': (state: ClientGameState) => void
   'chat:message': (msg: ChatMessage) => void
+  'chat:history': (history: ChatMessage[]) => void
   'seer:result': (result: SeerResult) => void
   'room:kicked': (reason: string) => void
   error: (message: string) => void

@@ -12,6 +12,7 @@ import {
   resolveDayVoteArena,
 } from '@/server/game/roles'
 import { prisma } from '@/lib/prisma'
+import { addChatMessage } from '@/server/game/chat-store'
 
 type GameSocket = Socket<ClientToServerEvents, ServerToClientEvents>
 type GameServer = Server<ClientToServerEvents, ServerToClientEvents>
@@ -386,6 +387,7 @@ async function simulateBotChatMessage(
     timestamp: Date.now(),
   }
 
+  await addChatMessage(roomCode, msg)
   io.to(`room:${roomCode}`).emit('chat:message', msg)
 
   if (state.dbGameId) {
@@ -1049,6 +1051,7 @@ async function persistSystem(
       isSystem: true,
       timestamp: created.createdAt.getTime(),
     }
+    await addChatMessage(state.roomCode, msg)
     io.to(`room:${state.roomCode}`).emit('chat:message', msg)
   } catch (err) { console.error('[persistSystem]', err) }
 }

@@ -4,6 +4,7 @@ import { getGame } from '@/server/game/state'
 import { prisma } from '@/lib/prisma'
 import { v4 as uuidv4 } from 'uuid'
 import { onSpeakerMessage } from './game'
+import { addChatMessage } from '@/server/game/chat-store'
 
 type GameSocket = Socket<ClientToServerEvents, ServerToClientEvents>
 type GameServer = Server<ClientToServerEvents, ServerToClientEvents>
@@ -61,6 +62,8 @@ export function registerChatHandlers(io: GameServer, socket: GameSocket) {
         isSystem: false,
         timestamp: Date.now(),
       }
+
+      await addChatMessage(roomCode, msg)
 
       if (isNight) {
         io.to(`wolves:${roomCode}`).emit('chat:message', msg)

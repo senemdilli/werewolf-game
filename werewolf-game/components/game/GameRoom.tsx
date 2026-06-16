@@ -54,6 +54,10 @@ export default function GameRoom({ roomCode, playerId }: Props) {
       setMessages(prev => [...prev, msg])
     })
 
+    s.on('chat:history', (history) => {
+      setMessages(history)
+    })
+
     s.on('seer:result', (result) => {
       const id = `${Date.now()}-${Math.random()}`
       const endTime = Date.now() + 10000
@@ -100,6 +104,7 @@ export default function GameRoom({ roomCode, playerId }: Props) {
       s.off('connect', rejoin)
       s.off('game:state')
       s.off('chat:message')
+      s.off('chat:history')
       s.off('seer:result')
       s.off('error')
       s.off('room:kicked')
