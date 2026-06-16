@@ -1,9 +1,11 @@
 'use client'
 
+import React from 'react'
 import type { ClientGameState, Role } from '@/types/game'
 import type { GameSocket } from '@/app/room/[code]/page'
 import { ROLE_INFO } from '@/server/game/roles'
 import Button from '@/components/ui/Button'
+import PlayerName, { getPlayerStyle } from './PlayerName'
 
 const roleStyle: Record<Role, { border: string; bg: string; icon: string }> = {
   werewolf: { border: 'border-red-700',     bg: 'bg-red-950/40',     icon: '🐺' },
@@ -42,7 +44,7 @@ export default function RoleReveal({ state, socket, onAcknowledge, acknowledged 
         {state.forceRandomNames && myName && (
           <div className="bg-violet-950/60 border border-violet-800/80 rounded-xl p-4 mb-6 text-center animate-pulse">
             <p className="text-violet-300 font-semibold text-xs uppercase tracking-wide">Your randomized name for this game:</p>
-            <p className="text-white text-3xl font-black font-mono mt-1">{myName}</p>
+            <p className="text-3xl font-black font-mono mt-1" style={getPlayerStyle(myName)}>{myName}</p>
           </div>
         )}
 
@@ -53,7 +55,14 @@ export default function RoleReveal({ state, socket, onAcknowledge, acknowledged 
         {role === 'werewolf' && teammateNames.length > 0 && (
           <div className="bg-red-950/60 border border-red-800 rounded-lg p-3 mb-6 text-sm">
             <p className="text-red-300 font-semibold mb-1">Your pack:</p>
-            <p className="text-red-200">{teammateNames.join(', ')}</p>
+            <div className="flex flex-wrap justify-center gap-1.5 mt-1">
+              {state.players.filter(p => teammates?.includes(p.id)).map((p, index) => (
+                <React.Fragment key={p.id}>
+                  {index > 0 && <span className="text-red-400">,</span>}
+                  <PlayerName name={p.name} role={p.role} showTeammateIcon={true} />
+                </React.Fragment>
+              ))}
+            </div>
           </div>
         )}
 

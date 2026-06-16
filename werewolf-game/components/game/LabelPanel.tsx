@@ -6,6 +6,7 @@ import type {
   TrustDimension, Confidence, LabelCheckpoint,
 } from '@/types/game'
 import type { GameSocket } from '@/app/room/[code]/page'
+import PlayerName from './PlayerName'
 
 interface Props {
   socket: GameSocket
@@ -474,7 +475,7 @@ export default function LabelPanel({ socket, state }: Props) {
                           : 'bg-slate-800 border-slate-700 text-slate-300 hover:border-amber-700'
                       }`}
                     >
-                      {p.name}
+                      <PlayerName name={p.name} role={p.role} showTeammateIcon={false} />
                     </button>
                   )
                 })}
@@ -488,7 +489,9 @@ export default function LabelPanel({ socket, state }: Props) {
               const recording = !!isRecording[playerId]
               return (
                 <div key={playerId} className="border border-slate-700 rounded-lg p-3 bg-slate-800/40 flex flex-col gap-3">
-                  <div className="text-sm text-amber-200 font-semibold">{p.name}</div>
+                  <div className="text-sm font-semibold">
+                    <PlayerName name={p.name} role={p.role} showTeammateIcon={false} />
+                  </div>
 
                   <div>
                     <div className="flex items-center justify-between mb-1">

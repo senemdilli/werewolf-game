@@ -78,20 +78,33 @@ export default function GameRoom({ roomCode, playerId }: Props) {
       router.push('/')
     })
 
-    s.emit('room:rejoin', { roomCode, playerId }, ({ success, error }) => {
-      if (!success) {
-        setError(error || 'Failed to rejoin room')
-      }
-    })
+    const rejoin = () => {
+      s.emit('room:rejoin', { roomCode, playerId }, ({ success, error }) => {
+        if (!success) {
+          setError(error || 'Failed to rejoin room')
+          if (error === 'Room not found' || error === 'Player not found in room') {
+            sessionStorage.removeItem('ww_playerId')
+            sessionStorage.removeItem('ww_roomCode')
+            router.push('/')
+          }
+        }
+      })
+    }
+
+    if (s.connected) {
+      rejoin()
+    }
+    s.on('connect', rejoin)
 
     return () => {
+      s.off('connect', rejoin)
       s.off('game:state')
       s.off('chat:message')
       s.off('seer:result')
       s.off('error')
       s.off('room:kicked')
     }
-  }, [roomCode, playerId])
+  }, [roomCode, playerId, router])
 
   // Phase-transition audio cues. Fires once per phase change (not on every render).
   useEffect(() => {

@@ -23,8 +23,7 @@ export function registerChatHandlers(io: GameServer, socket: GameSocket) {
       const player = state.players.find(p => p.id === playerId)
       if (!player) return
 
-      // Keep host identity completely hidden in chat after game starts: host cannot send messages
-      if (player.isHost && state.phase !== 'lobby') return
+
 
       const isNight = state.phase === 'night'
       const isArena = state.gameMode === 'arena'

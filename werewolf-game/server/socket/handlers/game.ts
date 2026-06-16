@@ -1135,14 +1135,66 @@ export async function startGame(io: GameServer, roomCode: string): Promise<void>
 
   // 3. If Force Random Names is enabled, randomize player names
   if (state.forceRandomNames) {
-    const namePool = state.useColorsAsNames
-      ? ['Red', 'Blue', 'Green', 'Yellow', 'Purple', 'Orange', 'Pink', 'Brown', 'Cyan', 'Lime', 'Gold', 'Silver', 'Magenta', 'Maroon', 'Navy', 'Olive', 'Lavender', 'Peach', 'Mint']
-      : ['Aldric', 'Beatrix', 'Casimir', 'Delara', 'Edmund', 'Fiona', 'Garrett', 'Helena', 'Isidore', 'Juliana', 'Kieran', 'Lyra', 'Magnus', 'Nadia', 'Oswin', 'Petra', 'Rowena', 'Stellan', 'Tamsin', 'Ulric', 'Vesper', 'Wren', 'Xander', 'Yara', 'Zephyr']
+    let namePool: string[] = []
+    if (state.useColorsAsNames) {
+      const numPlayers = state.players.length
+      const families = [
+        ['Red', 'Pink'],
+        ['Blue', 'Teal'],
+        ['Green', 'Mint'],
+        ['Yellow', 'Gold'],
+        ['Purple', 'Violet', 'Lavender'],
+        ['Orange'],
+        ['White', 'Gray'],
+        ['Brown'],
+      ]
 
-    // Shuffle the name pool
-    for (let i = namePool.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [namePool[i], namePool[j]] = [namePool[j], namePool[i]];
+      const shuffle = <T>(arr: T[]): T[] => {
+        const a = [...arr]
+        for (let i = a.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [a[i], a[j]] = [a[j], a[i]]
+        }
+        return a
+      }
+
+      const shufFamilies = shuffle(families)
+      const selectedFamilies = shufFamilies.slice(0, Math.min(numPlayers, 8))
+      
+      const selectedColors: string[] = []
+      const remainingColors: string[] = []
+
+      for (const fam of selectedFamilies) {
+        const shufColors = shuffle(fam)
+        selectedColors.push(shufColors[0])
+        for (let i = 1; i < shufColors.length; i++) {
+          remainingColors.push(shufColors[i])
+        }
+      }
+
+      if (numPlayers <= 8) {
+        namePool = selectedColors
+      } else {
+        const unselectedFamilies = shufFamilies.slice(8)
+        for (const fam of unselectedFamilies) {
+          for (const color of fam) {
+            remainingColors.push(color)
+          }
+        }
+
+        const shufRemaining = shuffle(remainingColors)
+        const extraNeeded = numPlayers - 8
+        namePool = [...selectedColors, ...shufRemaining.slice(0, extraNeeded)]
+      }
+
+      namePool = shuffle(namePool)
+    } else {
+      namePool = ['Aldric', 'Beatrix', 'Casimir', 'Delara', 'Edmund', 'Fiona', 'Garrett', 'Helena', 'Isidore', 'Juliana', 'Kieran', 'Lyra', 'Magnus', 'Nadia', 'Oswin', 'Petra', 'Rowena', 'Stellan', 'Tamsin', 'Ulric', 'Vesper', 'Wren', 'Xander', 'Yara', 'Zephyr']
+      // Shuffle the name pool
+      for (let i = namePool.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [namePool[i], namePool[j]] = [namePool[j], namePool[i]];
+      }
     }
 
     let nameIdx = 0
