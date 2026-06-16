@@ -190,8 +190,8 @@ export default function GameRoom({ roomCode, playerId }: Props) {
         {state.phase === 'lobby' && socket && (
           <Lobby state={state} socket={socket} onStart={handleStart} starting={starting} onReady={handleReady} />
         )}
-        {state.phase === 'role_reveal' && (
-          <RoleReveal state={state} onAcknowledge={handleAcknowledge} acknowledged={acknowledged} />
+        {state.phase === 'role_reveal' && socket && (
+          <RoleReveal state={state} socket={socket} onAcknowledge={handleAcknowledge} acknowledged={acknowledged} />
         )}
         {state.phase === 'night' && socket && (
           <NightPhase state={state} socket={socket} messages={messages} />

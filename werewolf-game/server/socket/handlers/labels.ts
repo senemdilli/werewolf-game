@@ -144,4 +144,32 @@ export function registerLabelHandlers(io: GameServer, socket: GameSocket) {
       ack({ success: false, error: 'Failed to skip' })
     }
   })
+
+  socket.on('label:force_skip', async (cb) => {
+    const ack = typeof cb === 'function' ? cb : () => {}
+    try {
+      const { playerId, roomCode } = socket.data
+      if (!playerId || !roomCode) return ack({ success: false, error: 'Not in a room' })
+
+      const state = await getGame(roomCode)
+      if (!state) return ack({ success: false, error: 'Game not found' })
+      const cp = state.labelCheckpoint
+      if (!cp) return ack({ success: false, error: 'No labeling checkpoint open' })
+
+      const caller = state.players.find(p => p.id === playerId)
+      if (!caller || !caller.isHost) return ack({ success: false, error: 'Only the host can force skip' })
+
+      // Force mark all alive players as decided so maybeResolveCheckpoint resolves immediately
+      const alivePlayers = state.players.filter(p => p.isAlive)
+      for (const p of alivePlayers) {
+        state.labelDecisions[p.id] = true
+      }
+      await saveGame(state)
+      ack({ success: true })
+      await maybeResolveCheckpoint(io, roomCode)
+    } catch (err) {
+      console.error('[label:force_skip]', err)
+      ack({ success: false, error: 'Failed to force skip' })
+    }
+  })
 }

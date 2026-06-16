@@ -437,6 +437,20 @@ export default function LabelPanel({ socket, state }: Props) {
             <div className="text-sm text-slate-400 text-center">
               Waiting for {decidedTotal - decidedCount} other player{decidedTotal - decidedCount === 1 ? '' : 's'} to finish.
             </div>
+            {me?.isHost && (
+              <button
+                onClick={() => {
+                  if (window.confirm('Force skip this labeling checkpoint for everyone?')) {
+                    socket.emit('label:force_skip', (r) => {
+                      if (!r.success) alert(r.error ?? 'Failed to force skip')
+                    })
+                  }
+                }}
+                className="mt-4 px-4 py-2 bg-red-900/60 hover:bg-red-800/60 border border-red-700 text-red-100 text-xs font-semibold rounded cursor-pointer transition-colors"
+              >
+                Force Skip Checkpoint (Host)
+              </button>
+            )}
           </div>
         ) : (
           <div className="p-5 flex flex-col gap-4 overflow-y-auto">
@@ -640,6 +654,20 @@ export default function LabelPanel({ socket, state }: Props) {
               >
                 Don&apos;t label
               </button>
+              {me?.isHost && (
+                <button
+                  onClick={() => {
+                    if (window.confirm('Force skip this labeling checkpoint for everyone?')) {
+                      socket.emit('label:force_skip', (r) => {
+                        if (!r.success) alert(r.error ?? 'Failed to force skip')
+                      })
+                    }
+                  }}
+                  className="px-4 py-2.5 bg-red-950/40 hover:bg-red-900/40 border border-red-800 text-red-200 text-sm font-semibold rounded transition-colors cursor-pointer"
+                >
+                  Force Skip
+                </button>
+              )}
               <button
                 onClick={handleSubmit}
                 disabled={!canSubmit}

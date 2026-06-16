@@ -1124,7 +1124,34 @@ export async function startGame(io: GameServer, roomCode: string): Promise<void>
   const state = await getGame(roomCode)
   if (!state || state.phase !== 'lobby' || state.players.length < 4) return
 
+  // 1.  shuffle players array to avoid seating order bias
+  for (let i = state.players.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [state.players[i], state.players[j]] = [state.players[j], state.players[i]];
+  }
+
+  // 2. Assign roles normally to the shuffled list
   state.players = assignRoles(state.players)
+
+  // 3. If Force Random Names is enabled, randomize player names
+  if (state.forceRandomNames) {
+    const namePool = state.useColorsAsNames
+      ? ['Red', 'Blue', 'Green', 'Yellow', 'Purple', 'Orange', 'Pink', 'Brown', 'Cyan', 'Lime', 'Gold', 'Silver', 'Magenta', 'Maroon', 'Navy', 'Olive', 'Lavender', 'Peach', 'Mint']
+      : ['Aldric', 'Beatrix', 'Casimir', 'Delara', 'Edmund', 'Fiona', 'Garrett', 'Helena', 'Isidore', 'Juliana', 'Kieran', 'Lyra', 'Magnus', 'Nadia', 'Oswin', 'Petra', 'Rowena', 'Stellan', 'Tamsin', 'Ulric', 'Vesper', 'Wren', 'Xander', 'Yara', 'Zephyr']
+
+    // Shuffle the name pool
+    for (let i = namePool.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [namePool[i], namePool[j]] = [namePool[j], namePool[i]];
+    }
+
+    let nameIdx = 0
+    state.players = state.players.map(p => ({
+      ...p,
+      name: namePool[nameIdx++]
+    }))
+  }
+
   state.phase = 'role_reveal'
 
   const dbGame = await prisma.game.create({
@@ -1190,6 +1217,28 @@ export function registerGameHandlers(io: GameServer, socket: GameSocket) {
         await broadcastState(io, roomCode)
       }
     } catch (err) { console.error('[game:acknowledge_role]', err) }
+  })
+
+  socket.on('game:force_start_night', async (cb) => {
+    const ack = typeof cb === 'function' ? cb : () => {}
+    try {
+      const { playerId, roomCode } = socket.data
+      const state = await getGame(roomCode)
+      if (!state || state.phase !== 'role_reveal') return ack({ success: false, error: 'Invalid state' })
+
+      const caller = state.players.find(p => p.id === playerId)
+      if (!caller || !caller.isHost) return ack({ success: false, error: 'Only the host can force skip' })
+
+      for (const p of state.players) {
+        p.roleAcknowledged = true
+      }
+      await saveGame(state)
+      await transitionToNight(io, roomCode)
+      ack({ success: true })
+    } catch (err) {
+      console.error('[game:force_start_night]', err)
+      ack({ success: false, error: 'Failed to force start night' })
+    }
   })
 
   socket.on('night:werewolf_vote', async (targetId) => {

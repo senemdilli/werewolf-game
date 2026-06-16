@@ -28,6 +28,8 @@ export default function Home() {
   const [speakDuration, setSpeakDuration] = useState<number>(60)
   const [bidDuration, setBidDuration] = useState<number>(30)
   const [isSandbox, setIsSandbox] = useState(false)
+  const [forceRandomNames, setForceRandomNames] = useState(true)
+  const [useColorsAsNames, setUseColorsAsNames] = useState(true)
   const [showSettings, setShowSettings] = useState(false)
   const [name, setName] = useState('')
   const [code, setCode] = useState('')
@@ -62,6 +64,8 @@ export default function Home() {
         gameMode,
         witchSelfHeal,
         isSandbox,
+        forceRandomNames,
+        useColorsAsNames,
         ...(gameMode === 'arena' ? { speakDuration, bidDuration } : {}),
       },
       ({ roomCode, playerId }) => {
@@ -215,6 +219,47 @@ export default function Home() {
                       <div className="relative w-9 h-5 bg-slate-800 border border-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[3px] after:left-[3px] after:bg-slate-400 after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-violet-600 peer-checked:after:bg-white peer-checked:after:border-white"></div>
                     </label>
                   </div>
+
+                  {/* Force Random Names Switch */}
+                  <div className="flex items-center justify-between pb-3 border-b border-slate-800/60">
+                    <div>
+                      <p className="text-xs font-semibold text-slate-300">🎲 Force Random Names</p>
+                      <p className="text-[10px] text-slate-500 leading-tight mt-0.5">Players get new randomized names when the game starts.</p>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={forceRandomNames}
+                        onChange={e => {
+                          setForceRandomNames(e.target.checked)
+                          if (e.target.checked) {
+                            setUseColorsAsNames(true)
+                          }
+                        }}
+                        className="sr-only peer"
+                      />
+                      <div className="relative w-9 h-5 bg-slate-800 border border-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[3px] after:left-[3px] after:bg-slate-400 after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-violet-600 peer-checked:after:bg-white peer-checked:after:border-white"></div>
+                    </label>
+                  </div>
+
+                  {/* Colors as Names Switch */}
+                  {forceRandomNames && (
+                    <div className="flex items-center justify-between pb-3 border-b border-slate-800/60">
+                      <div>
+                        <p className="text-xs font-semibold text-slate-300">🎨 Colors as Names</p>
+                        <p className="text-[10px] text-slate-500 leading-tight mt-0.5">Use colors (Red, Blue, Green...) instead of fantasy names.</p>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          checked={useColorsAsNames}
+                          onChange={e => setUseColorsAsNames(e.target.checked)}
+                          className="sr-only peer"
+                        />
+                        <div className="relative w-9 h-5 bg-slate-800 border border-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[3px] after:left-[3px] after:bg-slate-400 after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-violet-600 peer-checked:after:bg-white peer-checked:after:border-white"></div>
+                      </label>
+                    </div>
+                  )}
 
                   <div>
                     <p className="text-xs font-semibold text-slate-400 mb-2">Witch Self-Healing</p>
