@@ -6,6 +6,7 @@ import { SKIP_VOTE } from '@/types/game'
 import type { GameSocket } from '@/app/room/[code]/page'
 import Button from '@/components/ui/Button'
 import Chat from './Chat'
+import PlayerName from './PlayerName'
 import ConversationPanel from './ConversationPanel'
 import { safeDateNow } from '@/lib/clock'
 
@@ -180,11 +181,14 @@ export default function DayPhase({ state, socket, messages }: Props) {
                   `}
                 >
                   <div className="flex items-center gap-2 min-w-0">
-                    <span className="text-sm font-medium truncate">
-                      {p.name}
-                      {p.id === state.myId && <span className="ml-1 text-xs text-slate-400">(you)</span>}
-                      {p.isHost && <span className="ml-1 text-xs text-violet-400">host</span>}
-                      {p.isMayor && <span className="ml-1 text-xs text-violet-300">👑 mayor</span>}
+                    <span className="text-sm truncate">
+                      <PlayerName
+                        name={p.name}
+                        role={p.role}
+                        isMe={p.id === state.myId}
+                        isHost={p.isHost}
+                        isMayor={p.isMayor}
+                      />
                     </span>
                   </div>
                   <div className="flex items-center gap-3 shrink-0">

@@ -6,6 +6,7 @@ import { WOLF_VOTE_NOBODY } from '@/types/game'
 import type { GameSocket } from '@/app/room/[code]/page'
 import Button from '@/components/ui/Button'
 import { play } from '@/lib/sounds'
+import PlayerName, { getPlayerColor } from './PlayerName'
 
 interface Props {
   state: ClientGameState
@@ -22,11 +23,24 @@ export default function WerewolfArenaPanel({ state, socket }: Props) {
   const me = state.players.find(p => p.id === state.myId)
   const alivePlayers = state.players.filter(p => p.isAlive)
   const targetable = alivePlayers.filter(p => p.id !== state.myId && !state.werewolfTeammates?.includes(p.id))
-  const playerName = (id: string) =>
-    id === WOLF_VOTE_NOBODY ? 'Spare everyone' : state.players.find(p => p.id === id)?.name ?? '?'
+  
+  const renderVoterTarget = (voterId: string, targetId: string) => {
+    const voter = state.players.find(p => p.id === voterId)
+    const target = state.players.find(p => p.id === targetId)
+    return (
+      <>
+        {voter ? <PlayerName name={voter.name} role={voter.role} showTeammateIcon={false} /> : '?'} →{' '}
+        <span>
+          {targetId === WOLF_VOTE_NOBODY 
+            ? 'Spare everyone' 
+            : (target ? <PlayerName name={target.name} role={target.role} showTeammateIcon={false} /> : '?')}
+        </span>
+      </>
+    )
+  }
 
   const currentVoter = arena.order[arena.turn]
-  const currentVoterName = state.players.find(p => p.id === currentVoter)?.name ?? '?'
+  const currentVoterPlayer = state.players.find(p => p.id === currentVoter)
   const isMyTurn = arena.myTurn && !!me?.isAlive
 
   const myTurnRef = useRef(false)
@@ -72,7 +86,7 @@ export default function WerewolfArenaPanel({ state, socket }: Props) {
                     : 'border-slate-700 bg-slate-800/40 text-slate-400'
                 }`}
               >
-                {i + 1}. {name}{voted ? ' ✓' : isCurrent ? ' …' : ''}
+                {i + 1}. <PlayerName name={name} showTeammateIcon={false} />{voted ? ' ✓' : isCurrent ? ' …' : ''}
               </span>
             )
           })}
@@ -89,7 +103,7 @@ export default function WerewolfArenaPanel({ state, socket }: Props) {
                 <p className="text-slate-400 font-semibold mb-1">Round {h.round}</p>
                 {Object.entries(h.votes).map(([voter, target]) => (
                   <p key={voter} className="text-slate-300">
-                    {state.players.find(p => p.id === voter)?.name ?? '?'} → <span className="text-red-300">{playerName(target)}</span>
+                    {renderVoterTarget(voter, target)}
                   </p>
                 ))}
               </div>
@@ -105,7 +119,7 @@ export default function WerewolfArenaPanel({ state, socket }: Props) {
           <div className="space-y-1 text-xs">
             {Object.entries(arena.currentVotes).map(([voter, target]) => (
               <p key={voter} className="text-slate-300">
-                {state.players.find(p => p.id === voter)?.name ?? '?'} → <span className="text-red-300">{playerName(target)}</span>
+                {renderVoterTarget(voter, target)}
               </p>
             ))}
           </div>
@@ -134,7 +148,7 @@ export default function WerewolfArenaPanel({ state, socket }: Props) {
                     : 'border-slate-700 bg-slate-900 text-slate-300 hover:border-red-700'
                 }`}
               >
-                {p.name}
+                <PlayerName name={p.name} role={p.role} showTeammateIcon={false} />
               </button>
             ))}
             <button
@@ -162,7 +176,7 @@ export default function WerewolfArenaPanel({ state, socket }: Props) {
 
       {!arena.resolved && !isMyTurn && (
         <div className="bg-slate-800/60 border border-slate-700 rounded-lg p-3 text-sm text-slate-300">
-          Waiting for <span className="font-semibold text-red-300">{currentVoterName}</span> to vote…
+          Waiting for <span className="font-semibold"><PlayerName name={currentVoterPlayer?.name ?? '?'} role={currentVoterPlayer?.role} showTeammateIcon={false} /></span> to vote…
         </div>
       )}
     </div>

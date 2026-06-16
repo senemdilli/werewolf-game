@@ -5,6 +5,7 @@ import type { ClientGameState, ChatMessage } from '@/types/game'
 import type { GameSocket } from '@/app/room/[code]/page'
 import Button from '@/components/ui/Button'
 import PlayerList from './PlayerList'
+import PlayerName from './PlayerName'
 import Chat from './Chat'
 import ConversationPanel from './ConversationPanel'
 import { safeDateNow } from '@/lib/clock'
@@ -104,7 +105,7 @@ export default function MayorElection({ state, socket, messages }: Props) {
                         : 'border-slate-700 bg-slate-800/60 text-slate-300 hover:border-amber-600'
                     }`}
                   >
-                    {p.name}
+                    <PlayerName name={p.name} role={p.role} showTeammateIcon={false} />
                   </button>
                 )
               })}
@@ -119,7 +120,12 @@ export default function MayorElection({ state, socket, messages }: Props) {
             </Button>
             {state.mayorRunoff.myVote && (
               <p className="text-xs text-slate-400 text-center">
-                Your runoff vote: <span className="text-amber-300 font-semibold">{state.players.find(p => p.id === state.mayorRunoff!.myVote)?.name}</span>
+                Your runoff vote:{' '}
+                <PlayerName
+                  name={state.players.find(p => p.id === state.mayorRunoff!.myVote)?.name ?? '?'}
+                  role={state.players.find(p => p.id === state.mayorRunoff!.myVote)?.role}
+                  showTeammateIcon={false}
+                />
               </p>
             )}
           </div>

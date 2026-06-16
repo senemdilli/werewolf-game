@@ -18,6 +18,8 @@ export function createInitialState(
   speakDuration: number = 60,
   bidDuration: number = 30,
   isSandbox: boolean = false,
+  forceRandomNames: boolean = false,
+  useColorsAsNames: boolean = true,
 ): GameState {
   const hostId = uuidv4()
   return {
@@ -67,6 +69,8 @@ export function createInitialState(
     labelCheckpoint: null,
     labelDecisions: {},
     isSandbox,
+    forceRandomNames,
+    useColorsAsNames,
   }
 }
 
@@ -304,7 +308,7 @@ export function buildClientState(state: GameState, playerId: string): ClientGame
       id: p.id,
       name: p.name,
       isAlive: p.isAlive,
-      isHost: p.isHost,
+      isHost: state.phase === 'lobby' ? p.isHost : (p.id === playerId ? p.isHost : false),
       role: revealRole ? (p.role ?? undefined) : undefined,
       hasVoted: p.id in state.dayVotes.votes,
       isMayor: p.id === state.mayorId,
@@ -458,5 +462,7 @@ export function buildClientState(state: GameState, playerId: string): ClientGame
     labelDecidedTotal,
     isSandbox: state.isSandbox,
     serverTime: Date.now(),
+    forceRandomNames: state.forceRandomNames,
+    useColorsAsNames: state.useColorsAsNames,
   }
 }

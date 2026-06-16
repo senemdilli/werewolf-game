@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { ClientGameState, ChatMessage } from '@/types/game'
 import type { GameSocket } from '@/app/room/[code]/page'
 import Chat from './Chat'
+import PlayerName from './PlayerName'
 import { play } from '@/lib/sounds'
 import { safeDateNow } from '@/lib/clock'
 
@@ -84,10 +85,11 @@ export default function MayorAdvocacy({ state, socket, messages }: Props) {
                   }`}
                 >
                   <span className="font-mono w-5 text-xs">{i + 1}.</span>
-                  <span>{p?.name ?? '?'}</span>
+                  <span>
+                    <PlayerName name={p?.name ?? '?'} role={p?.role} isMe={p?.id === state.myId} showTeammateIcon={false} />
+                  </span>
                   {done && <span className="text-xs">✓</span>}
                   {current && <span className="text-xs">← now</span>}
-                  {p?.id === state.myId && <span className="text-xs text-slate-400">(you)</span>}
                 </li>
               )
             })}
@@ -102,7 +104,9 @@ export default function MayorAdvocacy({ state, socket, messages }: Props) {
         {!a.myTurn && (
           <div className="bg-slate-900 border border-slate-700 rounded-xl p-4 text-center">
             <p className="text-sm text-slate-300">
-              <span className="font-semibold text-violet-300">{currentName}</span> is speaking…
+              <span className="font-semibold">
+                <PlayerName name={currentName} role={state.players.find(p => p.id === a.currentSpeakerId)?.role} showTeammateIcon={false} />
+              </span> is speaking…
             </p>
             {myPos > a.turn && isAlive && (
               <p className="text-xs text-slate-500 mt-1">You&rsquo;ll be up at position {myPos + 1}.</p>

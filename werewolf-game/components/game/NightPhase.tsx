@@ -6,6 +6,7 @@ import { WOLF_VOTE_NOBODY } from '@/types/game'
 import type { GameSocket } from '@/app/room/[code]/page'
 import Button from '@/components/ui/Button'
 import PlayerList from './PlayerList'
+import PlayerName from './PlayerName'
 import Chat from './Chat'
 import WerewolfArenaPanel from './WerewolfArenaPanel'
 import type { ChatMessage } from '@/types/game'
@@ -321,7 +322,7 @@ export default function NightPhase({ state, socket, messages }: Props) {
             <div className="space-y-1">
               {state.players.filter(p => p.role === 'werewolf').map(w => (
                 <p key={w.id} className="text-xs text-slate-400">
-                  {w.name}: {state.aliveWerewolvesVoted?.includes(w.id) ? '✓ voted' : 'waiting…'}
+                  <PlayerName name={w.name} role={w.role} />: {state.aliveWerewolvesVoted?.includes(w.id) ? '✓ voted' : 'waiting…'}
                 </p>
               ))}
             </div>

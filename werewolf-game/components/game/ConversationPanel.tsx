@@ -1,10 +1,11 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import type { ClientGameState } from '@/types/game'
 import type { GameSocket } from '@/app/room/[code]/page'
 import { play } from '@/lib/sounds'
 import { safeDateNow } from '@/lib/clock'
+import PlayerName from './PlayerName'
 
 interface Props {
   state: ClientGameState
@@ -73,7 +74,18 @@ export default function ConversationPanel({ state, socket }: Props) {
       {queue.length > 0 && (
         <div className="text-xs bg-violet-950/30 border border-violet-800/60 rounded-lg p-2">
           <span className="text-violet-300 font-semibold">Up next (mentioned):</span>{' '}
-          <span className="text-slate-200">{queueNames.join(' → ')}</span>
+          <span className="text-slate-200">
+            {queue.map((id, index) => {
+              const p = state.players.find(pl => pl.id === id)
+              if (!p) return null
+              return (
+                <React.Fragment key={id}>
+                  {index > 0 && <span className="mx-1 text-slate-500">→</span>}
+                  <PlayerName name={p.name} role={p.role} showTeammateIcon={false} />
+                </React.Fragment>
+              )
+            })}
+          </span>
           {myQueuePos >= 0 && isAlive && (
             <span className="text-violet-200"> · you&rsquo;re #{myQueuePos + 1} — no bid needed</span>
           )}
@@ -119,7 +131,7 @@ export default function ConversationPanel({ state, socket }: Props) {
             </p>
           ) : (
             <p className="text-sm text-slate-300">
-              <span className="font-semibold text-violet-300">{c.speakerName}</span> is speaking…
+              <span className="font-semibold"><PlayerName name={c.speakerName ?? '?'} role={c.speakerId ? state.players.find(p => p.id === c.speakerId)?.role : null} showTeammateIcon={false} /></span> is speaking…
             </p>
           )}
         </div>
@@ -129,9 +141,15 @@ export default function ConversationPanel({ state, socket }: Props) {
         <details className="text-xs text-slate-400">
           <summary className="cursor-pointer hover:text-slate-200">Past rounds</summary>
           <ul className="mt-2 space-y-1">
-            {c.history.map(h => (
-              <li key={h.round}>Round {h.round}: <span className="text-slate-300">{h.speakerName}</span></li>
-            ))}
+            {c.history.map(h => {
+              const sp = state.players.find(p => p.id === h.speakerId)
+              return (
+                <li key={h.round}>
+                  Round {h.round}:{' '}
+                  <PlayerName name={h.speakerName} role={sp?.role} showTeammateIcon={false} />
+                </li>
+              )
+            })}
           </ul>
         </details>
       )}
