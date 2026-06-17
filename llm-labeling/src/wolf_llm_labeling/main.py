@@ -1,0 +1,3 @@
+"""Integration stubs for early experiments."""
+
+def run_example(llm_provider: object, system_prompt: str, game_path: str, player_name: str): ...
