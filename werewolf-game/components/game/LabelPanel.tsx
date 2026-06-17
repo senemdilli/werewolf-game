@@ -6,16 +6,29 @@ import type {
   TrustDimension, Confidence, LabelCheckpoint,
 } from '@/types/game'
 import type { GameSocket } from '@/app/room/[code]/page'
+import PlayerName from './PlayerName'
 
 interface Props {
   socket: GameSocket
   state: ClientGameState
 }
 
-const DIMENSIONS: { key: TrustDimension; label: string; hint: string }[] = [
-  { key: 'alignment', label: 'Alignment', hint: 'On my team?' },
-  { key: 'information', label: 'Information', hint: 'Reliable claims?' },
-  { key: 'consistency', label: 'Consistency', hint: 'Coherent over time?' },
+const DIMENSIONS: { key: TrustDimension; label: string; question: string }[] = [
+  {
+    key: 'alignment',
+    label: 'Alignment trust',
+    question: 'Do I believe this player’s goals are compatible with mine?',
+  },
+  {
+    key: 'information',
+    label: 'Information trust',
+    question: 'Do I believe this player gives accurate or useful information?',
+  },
+  {
+    key: 'consistency',
+    label: 'Consistency trust',
+    question: 'Do I believe this player behaves predictably over time?',
+  },
 ]
 
 const CONFIDENCES: { key: Confidence; label: string }[] = [
@@ -23,6 +36,16 @@ const CONFIDENCES: { key: Confidence; label: string }[] = [
   { key: 'medium', label: 'Med' },
   { key: 'high', label: 'High' },
 ]
+
+const SCORE_LABELS: Record<number, string> = {
+  1: 'Strong distrust',
+  2: 'Distrust',
+  3: 'Slight distrust',
+  4: 'Neutral',
+  5: 'Slight trust',
+  6: 'Trust',
+  7: 'Strong trust',
+}
 
 const CHECKPOINT_TITLES: Record<LabelCheckpoint, string> = {
   before_discussion: 'Before discussion',
@@ -415,6 +438,20 @@ export default function LabelPanel({ socket, state }: Props) {
             <div className="text-sm text-slate-400 text-center">
               Waiting for {decidedTotal - decidedCount} other player{decidedTotal - decidedCount === 1 ? '' : 's'} to finish.
             </div>
+            {me?.isHost && (
+              <button
+                onClick={() => {
+                  if (window.confirm('Force skip this labeling checkpoint for everyone?')) {
+                    socket.emit('label:force_skip', (r) => {
+                      if (!r.success) alert(r.error ?? 'Failed to force skip')
+                    })
+                  }
+                }}
+                className="mt-4 px-4 py-2 bg-red-900/60 hover:bg-red-800/60 border border-red-700 text-red-100 text-xs font-semibold rounded cursor-pointer transition-colors"
+              >
+                Force Skip Checkpoint (Host)
+              </button>
+            )}
           </div>
         ) : (
           <div className="p-5 flex flex-col gap-4 overflow-y-auto">
@@ -438,7 +475,7 @@ export default function LabelPanel({ socket, state }: Props) {
                           : 'bg-slate-800 border-slate-700 text-slate-300 hover:border-amber-700'
                       }`}
                     >
-                      {p.name}
+                      <PlayerName name={p.name} role={p.role} showTeammateIcon={false} />
                     </button>
                   )
                 })}
@@ -452,7 +489,9 @@ export default function LabelPanel({ socket, state }: Props) {
               const recording = !!isRecording[playerId]
               return (
                 <div key={playerId} className="border border-slate-700 rounded-lg p-3 bg-slate-800/40 flex flex-col gap-3">
-                  <div className="text-sm text-amber-200 font-semibold">{p.name}</div>
+                  <div className="text-sm font-semibold">
+                    <PlayerName name={p.name} role={p.role} showTeammateIcon={false} />
+                  </div>
 
                   <div>
                     <div className="flex items-center justify-between mb-1">
@@ -539,25 +578,30 @@ export default function LabelPanel({ socket, state }: Props) {
                             onClick={() =>
                               setDimension(playerId, d.key, on ? null : { score: 4, confidence: 'medium' })
                             }
-                            className={`text-xs text-left px-2 py-1 rounded border cursor-pointer ${
+                            className={`text-xs text-left px-2 py-1.5 rounded border cursor-pointer ${
                               on
                                 ? 'bg-amber-950/40 border-amber-700 text-amber-200'
                                 : 'bg-slate-800 border-slate-700 text-slate-400 hover:border-amber-800'
                             }`}
                           >
-                            {on ? '✓' : '+'} {d.label} <span className="text-slate-500">— {d.hint}</span>
+                            <div className="font-semibold">{on ? '✓' : '+'} {d.label}</div>
+                            <div className="text-[11px] text-slate-500 mt-0.5 leading-snug">{d.question}</div>
                           </button>
                           {on && (
                             <div className="pl-2 flex flex-col gap-1.5">
                               <div className="flex flex-col gap-0.5">
-                                <div className="text-[10px] uppercase tracking-wide text-slate-500 font-semibold">
-                                  Score <span className="text-slate-600 normal-case">(1 = low trust · 7 = high)</span>
+                                <div className="text-[10px] uppercase tracking-wide text-slate-500 font-semibold flex items-center justify-between gap-2">
+                                  <span>Score</span>
+                                  <span className="text-amber-300/80 normal-case font-semibold tracking-normal">
+                                    {cur.score} — {SCORE_LABELS[cur.score]}
+                                  </span>
                                 </div>
                                 <div className="grid grid-cols-7 gap-0.5">
                                   {[1, 2, 3, 4, 5, 6, 7].map(n => (
                                     <button
                                       key={n}
                                       onClick={() => setDimension(playerId, d.key, { ...cur, score: n })}
+                                      title={`${n} — ${SCORE_LABELS[n]}`}
                                       className={`py-0.5 rounded text-xs font-mono cursor-pointer ${
                                         cur.score === n
                                           ? 'bg-amber-700 text-amber-50'
@@ -613,6 +657,20 @@ export default function LabelPanel({ socket, state }: Props) {
               >
                 Don&apos;t label
               </button>
+              {me?.isHost && (
+                <button
+                  onClick={() => {
+                    if (window.confirm('Force skip this labeling checkpoint for everyone?')) {
+                      socket.emit('label:force_skip', (r) => {
+                        if (!r.success) alert(r.error ?? 'Failed to force skip')
+                      })
+                    }
+                  }}
+                  className="px-4 py-2.5 bg-red-950/40 hover:bg-red-900/40 border border-red-800 text-red-200 text-sm font-semibold rounded transition-colors cursor-pointer"
+                >
+                  Force Skip
+                </button>
+              )}
               <button
                 onClick={handleSubmit}
                 disabled={!canSubmit}

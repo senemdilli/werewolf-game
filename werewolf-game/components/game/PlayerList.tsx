@@ -1,6 +1,7 @@
 'use client'
 
 import type { PublicPlayer, Role } from '@/types/game'
+import PlayerName from './PlayerName'
 
 const roleColor: Record<Role, string> = {
   werewolf: 'text-red-400 bg-red-950/50 border-red-800',
@@ -54,10 +55,8 @@ export default function PlayerList({
             `}
           >
             <div className="flex items-center gap-2 min-w-0">
-              <span className="text-sm font-medium truncate">
-                {p.name}
-                {isMe && <span className="ml-1 text-xs text-slate-400">(you)</span>}
-                {p.isHost && <span className="ml-1 text-xs text-violet-400">host</span>}
+              <span className="text-sm truncate">
+                <PlayerName name={p.name} role={p.role} isMe={isMe} isHost={p.isHost} />
               </span>
             </div>
             <div className="flex items-center gap-2 shrink-0">

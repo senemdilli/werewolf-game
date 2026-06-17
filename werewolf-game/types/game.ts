@@ -168,6 +168,8 @@ export interface GameState {
   labelDecisions: Record<string, boolean>
   // Testing/sandbox mode: when true, bot players auto-act on every saveGame.
   isSandbox?: boolean
+  forceRandomNames?: boolean
+  useColorsAsNames?: boolean
 }
 
 export interface PublicPlayer {
@@ -270,6 +272,8 @@ export interface ClientGameState {
   labelDecidedTotal: number
   isSandbox?: boolean
   serverTime: number
+  forceRandomNames?: boolean
+  useColorsAsNames?: boolean
 }
 
 export interface ChatMessage {
@@ -292,13 +296,14 @@ export interface SeerResult {
 export interface ServerToClientEvents {
   'game:state': (state: ClientGameState) => void
   'chat:message': (msg: ChatMessage) => void
+  'chat:history': (history: ChatMessage[]) => void
   'seer:result': (result: SeerResult) => void
   'room:kicked': (reason: string) => void
   error: (message: string) => void
 }
 
 export interface ClientToServerEvents {
-  'room:create': (data: { playerName: string; gameMode: GameMode; witchSelfHeal?: WitchSelfHealSetting; speakDuration?: number; bidDuration?: number; isSandbox?: boolean }, cb: (r: { roomCode: string; playerId: string }) => void) => void
+  'room:create': (data: { playerName: string; gameMode: GameMode; witchSelfHeal?: WitchSelfHealSetting; speakDuration?: number; bidDuration?: number; isSandbox?: boolean; forceRandomNames?: boolean; useColorsAsNames?: boolean }, cb: (r: { roomCode: string; playerId: string }) => void) => void
   'room:join': (data: { roomCode: string; playerName: string }, cb: (r: { success: boolean; playerId?: string; error?: string }) => void) => void
   'room:rejoin': (data: { roomCode: string; playerId: string }, cb: (r: { success: boolean; error?: string }) => void) => void
   'room:ready': () => void
@@ -318,4 +323,6 @@ export interface ClientToServerEvents {
   'phase:advance': () => void
   'label:submit': (data: LabelSubmitInput, cb: (r: { success: boolean; error?: string }) => void) => void
   'label:skip': (cb: (r: { success: boolean; error?: string }) => void) => void
+  'label:force_skip': (cb: (r: { success: boolean; error?: string }) => void) => void
+  'game:force_start_night': (cb: (r: { success: boolean; error?: string }) => void) => void
 }

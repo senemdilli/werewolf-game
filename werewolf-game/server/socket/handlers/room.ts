@@ -4,6 +4,7 @@ import { createInitialState, getGame, saveGame } from '@/server/game/state'
 import { buildClientState } from '@/server/game/state'
 import { startGame } from './game'
 import { v4 as uuidv4 } from 'uuid'
+import { getChatHistory } from '@/server/game/chat-store'
 
 type GameSocket = Socket<ClientToServerEvents, ServerToClientEvents>
 type GameServer = Server<ClientToServerEvents, ServerToClientEvents>
@@ -19,8 +20,10 @@ function uniquifyName(name: string, taken: string[]): string {
   return `${name}${n}`
 }
 
+const pendingDisconnects = new Map<string, NodeJS.Timeout>()
+
 export function registerRoomHandlers(io: GameServer, socket: GameSocket) {
-  socket.on('room:create', async ({ playerName, gameMode, witchSelfHeal, speakDuration, bidDuration, isSandbox }, cb) => {
+  socket.on('room:create', async ({ playerName, gameMode, witchSelfHeal, speakDuration, bidDuration, isSandbox, forceRandomNames, useColorsAsNames }, cb) => {
     try {
       let roomCode = generateRoomCode()
       let existing = await getGame(roomCode)
@@ -35,7 +38,7 @@ export function registerRoomHandlers(io: GameServer, socket: GameSocket) {
         : 'first_round'
       const safeSpeak = typeof speakDuration === 'number' && speakDuration >= 15 && speakDuration <= 100 ? speakDuration : 60
       const safeBid = typeof bidDuration === 'number' && bidDuration >= 15 && bidDuration <= 100 ? bidDuration : 30
-      const state = createInitialState(roomCode, socket.id, playerName, safeMode, safeSelfHeal, safeSpeak, safeBid, !!isSandbox)
+      const state = createInitialState(roomCode, socket.id, playerName, safeMode, safeSelfHeal, safeSpeak, safeBid, !!isSandbox, !!forceRandomNames, useColorsAsNames !== false)
       const hostId = state.players[0].id
 
       if (isSandbox) {
@@ -108,6 +111,12 @@ export function registerRoomHandlers(io: GameServer, socket: GameSocket) {
 
   socket.on('room:rejoin', async ({ roomCode, playerId }, cb) => {
     try {
+      const pending = pendingDisconnects.get(playerId)
+      if (pending) {
+        clearTimeout(pending)
+        pendingDisconnects.delete(playerId)
+      }
+
       const state = await getGame(roomCode)
       if (!state) return cb({ success: false, error: 'Room not found' })
 
@@ -127,6 +136,16 @@ export function registerRoomHandlers(io: GameServer, socket: GameSocket) {
 
       const clientState = buildClientState(state, playerId)
       socket.emit('game:state', clientState)
+
+      const history = await getChatHistory(roomCode)
+      const filtered = history.filter(msg => {
+        if (msg.isSystem) return true
+        if (msg.phase === 'night') {
+          return player.role === 'werewolf'
+        }
+        return true
+      })
+      socket.emit('chat:history', filtered)
 
       cb({ success: true })
     } catch (err) {
@@ -197,39 +216,48 @@ export function registerRoomHandlers(io: GameServer, socket: GameSocket) {
     const { playerId, roomCode } = socket.data
     if (!playerId || !roomCode) return
 
-    try {
-      const state = await getGame(roomCode)
-      if (!state) return
+    const timeout = setTimeout(async () => {
+      pendingDisconnects.delete(playerId)
+      try {
+        const state = await getGame(roomCode)
+        if (!state) return
 
-      if (state.phase === 'lobby') {
-        state.players = state.players.filter(p => p.id !== playerId)
-        if (state.players.length === 0) return
+        const player = state.players.find(p => p.id === playerId)
+        if (!player) return
+        if (player.socketId !== socket.id) return
 
-        if (state.hostId === playerId && state.players.length > 0) {
-          state.players[0].isHost = true
-          state.hostId = state.players[0].id
-        }
-        await saveGame(state)
+        if (state.phase === 'lobby') {
+          state.players = state.players.filter(p => p.id !== playerId)
+          if (state.players.length === 0) return
 
-        for (const p of state.players) {
-          io.to(p.socketId).emit('game:state', buildClientState(state, p.id))
-        }
-      } else {
-        // In-game: transfer host if host left so phase:advance still works
-        if (state.hostId === playerId) {
-          const nextHost = state.players.find(p => p.id !== playerId && p.isAlive)
-          if (nextHost) {
-            state.players.forEach(p => { p.isHost = p.id === nextHost.id })
-            state.hostId = nextHost.id
-            await saveGame(state)
-            for (const p of state.players) {
-              io.to(p.socketId).emit('game:state', buildClientState(state, p.id))
+          if (state.hostId === playerId && state.players.length > 0) {
+            state.players[0].isHost = true
+            state.hostId = state.players[0].id
+          }
+          await saveGame(state)
+
+          for (const p of state.players) {
+            io.to(p.socketId).emit('game:state', buildClientState(state, p.id))
+          }
+        } else {
+          // In-game: transfer host if host left so phase:advance still works
+          if (state.hostId === playerId) {
+            const nextHost = state.players.find(p => p.id !== playerId && p.isAlive)
+            if (nextHost) {
+              state.players.forEach(p => { p.isHost = p.id === nextHost.id })
+              state.hostId = nextHost.id
+              await saveGame(state)
+              for (const p of state.players) {
+                io.to(p.socketId).emit('game:state', buildClientState(state, p.id))
+              }
             }
           }
         }
+      } catch (err) {
+        console.error('[disconnect delayed cleanup]', err)
       }
-    } catch (err) {
-      console.error('[disconnect]', err)
-    }
+    }, 8000)
+
+    pendingDisconnects.set(playerId, timeout)
   })
 }

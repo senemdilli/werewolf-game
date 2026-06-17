@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import type { ChatMessage } from '@/types/game'
+import PlayerName from './PlayerName'
 
 interface Props {
   messages: ChatMessage[]
@@ -422,7 +423,7 @@ export default function Chat({ messages, onSend, canSend, placeholder }: Props) 
             ) : (
               <>
                 <span className="font-semibold text-slate-300">
-                  {msg.playerName}
+                  <PlayerName name={msg.playerName} showTeammateIcon={false} />
                 </span>
                 <span className="text-slate-500 text-xs ml-1">
                   [{msg.phase === 'night' ? 'night' : `day ${msg.round}`}]

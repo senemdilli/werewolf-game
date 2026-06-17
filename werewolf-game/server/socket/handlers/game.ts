@@ -12,6 +12,7 @@ import {
   resolveDayVoteArena,
 } from '@/server/game/roles'
 import { prisma } from '@/lib/prisma'
+import { addChatMessage } from '@/server/game/chat-store'
 
 type GameSocket = Socket<ClientToServerEvents, ServerToClientEvents>
 type GameServer = Server<ClientToServerEvents, ServerToClientEvents>
@@ -386,6 +387,7 @@ async function simulateBotChatMessage(
     timestamp: Date.now(),
   }
 
+  await addChatMessage(roomCode, msg)
   io.to(`room:${roomCode}`).emit('chat:message', msg)
 
   if (state.dbGameId) {
@@ -550,8 +552,20 @@ async function finalizeMayorElection(io: GameServer, roomCode: string) {
     const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1])
 
     if (sorted.length === 0) {
-      // No one voted: skip and proceed without electing a mayor.
-      await persistSystem(io, state, 'No one voted. No Mayor elected.', 'DAY')
+      // Nobody voted → pick a random alive player so the game always has a Mayor.
+      const alive = state.players.filter(p => p.isAlive)
+      if (alive.length > 0) {
+        const pick = alive[Math.floor(Math.random() * alive.length)]
+        state.mayorId = pick.id
+        state.mayorElected = true
+        await persistSystem(
+          io, state,
+          `No one voted. ${pick.name} was randomly selected as Mayor. The Mayor breaks ties in day votes.`,
+          'DAY',
+        )
+      } else {
+        await persistSystem(io, state, 'No one voted. No Mayor elected.', 'DAY')
+      }
       await proceedAfterMayorElection(io, state)
       return
     }
@@ -600,13 +614,26 @@ async function finalizeMayorElection(io: GameServer, roomCode: string) {
   }
 
   // Classic
-  const winnerId = resolveMayorElection(state.mayorVotes)
+  let winnerId = resolveMayorElection(state.mayorVotes)
+  let randomlyChosen = false
+
+  if (!winnerId) {
+    // Nobody voted → pick a random alive player so the game always has a Mayor.
+    const alive = state.players.filter(p => p.isAlive)
+    if (alive.length > 0) {
+      winnerId = alive[Math.floor(Math.random() * alive.length)].id
+      randomlyChosen = true
+    }
+  }
 
   if (winnerId) {
     state.mayorId = winnerId
     const name = state.players.find(p => p.id === winnerId)?.name ?? 'Someone'
     state.mayorElected = true
-    await persistSystem(io, state, `${name} has been elected Mayor. Their vote counts double.`, 'DAY')
+    const msg = randomlyChosen
+      ? `No one voted. ${name} was randomly selected as Mayor. Their vote counts double.`
+      : `${name} has been elected Mayor. Their vote counts double.`
+    await persistSystem(io, state, msg, 'DAY')
   }
 
   await proceedAfterMayorElection(io, state)
@@ -1024,6 +1051,7 @@ async function persistSystem(
       isSystem: true,
       timestamp: created.createdAt.getTime(),
     }
+    await addChatMessage(state.roomCode, msg)
     io.to(`room:${state.roomCode}`).emit('chat:message', msg)
   } catch (err) { console.error('[persistSystem]', err) }
 }
@@ -1099,7 +1127,86 @@ export async function startGame(io: GameServer, roomCode: string): Promise<void>
   const state = await getGame(roomCode)
   if (!state || state.phase !== 'lobby' || state.players.length < 4) return
 
+  // 1.  shuffle players array to avoid seating order bias
+  for (let i = state.players.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [state.players[i], state.players[j]] = [state.players[j], state.players[i]];
+  }
+
+  // 2. Assign roles normally to the shuffled list
   state.players = assignRoles(state.players)
+
+  // 3. If Force Random Names is enabled, randomize player names
+  if (state.forceRandomNames) {
+    let namePool: string[] = []
+    if (state.useColorsAsNames) {
+      const numPlayers = state.players.length
+      const families = [
+        ['Red', 'Pink'],
+        ['Blue', 'Teal'],
+        ['Green', 'Mint'],
+        ['Yellow', 'Gold'],
+        ['Purple', 'Violet', 'Lavender'],
+        ['Orange'],
+        ['White', 'Gray'],
+        ['Brown'],
+      ]
+
+      const shuffle = <T>(arr: T[]): T[] => {
+        const a = [...arr]
+        for (let i = a.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [a[i], a[j]] = [a[j], a[i]]
+        }
+        return a
+      }
+
+      const shufFamilies = shuffle(families)
+      const selectedFamilies = shufFamilies.slice(0, Math.min(numPlayers, 8))
+      
+      const selectedColors: string[] = []
+      const remainingColors: string[] = []
+
+      for (const fam of selectedFamilies) {
+        const shufColors = shuffle(fam)
+        selectedColors.push(shufColors[0])
+        for (let i = 1; i < shufColors.length; i++) {
+          remainingColors.push(shufColors[i])
+        }
+      }
+
+      if (numPlayers <= 8) {
+        namePool = selectedColors
+      } else {
+        const unselectedFamilies = shufFamilies.slice(8)
+        for (const fam of unselectedFamilies) {
+          for (const color of fam) {
+            remainingColors.push(color)
+          }
+        }
+
+        const shufRemaining = shuffle(remainingColors)
+        const extraNeeded = numPlayers - 8
+        namePool = [...selectedColors, ...shufRemaining.slice(0, extraNeeded)]
+      }
+
+      namePool = shuffle(namePool)
+    } else {
+      namePool = ['Aldric', 'Beatrix', 'Casimir', 'Delara', 'Edmund', 'Fiona', 'Garrett', 'Helena', 'Isidore', 'Juliana', 'Kieran', 'Lyra', 'Magnus', 'Nadia', 'Oswin', 'Petra', 'Rowena', 'Stellan', 'Tamsin', 'Ulric', 'Vesper', 'Wren', 'Xander', 'Yara', 'Zephyr']
+      // Shuffle the name pool
+      for (let i = namePool.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [namePool[i], namePool[j]] = [namePool[j], namePool[i]];
+      }
+    }
+
+    let nameIdx = 0
+    state.players = state.players.map(p => ({
+      ...p,
+      name: namePool[nameIdx++]
+    }))
+  }
+
   state.phase = 'role_reveal'
 
   const dbGame = await prisma.game.create({
@@ -1165,6 +1272,28 @@ export function registerGameHandlers(io: GameServer, socket: GameSocket) {
         await broadcastState(io, roomCode)
       }
     } catch (err) { console.error('[game:acknowledge_role]', err) }
+  })
+
+  socket.on('game:force_start_night', async (cb) => {
+    const ack = typeof cb === 'function' ? cb : () => {}
+    try {
+      const { playerId, roomCode } = socket.data
+      const state = await getGame(roomCode)
+      if (!state || state.phase !== 'role_reveal') return ack({ success: false, error: 'Invalid state' })
+
+      const caller = state.players.find(p => p.id === playerId)
+      if (!caller || !caller.isHost) return ack({ success: false, error: 'Only the host can force skip' })
+
+      for (const p of state.players) {
+        p.roleAcknowledged = true
+      }
+      await saveGame(state)
+      await transitionToNight(io, roomCode)
+      ack({ success: true })
+    } catch (err) {
+      console.error('[game:force_start_night]', err)
+      ack({ success: false, error: 'Failed to force start night' })
+    }
   })
 
   socket.on('night:werewolf_vote', async (targetId) => {
