@@ -102,7 +102,8 @@ class Ctx:
 interface Context:
 	// Generate a concrete context, depending on the type of context we want
 	// We need to do that on the fly depending on the acutal game data we receive inside of `label_once`
-	fn get_context(game_records, phase_idx) -> Ctx
+	// It is allowed to return no context (e.g. if there is no historical data just jet for the game, as it just started)
+	fn get_context(game_records, phase_idx) -> Ctx | null
 	
 	// when joining contexts, handles in which order contexts should be joined.
 	// the hightest topness value goes first, then the next and so on
@@ -111,6 +112,7 @@ interface Context:
 
 // We want to be able to combine multiple contexts, so we can just pass one object to the llm handler, but with multiple variable pieces of information.
 // a JoinedContext just concattenates contexts in order of their topness and optionally adds its own header and content
+// If all subcontexts are null and content is null -> this context becomes also null
 class JoinedContext:
 	constructor(header, content, topness, sub_contexts...)
 
@@ -123,25 +125,24 @@ class StaticContext
 // (seer: revealed factions, witch: used potions and on whom), which day it is
 class GameNowContext
 
-// Things that happend in a phase 
-// You probably want to split this up into Daytime|Morning|Evening|Label Context 
-// internally and just bubble up through get_context
-class HistoricalPhaseContext
 
-	// cutoff: how many phases of context to show (it doesn't show the current phase but only historical ones)
-	// include_trust_scores: should we also give recorded trust scores from the 
-	// games to the llm?
-	// include_trust_rationale: do we also include the rationale (if one exists)?
-	// injected_trust_labels: if we have some custom trust labels (e.g. llm 
+class PhaseGameContext
+	// Contains context for *1* phase
+	// offset: How many phases 'back' should we look? (e.g. offset=1 -> show last phase)
+	// gives null context, if the phase is does not exist
+	// optional: supports future phases for shits and giggles
+	constructor(offset=0)
+
+class PhaseTrustContext
+	// Similar to PhaseGameContext but for trust labels
+
+	// injected_trust: if we have some custom trust labels (e.g. llm 
 	// generated them in a previous iteration) generated, please use these 
 	// instead of the ones from the game. they come in the form of 
 	// list[dict[PlayerName,Label]], where each phase gets one list entry
-	// only_labels: give only the labels and not the actuall chat/event history
-	constructor(range, include_trust_scores=0, include_trust_rationale=0, injected_trust_labels=null, only_labels=0)
+	constructor(offset=0, injected_trust=null)
 
-// Same as HistorialPhaseContext but without the cutoff and only showing the 
-// current phase
-class CurrentPhaseContext
+// We can then just create multiple of these PhaseGameContext/PhaseTrustContext and join them into one combined context later
 
 // Note: all context functions have to idempotent
 ```
@@ -216,7 +217,7 @@ class LLMCallInfo:
 
 - define a toolcall to query the inner voice
 	- the toolcall should just call the `InnerVoice` that has been passed to the function (converting the formats of course)
-- define a toolcall to report results (trust labels)
+- define a toolcall to report results (trust labels) using a structured format (`structured_output` from langchain)
 - materialize the context to a string
 - call an agent with the systemprompt and the context
 - allow an recursion limit=N_Players+1 (so we dont get while trues with endless loops)
