@@ -4,6 +4,7 @@ from typing import Protocol
 
 from wolf_llm_labeling.game_records import GameRecord
 from wolf_llm_labeling.models import Label, PlayerName
+from wolf_llm_labeling.inner_voice import InnerVoice
 
 
 class Ctx:
@@ -70,6 +71,20 @@ class PhaseTrustContext:
     injected_trust: list[dict[PlayerName, Label]] | None
 
     def __init__(self, offset: int = 0, injected_trust: list[dict[PlayerName, Label]] | None = None) -> None: ...
+
+    def get_context(self, game_record: GameRecord, phase_idx: int) -> "Ctx | None": ...
+
+    @staticmethod
+    def get_topness() -> float: ...
+
+
+class InnerTrustVoiceContext:
+    '''
+        This context returns the scores of an inner trust voice for all players (except self).
+        The inner voice is provided a custom trust context.
+    ''' 
+
+    def __init__(self, inner_voice: InnerVoice, inner_voice_context: ContextProvider) -> None: ...
 
     def get_context(self, game_record: GameRecord, phase_idx: int) -> "Ctx | None": ...
 
