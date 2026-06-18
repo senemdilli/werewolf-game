@@ -14,7 +14,7 @@ from agents.prompts import *
 PROMPTS_DIR = Path(__file__).parent / "prompts"
 
 class AgentConfig(BaseModel):
-    """Configuration schema for a player."""
+    """Configuration schema for an agent."""
 
     # Basic Information
     name : str = Field(..., description="Name of the agent")
