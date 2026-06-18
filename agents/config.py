@@ -1,6 +1,8 @@
 """Player agent configuration class."""
 
+import importlib
 import json
+import os
 
 from pathlib import Path
 
@@ -20,9 +22,15 @@ class AgentConfig(BaseModel):
     prompt : str = Field("", description="Initial prompt for the agent")
 
     # LLM Configuration
-    llm_model : str = Field("gpt-4o-mini", description="LLM model to use")
-    llm_temperature : float = Field(0.7, description="Temperature for LLM responses")
-    llm_max_tokens : int = Field(2048, description="Maximum tokens for LLM responses")
+    model_name : str = Field("gemma4:26b", description="Ollama model name")
+    temperature : float = Field(0, description="Sampling temperature")
+    base_url : str = Field(
+        default_factory=lambda: os.getenv("SNET_OLLAMA_ENDPOINT"),
+        description="Ollama base URL",
+    )
+    api_key_env : str = Field(
+        "SNET_TOKEN", description="Environment variable containing the bearer token"
+    )
 
     # Tools
     tools : list[str] = Field(default_factory=list, description="List of tools available to the agent")
@@ -33,6 +41,26 @@ class AgentConfig(BaseModel):
         with open(json_path, "r", encoding="utf-8") as f:
             data = json.load(f)
         return cls(**data)
+
+    def build_chat_model(self):
+        """Create the configured Ollama chat model."""
+        chat_ollama_module = importlib.import_module("langchain_ollama")
+        ChatOllama = chat_ollama_module.ChatOllama
+
+        api_key = os.getenv(self.api_key_env)
+        if not api_key:
+            raise ValueError(f"Missing required environment variable: {self.api_key_env}")
+
+        return ChatOllama(
+            model=self.model_name,
+            temperature=self.temperature,
+            base_url=self.base_url,
+            client_kwargs={
+                "headers": {
+                    "Authorization": f"Bearer {api_key}"
+                }
+            },
+        )
 
 def generate_prompt(role: Role, tools: list[str]) -> str:
     """Generate the initial prompt for the agent based on its role and tools."""
