@@ -35,17 +35,17 @@ def test_visibility_and_structured_rows(tmp_path) -> None:
     assert any(isinstance(item, SeerRevealed) and item.affected_player == "Wolf" for item in morning)
     assert any(isinstance(item, WitchSaved) and item.affected_player == "Seer" for item in morning)
     assert any(isinstance(item, KillEvent) and item.affected_player == "Seer" for item in morning)
-    assert any(isinstance(item, SystemMessage) and item.message == "A strange bell rings." for item in morning)
-    assert any(isinstance(item, MayorElected) and item.affected_player == "Villager" for item in morning)
 
     assert any(
         isinstance(item, Message) and item.forum == Forum.VILLAGE_CHAT and item.message == "hello village"
         for item in day
     )
+    assert any(isinstance(item, SystemMessage) and item.message == "A strange bell rings." for item in day)
+    assert any(isinstance(item, MayorElected) and item.affected_player == "Villager" for item in day)
     assert any(isinstance(item, SystemMessage) and item.message == "Voting begins." for item in evening)
     assert any(isinstance(item, ExileEvent) and item.affected_player == "Wolf" for item in evening)
 
-    assert record.get_player_status(0, "Villager") == PlayerStatus.MAYOR
+    assert record.get_player_status(1, "Villager") == PlayerStatus.MAYOR
     assert record.get_player_status(0, "Seer") == PlayerStatus.DEAD
     assert record.get_player_status(2, "Wolf") == PlayerStatus.EXILED
 

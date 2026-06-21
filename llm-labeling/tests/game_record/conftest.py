@@ -5,9 +5,6 @@ import json
 from pathlib import Path
 from typing import Any
 
-from wolf_llm_labeling.game_records import GameRecord
-
-
 CSV_FIELDS = [
     "type",
     "game_id",
@@ -133,13 +130,3 @@ def write_export(
         writer.writerows(rows)
     labels_path.write_text(json.dumps(labels), encoding="utf-8")
     return csv_path, labels_path
-
-
-def count_phases(record: GameRecord) -> int:
-    count = 0
-    while True:
-        try:
-            record.get_phase_type(count)
-        except IndexError:
-            return count
-        count += 1

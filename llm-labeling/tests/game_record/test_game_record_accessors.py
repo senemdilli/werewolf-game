@@ -16,7 +16,7 @@ from wolf_llm_labeling.models import (
     VoteReason,
 )
 
-from conftest import count_phases, write_export
+from conftest import write_export
 
 
 @pytest.mark.parametrize(
@@ -58,4 +58,4 @@ def test_accessors_return_defensive_collections(tmp_path) -> None:
     labels = record.get_labels(0)
     labels["Villager"]["Wolf"].clear()
     assert record.get_labels(0)["Villager"]["Wolf"]
-    assert count_phases(record) == 3
+    assert record.get_phase_count() == 3

@@ -4,7 +4,7 @@ import pytest
 
 from wolf_llm_labeling.game_records import GameRecord, GameRecordParseError, GameRecordValidationError
 
-from conftest import base_labels, base_rows, count_phases, row, write_export
+from conftest import base_labels, base_rows, row, write_export
 
 
 def second_export() -> tuple[list[dict[str, str]], dict]:
@@ -35,8 +35,8 @@ def test_repeated_load_does_not_duplicate_records(tmp_path) -> None:
     record.read_from_files([csv_path, labels_path])
     record.read_from_files([csv_path, labels_path])
 
-    assert count_phases(record) == 3
-    assert len(record.get_phase_data(0)) == 9
+    assert record.get_phase_count() == 3
+    assert len(record.get_phase_data(0)) == 6
 
 
 def test_failed_reload_preserves_previous_state(tmp_path) -> None:
@@ -52,7 +52,7 @@ def test_failed_reload_preserves_previous_state(tmp_path) -> None:
         record.read_from_files([csv_path, bad_labels])
 
     assert record.get_players() == before_players
-    assert count_phases(record) == 3
+    assert record.get_phase_count() == 3
 
 
 def test_malformed_json_reports_file(tmp_path) -> None:

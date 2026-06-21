@@ -95,6 +95,7 @@ class GameRecord:
     def __init__(self) -> None:
         self._players: dict[PlayerName, Role] = {}
         self._phases: tuple[_Phase, ...] = ()
+        self._winner: str | None = None
 
     def read_from_files(self, paths: str | Path | list[str | Path]) -> None:
         """Load one CSV/labels export pair, replacing current state atomically."""
@@ -105,17 +106,27 @@ class GameRecord:
 
         players: dict[PlayerName, Role] = {}
         _parse_csv_players(rows, players)
-        phase_defs = _parse_labels(labels_path, labels_doc, players)
+        labels = _parse_labels(labels_path, labels_doc, players)
         _validate_game_ids(rows, labels_doc, csv_path, labels_path)
-        phases = _build_phases(rows, phase_defs, players)
+        winner = _parse_winner(rows, labels_doc, csv_path, labels_path)
+        phases = _build_phases(rows, labels, players)
 
         self._players = dict(players)
         self._phases = tuple(phases)
+        self._winner = winner
 
     def get_players(self) -> dict[PlayerName, Role]:
         """Return player roles known from CSV player rows and labels."""
 
         return dict(self._players)
+
+    def get_winner(self) -> str | None:
+        """Return the exported winning team, if a game has been loaded."""
+
+        return self._winner
+
+    def get_phase_count(self) -> int:
+        return len(self._phases)
 
     def get_phase_type(self, phase_idx: int) -> PhaseType:
         return self._phase(phase_idx).phase_type
@@ -210,6 +221,21 @@ def _validate_game_ids(rows: list[_CsvRow], labels_doc: dict[str, Any], csv_path
         )
 
 
+def _parse_winner(rows: list[_CsvRow], labels_doc: dict[str, Any], csv_path: Path, labels_path: Path) -> str | None:
+    csv_winners = {row.values["winner"] for row in rows if row.values["winner"]}
+    if len(csv_winners) > 1:
+        raise GameRecordValidationError(f"Invalid winner values in {csv_path}; expected at most one, got {sorted(csv_winners)}.")
+    json_winner = labels_doc.get("winner")
+    if json_winner is not None and not isinstance(json_winner, str):
+        raise GameRecordValidationError(f"Invalid winner in {labels_path} at winner; expected string or null.")
+    csv_winner = next(iter(csv_winners), None)
+    if csv_winner and json_winner and csv_winner != json_winner:
+        raise GameRecordValidationError(
+            f"Mismatched winner between {csv_path} ({csv_winner}) and {labels_path} ({json_winner})."
+        )
+    return csv_winner or json_winner or None
+
+
 def _parse_csv_players(rows: list[_CsvRow], players: dict[PlayerName, Role]) -> None:
     for row in rows:
         name = row.values["player_name"]
@@ -227,9 +253,9 @@ def _parse_labels(
     path: Path,
     labels_doc: dict[str, Any],
     players: dict[PlayerName, Role],
-) -> list[tuple[int, str, dict[PlayerName, dict[PlayerName, tuple[Label, ...]]]]]:
+) -> dict[tuple[int, str], dict[PlayerName, dict[PlayerName, tuple[Label, ...]]]]:
     rounds = _expect_list(labels_doc, "rounds", path, "rounds")
-    phases = []
+    labels_by_phase = {}
     for round_index, round_doc in enumerate(rounds):
         round_path = f"rounds[{round_index}]"
         if not isinstance(round_doc, dict):
@@ -249,8 +275,8 @@ def _parse_labels(
                     f"expected one of {sorted(_CHECKPOINT_TYPES)}."
                 )
             labels = _parse_checkpoint_labels(path, checkpoint_doc, players, f"{checkpoint_path}.labels")
-            phases.append((round_number, checkpoint, labels))
-    return phases
+            labels_by_phase[(round_number, checkpoint)] = labels
+    return labels_by_phase
 
 
 def _parse_checkpoint_labels(
@@ -348,40 +374,54 @@ def _role(value: Any, source: str) -> Role:
 
 def _build_phases(
     rows: list[_CsvRow],
-    phase_defs: list[tuple[int, str, dict[PlayerName, dict[PlayerName, tuple[Label, ...]]]]],
+    labels: dict[tuple[int, str], dict[PlayerName, dict[PlayerName, tuple[Label, ...]]]],
     players: dict[PlayerName, Role],
 ) -> list[_Phase]:
+    phase_defs = _csv_phase_defs(rows)
     row_items = _collect_row_items(rows)
-    phase_items: dict[tuple[int, str], list[tuple[tuple[int, int], PhaseItem]]] = defaultdict(list)
-    checkpoints_by_round: dict[int, list[str]] = defaultdict(list)
-    for round_number, checkpoint, _labels in phase_defs:
-        checkpoints_by_round[round_number].append(checkpoint)
-
-    for (round_number, source_checkpoint), items in row_items.items():
-        target_checkpoint = _target_checkpoint(source_checkpoint, checkpoints_by_round.get(round_number, []))
-        if target_checkpoint is not None:
-            phase_items[(round_number, target_checkpoint)].extend(items)
 
     phases = []
     statuses = {player: PlayerStatus.ALIVE for player in players}
     mayor: PlayerName | None = None
-    for round_number, checkpoint, labels in phase_defs:
-        data = tuple(item for _sort_key, item in sorted(phase_items.get((round_number, checkpoint), []), key=lambda item: item[0]))
+    for round_number, checkpoint in phase_defs:
+        data = tuple(item for _sort_key, item in sorted(row_items.get((round_number, checkpoint), []), key=lambda item: item[0]))
         statuses, mayor, status_snapshot = _apply_statuses(statuses, mayor, data)
-        phases.append(_Phase(_CHECKPOINT_TYPES[checkpoint], data, labels, status_snapshot))
+        phases.append(_Phase(_CHECKPOINT_TYPES[checkpoint], data, labels.get((round_number, checkpoint), {}), status_snapshot))
     return phases
 
 
+def _csv_phase_defs(rows: list[_CsvRow]) -> list[tuple[int, str]]:
+    checkpoints_by_round: dict[int, set[str]] = defaultdict(set)
+    for row in rows:
+        if row.values["type"] != "chat" or row.values["is_system"] != "true":
+            continue
+        content = row.values["content"]
+        round_number = _round_number(row)
+        if content.startswith("Dawn breaks."):
+            checkpoints_by_round[round_number].add("BEFORE_DISCUSSION")
+        elif content == "Voting begins.":
+            checkpoints_by_round[round_number].add("BEFORE_VOTING")
+        elif content.startswith("The village voted"):
+            checkpoints_by_round[round_number].add("AFTER_VOTING")
+
+    return [
+        (round_number, checkpoint)
+        for round_number in sorted(checkpoints_by_round)
+        for checkpoint in _CHECKPOINT_ORDER
+        if checkpoint in checkpoints_by_round[round_number]
+    ]
+
+
 def _collect_row_items(rows: list[_CsvRow]) -> dict[tuple[int, str], list[tuple[tuple[int, int], PhaseItem]]]:
-    first_day_player: dict[int, int] = {}
+    dawn: dict[int, int] = {}
     voting_begins: dict[int, int] = {}
     for row in rows:
         values = row.values
-        if values["type"] == "chat" and values["phase"] == "DAY":
+        if values["type"] == "chat" and values["is_system"] == "true":
             round_number = _round_number(row)
-            if values["is_system"] == "false":
-                first_day_player.setdefault(round_number, row.number)
-            if values["is_system"] == "true" and values["content"] == "Voting begins.":
+            if values["content"].startswith("Dawn breaks."):
+                dawn.setdefault(round_number, row.number)
+            elif values["content"] == "Voting begins.":
                 voting_begins.setdefault(round_number, row.number)
 
     items: dict[tuple[int, str], list[tuple[tuple[int, int], PhaseItem]]] = defaultdict(list)
@@ -392,7 +432,7 @@ def _collect_row_items(rows: list[_CsvRow]) -> dict[tuple[int, str], list[tuple[
             continue
         round_number = _round_number(row)
         if row_type == "chat":
-            checkpoint, sort_group = _chat_checkpoint(row, first_day_player, voting_begins)
+            checkpoint, sort_group = _chat_checkpoint(row, dawn, voting_begins)
             for item in _parse_chat_row(row):
                 items[(round_number, checkpoint)].append(((sort_group, row.number), item))
             continue
@@ -408,7 +448,7 @@ def _collect_row_items(rows: list[_CsvRow]) -> dict[tuple[int, str], list[tuple[
 
 def _chat_checkpoint(
     row: _CsvRow,
-    first_day_player: dict[int, int],
+    dawn: dict[int, int],
     voting_begins: dict[int, int],
 ) -> tuple[str, int]:
     phase = row.values["phase"]
@@ -419,11 +459,13 @@ def _chat_checkpoint(
             f"Invalid phase {phase!r} in {row.path} row {row.number} field phase; expected DAY or NIGHT."
         )
     round_number = _round_number(row)
+    if row.values["content"].startswith("Dawn breaks."):
+        return "BEFORE_DISCUSSION", 2
     voting_row = voting_begins.get(round_number)
     if row.values["content"] == "Voting begins." or (voting_row is not None and row.number >= voting_row):
         return "AFTER_VOTING", 0
-    first_player_row = first_day_player.get(round_number)
-    if row.values["is_system"] == "true" and (first_player_row is None or row.number < first_player_row):
+    dawn_row = dawn.get(round_number)
+    if dawn_row is None or row.number < dawn_row:
         return "BEFORE_DISCUSSION", 2
     return "BEFORE_VOTING", 0
 
@@ -516,21 +558,6 @@ def _round_number(row: _CsvRow) -> int:
             f"Invalid round {value!r} in {row.path} row {row.number} field round; expected positive integer."
         )
     return round_number
-
-
-def _target_checkpoint(source_checkpoint: str, existing_checkpoints: list[str]) -> str | None:
-    if not existing_checkpoints:
-        return None
-    if source_checkpoint in existing_checkpoints:
-        return source_checkpoint
-    source_index = _CHECKPOINT_ORDER.index(source_checkpoint)
-    for checkpoint in _CHECKPOINT_ORDER[source_index + 1 :]:
-        if checkpoint in existing_checkpoints:
-            return checkpoint
-    for checkpoint in reversed(_CHECKPOINT_ORDER[:source_index]):
-        if checkpoint in existing_checkpoints:
-            return checkpoint
-    return None
 
 
 def _apply_statuses(
