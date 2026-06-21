@@ -1,5 +1,6 @@
 """Shared domain model stubs for game records and labeling."""
 
+from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import Any, Literal, TypeAlias
 
@@ -37,66 +38,83 @@ class PlayerStatus(StrEnum):
     EXILED = "Exiled"
 
 
+@dataclass(frozen=True, slots=True)
 class Score:
     trust: int
     confidence: int
 
 
+@dataclass(frozen=True, slots=True)
 class TrustScores:
-    alignment: Score
-    strategic: Score
-    consistency: Score
+    alignment: Score | None
+    strategic: Score | None
+    consistency: Score | None
 
 
+@dataclass(frozen=True, slots=True)
 class Label:
     trust_scores: TrustScores
     reasoning: str
 
 
+@dataclass(frozen=True, slots=True)
 class Message:
     forum: Forum
     player_name: PlayerName
     message: str
 
 
+@dataclass(frozen=True, slots=True)
+class SystemMessage:
+    message: str
+    forum: Forum | None = None
+
+
+@dataclass(frozen=True, slots=True)
 class Vote:
     reason: VoteReason
     player_name: PlayerName
     voted_for: PlayerName
 
 
+@dataclass(frozen=True, slots=True)
 class KillEvent:
     affected_player: PlayerName | None
-    kind: Literal["KillEvent"]
+    kind: Literal["KillEvent"] = field(init=False, default="KillEvent")
 
 
+@dataclass(frozen=True, slots=True)
 class ExileEvent:
     affected_player: PlayerName | None
-    kind: Literal["ExileEvent"]
+    kind: Literal["ExileEvent"] = field(init=False, default="ExileEvent")
 
 
+@dataclass(frozen=True, slots=True)
 class MayorElected:
     affected_player: PlayerName | None
-    kind: Literal["MayorElected"]
+    kind: Literal["MayorElected"] = field(init=False, default="MayorElected")
 
 
+@dataclass(frozen=True, slots=True)
 class SeerRevealed:
     affected_player: PlayerName
-    kind: Literal["SeerRevealed"]
+    kind: Literal["SeerRevealed"] = field(init=False, default="SeerRevealed")
 
 
+@dataclass(frozen=True, slots=True)
 class WitchKilled:
     affected_player: PlayerName
-    kind: Literal["WitchKilled"]
+    kind: Literal["WitchKilled"] = field(init=False, default="WitchKilled")
 
 
+@dataclass(frozen=True, slots=True)
 class WitchSaved:
     affected_player: PlayerName
-    kind: Literal["WitchSaved"]
+    kind: Literal["WitchSaved"] = field(init=False, default="WitchSaved")
 
 
 Event: TypeAlias = "KillEvent | ExileEvent | MayorElected | SeerRevealed | WitchKilled | WitchSaved"
-PhaseItem: TypeAlias = "Message | Vote | Event"
+PhaseItem: TypeAlias = "Message | SystemMessage | Vote | Event"
 
 
 class LLMCallInfo:
