@@ -157,6 +157,9 @@ export default function DayPhase({ state, socket, messages }: Props) {
             <div className="text-5xl">{resultIcon}</div>
             <h3 className="text-lg font-bold text-slate-100 leading-snug">{resultHeadline}</h3>
             {resultBody}
+            <div className="mt-2 text-[10px] uppercase tracking-wider text-amber-500 font-bold border-t border-slate-800/40 w-full pt-2">
+              🏷️ Next: Trust Labeling
+            </div>
           </div>
         )}
 

@@ -20,7 +20,7 @@ type GameServer = Server<ClientToServerEvents, ServerToClientEvents>
 const DAY_DISCUSSION_MS = 2 * 60 * 1000
 const DAY_VOTE_MS = 60 * 1000
 const MAYOR_ELECTION_MS = 60 * 1000
-const DAY_RESULT_MS = 8 * 1000
+const DAY_RESULT_MS = 5 * 1000
 // Minimum visible duration for the night phase. If wolf+witch act faster than
 // this, transitionAfterNight is deferred so non-acting players can register
 // that night happened. Host phase:advance still bypasses.
