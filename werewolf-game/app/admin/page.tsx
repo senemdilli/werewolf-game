@@ -19,7 +19,7 @@ interface GameSummary {
   _count: { messages: number; players: number }
 }
 
-type FilterType = 'all' | 'normal' | 'sandbox' | 'archived'
+type FilterType = 'all' | 'normal' | 'large' | 'sandbox' | 'archived'
 
 export default function AdminPage() {
   const router = useRouter()
@@ -154,7 +154,7 @@ export default function AdminPage() {
 
       {/* Tabs */}
       <div className="mb-6 flex border-b border-slate-800">
-        {(['all', 'normal', 'sandbox', 'archived'] as const).map(t => (
+        {(['all', 'normal', 'large', 'sandbox', 'archived'] as const).map(t => (
           <button
             key={t}
             onClick={() => setFilter(t)}
@@ -164,7 +164,15 @@ export default function AdminPage() {
                 : 'border-transparent text-slate-400 hover:text-slate-200'
             }`}
           >
-            {t === 'all' ? 'All Games' : t === 'normal' ? 'Normal Games' : t === 'sandbox' ? 'Sandbox Games' : 'Archived Games'}
+            {t === 'all'
+              ? 'All Games'
+              : t === 'normal'
+              ? 'Normal Games'
+              : t === 'large'
+              ? 'Large Games (>6 players)'
+              : t === 'sandbox'
+              ? 'Sandbox Games'
+              : 'Archived Games'}
           </button>
         ))}
       </div>

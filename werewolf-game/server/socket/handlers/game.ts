@@ -543,6 +543,27 @@ async function finalizeMayorElection(io: GameServer, roomCode: string) {
   const state = await getGame(roomCode)
   if (!state || state.phase !== 'mayor_election') return
 
+  // Save mayor votes to the database if it is a DB-backed game
+  if (state.dbGameId) {
+    for (const [voterId, targetId] of Object.entries(state.mayorVotes)) {
+      const voter = state.players.find(p => p.id === voterId)
+      if (!voter) continue
+      const target = state.players.find(p => p.id === targetId)
+      if (!target) continue
+
+      await prisma.dayVote.create({
+        data: {
+          gameId: state.dbGameId,
+          playerName: voter.name,
+          playerRole: (voter.role?.toUpperCase() ?? 'VILLAGER') as any,
+          targetName: target.name,
+          voteType: 'MAYOR',
+          round: state.round,
+        }
+      }).catch(err => console.error('[mayor_vote db persist]', err))
+    }
+  }
+
   // Arena: published individual votes + runoff on tie.
   if (state.gameMode === 'arena') {
     const counts: Record<string, number> = {}
@@ -655,6 +676,27 @@ async function resolveMayorRunoff(io: GameServer, roomCode: string) {
   clearPhaseTimer(roomCode)
   const state = await getGame(roomCode)
   if (!state || !state.mayorRunoff?.active) return
+
+  // Save mayor runoff votes to the database if it is a DB-backed game
+  if (state.dbGameId && state.mayorRunoff) {
+    for (const [voterId, targetId] of Object.entries(state.mayorRunoff.votes)) {
+      const voter = state.players.find(p => p.id === voterId)
+      if (!voter) continue
+      const target = state.players.find(p => p.id === targetId)
+      if (!target) continue
+
+      await prisma.dayVote.create({
+        data: {
+          gameId: state.dbGameId,
+          playerName: voter.name,
+          playerRole: (voter.role?.toUpperCase() ?? 'VILLAGER') as any,
+          targetName: target.name,
+          voteType: 'MAYOR',
+          round: state.round,
+        }
+      }).catch(err => console.error('[mayor_runoff db persist]', err))
+    }
+  }
 
   const counts: Record<string, number> = {}
   for (const target of Object.values(state.mayorRunoff.votes)) {
@@ -858,6 +900,26 @@ async function resolveVoteAndAdvance(io: GameServer, roomCode: string) {
   clearPhaseTimer(roomCode)
   const state = await getGame(roomCode)
   if (!state || state.phase !== 'day_vote') return
+
+  // Save day votes to the database if it is a DB-backed game
+  if (state.dbGameId) {
+    for (const [voterId, targetId] of Object.entries(state.dayVotes.votes)) {
+      const voter = state.players.find(p => p.id === voterId)
+      if (!voter) continue
+      const targetName = targetId === SKIP_VOTE ? 'skip' : (state.players.find(p => p.id === targetId)?.name ?? 'unknown')
+      
+      await prisma.dayVote.create({
+        data: {
+          gameId: state.dbGameId,
+          playerName: voter.name,
+          playerRole: (voter.role?.toUpperCase() ?? 'VILLAGER') as any,
+          targetName,
+          voteType: 'EXILE',
+          round: state.round,
+        }
+      }).catch(err => console.error('[day_vote db persist]', err))
+    }
+  }
 
   if (state.gameMode === 'arena') {
     const { outcome, eliminatedId, tieCandidates } = resolveDayVoteArena(state.dayVotes.votes)
