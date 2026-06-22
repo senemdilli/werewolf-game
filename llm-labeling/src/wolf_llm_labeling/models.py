@@ -116,10 +116,46 @@ class WitchSaved:
 Event: TypeAlias = "KillEvent | ExileEvent | MayorElected | SeerRevealed | WitchKilled | WitchSaved"
 PhaseItem: TypeAlias = "Message | SystemMessage | Vote | Event"
 
+from pydantic import BaseModel, Field
 
+
+class ScoreSchema(BaseModel):
+    trust: int = Field(description="Trust score from 1 (lowest trust) to 7 (highest trust)", ge=1, le=7)
+    confidence: int = Field(description="Confidence in this score from 1 (low) to 3 (high)", ge=1, le=3)
+
+
+class TrustScoresSchema(BaseModel):
+    alignment: ScoreSchema | None = Field(default=None, description="Score on how aligned the player is with our goals/team")
+    strategic: ScoreSchema | None = Field(default=None, description="Score on how strategic and competent the player's play is")
+    consistency: ScoreSchema | None = Field(default=None, description="Score on how consistent the player's behavior is")
+
+
+class LabelSchema(BaseModel):
+    trust_scores: TrustScoresSchema = Field(description="The trust scores dimensions")
+    reasoning: str = Field(description="A concise text explanation/rationale for these trust scores")
+
+
+class SinglePlayerLabel(BaseModel):
+    player_name: str = Field(description="Name of the player being labeled")
+    label: LabelSchema = Field(description="Label containing trust scores and reasoning for this player")
+
+
+class ReportLabelsArgs(BaseModel):
+    labels: list[SinglePlayerLabel] = Field(description="List of trust labels for other players in the game")
+
+
+@dataclass
 class LLMCallInfo:
-    provider_name: str | None
-    context: str | None
-    tool_calls: list[dict[str, Any]]
-    raw_response: Any | None
-    metadata: dict[str, Any]
+    provider_name: str | None = None
+    context: str | None = None
+    tool_calls: list[dict[str, Any]] = field(default_factory=list)
+    raw_response: Any | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+
+import contextvars
+active_player_name = contextvars.ContextVar("active_player_name", default=None)
+active_llm_provider = contextvars.ContextVar("active_llm_provider", default=None)
+active_system_prompt = contextvars.ContextVar("active_system_prompt", default=None)
+
+
