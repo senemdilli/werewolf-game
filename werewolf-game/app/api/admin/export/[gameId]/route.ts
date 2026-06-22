@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma'
 export async function GET(_req: Request, { params }: { params: Promise<{ gameId: string }> }) {
   const { gameId } = await params
 
-  const [game, messages, players, actions, notes] = await Promise.all([
+  const [game, messages, players, actions, notes, dayVotes] = await Promise.all([
     prisma.game.findUnique({ where: { id: gameId } }),
     prisma.message.findMany({
       where: { gameId },
@@ -18,6 +18,10 @@ export async function GET(_req: Request, { params }: { params: Promise<{ gameId:
     prisma.playerNote.findMany({
       where: { gameId },
       include: { player: true },
+      orderBy: { createdAt: 'asc' },
+    }),
+    prisma.dayVote.findMany({
+      where: { gameId },
       orderBy: { createdAt: 'asc' },
     }),
   ])
@@ -64,6 +68,24 @@ export async function GET(_req: Request, { params }: { params: Promise<{ gameId:
       action.actionType,
       'false',
       '',
+    ]))
+  }
+
+  for (const vote of dayVotes) {
+    rows.push(csvRow([
+      'day_vote',
+      game.id,
+      game.roomCode,
+      game.gameMode,
+      game.winner ?? '',
+      String(vote.round),
+      'DAY',
+      vote.playerName,
+      vote.playerRole,
+      vote.targetName,
+      vote.voteType,
+      'false',
+      vote.createdAt.toISOString(),
     ]))
   }
 

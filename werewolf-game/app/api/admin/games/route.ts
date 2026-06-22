@@ -36,6 +36,8 @@ export async function GET(req: NextRequest) {
     where.isSandbox = true
   } else if (type === 'normal') {
     where.isSandbox = false
+  } else if (type === 'large') {
+    where.playerCount = { gt: 6 }
   }
 
   const [games, total] = await Promise.all([

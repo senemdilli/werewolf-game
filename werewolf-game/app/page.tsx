@@ -28,6 +28,7 @@ export default function Home() {
   const [speakDuration, setSpeakDuration] = useState<number>(60)
   const [bidDuration, setBidDuration] = useState<number>(30)
   const [isSandbox, setIsSandbox] = useState(false)
+  const [sandboxBotCount, setSandboxBotCount] = useState(3)
   const [forceRandomNames, setForceRandomNames] = useState(true)
   const [useColorsAsNames, setUseColorsAsNames] = useState(true)
   const [showSettings, setShowSettings] = useState(false)
@@ -64,13 +65,15 @@ export default function Home() {
         gameMode,
         witchSelfHeal,
         isSandbox,
+        sandboxBotCount,
         forceRandomNames,
         useColorsAsNames,
         ...(gameMode === 'arena' ? { speakDuration, bidDuration } : {}),
       },
       ({ roomCode, playerId }) => {
-        sessionStorage.setItem('ww_playerId', playerId)
-        sessionStorage.setItem('ww_roomCode', roomCode)
+        sessionStorage.setItem(`ww_playerId_${roomCode}`, playerId)
+        sessionStorage.setItem(`ww_roomCode_${roomCode}`, roomCode)
+        localStorage.setItem(`ww_playerId_${roomCode}`, playerId)
         router.push(`/room/${roomCode}`)
       }
     )
@@ -82,20 +85,22 @@ export default function Home() {
       finalName = RANDOM_NAMES[Math.floor(Math.random() * RANDOM_NAMES.length)]
       setName(finalName)
     }
-    if (!code.trim()) return setError('Enter a room code')
+    const finalCode = code.trim().toUpperCase()
+    if (!finalCode) return setError('Enter a room code')
     setLoading(true)
     setError('')
 
     const socket = connectSocket()
-    socket.emit('room:join', { roomCode: code.trim().toUpperCase(), playerName: finalName }, (res) => {
+    socket.emit('room:join', { roomCode: finalCode, playerName: finalName }, (res) => {
       if (!res.success) {
         setError(res.error || 'Failed to join')
         setLoading(false)
         return
       }
-      sessionStorage.setItem('ww_playerId', res.playerId!)
-      sessionStorage.setItem('ww_roomCode', code.trim().toUpperCase())
-      router.push(`/room/${code.trim().toUpperCase()}`)
+      sessionStorage.setItem(`ww_playerId_${finalCode}`, res.playerId!)
+      sessionStorage.setItem(`ww_roomCode_${finalCode}`, finalCode)
+      localStorage.setItem(`ww_playerId_${finalCode}`, res.playerId!)
+      router.push(`/room/${finalCode}`)
     })
   }
 
@@ -207,7 +212,7 @@ export default function Home() {
                   <div className="flex items-center justify-between pb-3 border-b border-slate-800/60">
                     <div>
                       <p className="text-xs font-semibold text-slate-300">🧪 Sandbox Mode</p>
-                      <p className="text-[10px] text-slate-500 leading-tight mt-0.5">Adds 3 automated bot players for instant solo testing.</p>
+                      <p className="text-[10px] text-slate-500 leading-tight mt-0.5">Adds automated bot players for instant solo testing.</p>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer select-none">
                       <input
@@ -219,6 +224,25 @@ export default function Home() {
                       <div className="relative w-9 h-5 bg-slate-800 border border-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[3px] after:left-[3px] after:bg-slate-400 after:border-slate-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-violet-600 peer-checked:after:bg-white peer-checked:after:border-white"></div>
                     </label>
                   </div>
+
+                  {/* Sandbox Bot Count Option */}
+                  {isSandbox && (
+                    <div className="flex items-center justify-between pb-3 border-b border-slate-800/60 animate-fadeIn">
+                      <div>
+                        <p className="text-xs font-semibold text-slate-300">🤖 Number of Bots</p>
+                        <p className="text-[10px] text-slate-500 leading-tight mt-0.5">Select how many bots should join (1 - 12).</p>
+                      </div>
+                      <select
+                        value={sandboxBotCount}
+                        onChange={e => setSandboxBotCount(Number(e.target.value))}
+                        className="bg-slate-850 border border-slate-700 text-slate-300 text-xs rounded px-2 py-1.5 focus:outline-none focus:border-amber-600 cursor-pointer"
+                      >
+                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(n => (
+                          <option key={n} value={n}>{n} Bot{n > 1 ? 's' : ''}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
 
                   {/* Force Random Names Switch */}
                   <div className="flex items-center justify-between pb-3 border-b border-slate-800/60">
