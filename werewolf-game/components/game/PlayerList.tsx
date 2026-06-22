@@ -49,7 +49,7 @@ export default function PlayerList({
             onClick={() => canSelect && onSelect?.(p.id)}
             className={`
               flex items-center justify-between px-3 py-2 rounded-lg border transition-colors
-              ${!p.isAlive ? 'opacity-40 line-through border-slate-800 bg-slate-900/30' : 'border-slate-700 bg-slate-800/60'}
+              ${p.isSpectator ? 'border-slate-800 bg-slate-900/10 opacity-70' : !p.isAlive ? 'opacity-40 line-through border-slate-800 bg-slate-900/30' : 'border-slate-700 bg-slate-800/60'}
               ${isSelected ? 'border-violet-500 bg-violet-950/50' : ''}
               ${canSelect ? 'cursor-pointer hover:border-violet-400' : ''}
             `}
@@ -60,7 +60,7 @@ export default function PlayerList({
               </span>
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              {showReady && (
+              {showReady && !p.isSpectator && (
                 <span className={`text-xs ${p.isReady ? 'text-emerald-400' : 'text-slate-600'}`}>
                   {p.isReady ? '✓ ready' : 'not ready'}
                 </span>
@@ -78,8 +78,13 @@ export default function PlayerList({
                   {p.role}
                 </span>
               )}
-              {!p.isAlive && (
+              {!p.isAlive && !p.isSpectator && (
                 <span className="text-xs text-slate-500">☠</span>
+              )}
+              {p.isSpectator && (
+                <span className="text-xs px-2 py-0.5 rounded border border-slate-800 bg-slate-950/60 text-slate-400">
+                  👀 Spectator
+                </span>
               )}
               {onKick && p.id !== myId && (
                 <button

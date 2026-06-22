@@ -17,15 +17,20 @@ export default function RoomPage() {
   const [ready, setReady] = useState(false)
 
   useEffect(() => {
-    const stored = sessionStorage.getItem('ww_playerId')
+    let stored = sessionStorage.getItem(`ww_playerId_${roomCode}`)
+    if (!stored) {
+      stored = localStorage.getItem(`ww_playerId_${roomCode}`)
+    }
     if (!stored) {
       router.replace('/')
       return
     }
+    sessionStorage.setItem(`ww_playerId_${roomCode}`, stored)
+    sessionStorage.setItem(`ww_roomCode_${roomCode}`, roomCode)
     setPlayerId(stored)
     connectSocket()
     setReady(true)
-  }, [router])
+  }, [router, roomCode])
 
   if (!ready || !playerId) {
     return (

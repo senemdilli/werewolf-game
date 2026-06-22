@@ -15,11 +15,13 @@ interface Props {
 
 export default function Lobby({ state, socket, onStart, onReady, starting }: Props) {
   const me = state.players.find(p => p.id === state.myId)
+  const activePlayers = state.players.filter(p => !p.isSpectator)
+  const spectators = state.players.filter(p => p.isSpectator)
   const isHost = me?.isHost
   const iAmReady = me?.isReady ?? false
-  const canStart = state.players.length >= 4
-  const readyCount = state.players.filter(p => p.isReady).length
-  const allReady = canStart && readyCount === state.players.length
+  const canStart = activePlayers.length >= 4
+  const readyCount = activePlayers.filter(p => p.isReady).length
+  const allReady = canStart && readyCount === activePlayers.length
 
   return (
     <div className="flex flex-col items-center gap-8 py-8 px-4 max-w-md mx-auto w-full">
@@ -50,11 +52,11 @@ export default function Lobby({ state, socket, onStart, onReady, starting }: Pro
       <div className="w-full bg-slate-900 border border-slate-700 rounded-xl p-4">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-semibold text-slate-300 uppercase tracking-wide">
-            Players ({state.players.length}/12)
+            Players ({activePlayers.length}/12)
           </h2>
           {canStart ? (
             <span className={`text-xs font-medium ${allReady ? 'text-emerald-400' : 'text-slate-400'}`}>
-              {readyCount}/{state.players.length} ready
+              {readyCount}/{activePlayers.length} ready
             </span>
           ) : (
             <span className="text-xs text-amber-400">Need at least 4 players</span>
@@ -70,17 +72,28 @@ export default function Lobby({ state, socket, onStart, onReady, starting }: Pro
 
       <div className="w-full bg-slate-900 border border-slate-700 rounded-xl p-4">
         <h2 className="text-sm font-semibold text-slate-300 uppercase tracking-wide mb-2">Role distribution</h2>
-        <RolePreview count={state.players.length} />
+        <RolePreview count={activePlayers.length} />
       </div>
 
       <div className="w-full flex flex-col gap-3">
+        {!me?.isSpectator && (
+          <Button
+            size="lg"
+            className="w-full"
+            variant={iAmReady ? 'ghost' : 'primary'}
+            onClick={onReady}
+          >
+            {iAmReady ? 'Cancel Ready' : 'Ready'}
+          </Button>
+        )}
+
         <Button
           size="lg"
           className="w-full"
-          variant={iAmReady ? 'ghost' : 'primary'}
-          onClick={onReady}
+          variant="ghost"
+          onClick={() => socket.emit('room:toggle_spectator')}
         >
-          {iAmReady ? 'Cancel Ready' : 'Ready'}
+          {me?.isSpectator ? 'Join as Active Player' : 'Join as Spectator'}
         </Button>
 
         {isHost && (

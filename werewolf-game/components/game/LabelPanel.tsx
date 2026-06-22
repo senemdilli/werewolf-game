@@ -65,6 +65,22 @@ export default function LabelPanel({ socket, state }: Props) {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  const [countdown, setCountdown] = useState<number | null>(
+    state.labelCheckpoint === 'after_voting' ? null : 3
+  )
+
+  useEffect(() => {
+    if (countdown === null) return
+    if (countdown === 0) {
+      setCountdown(null)
+      return
+    }
+    const timer = setTimeout(() => {
+      setCountdown(countdown - 1)
+    }, 1000)
+    return () => clearTimeout(timer)
+  }, [countdown])
+
   // Voice input state (per-target Deepgram streaming).
   const [speechLanguage, setSpeechLanguage] = useState<'en' | 'de'>('en')
   const [isRecording, setIsRecording] = useState<Record<string, boolean>>({})
@@ -406,12 +422,99 @@ export default function LabelPanel({ socket, state }: Props) {
   if (!checkpoint) return null
 
   const me = state.players.find(p => p.id === state.myId)
-  if (!me?.isAlive) return null
+  const isSpectatorOrDead = !me || !me.isAlive
 
   const title = CHECKPOINT_TITLES[checkpoint]
   const decidedCount = state.labelDecidedCount
   const decidedTotal = state.labelDecidedTotal
   const meDecided = state.labelMeDecided
+
+  if (isSpectatorOrDead) {
+    return (
+      <div className="fixed inset-0 z-40 bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">
+        <div className="w-full max-w-md bg-slate-900 border border-amber-800/40 rounded-2xl shadow-2xl flex flex-col p-6 text-center gap-4">
+          <div className="text-3xl animate-pulse">🏷️</div>
+          <div>
+            <div className="text-xs uppercase tracking-wider text-amber-400 font-semibold mb-1">
+              Trust labeling · Round {state.round}
+            </div>
+            <div className="text-lg font-semibold text-amber-100">{title}</div>
+          </div>
+          
+          <div className="text-sm text-slate-300 leading-relaxed">
+            {me?.isSpectator 
+              ? 'You are spectating. Other players are currently evaluating trust.'
+              : me?.isAlive === false
+                ? 'You have been eliminated. Other players are currently evaluating trust.'
+                : 'Other players are currently evaluating trust.'}
+          </div>
+
+          <div className="bg-slate-950/40 border border-slate-800 rounded-xl p-4 flex flex-col gap-2">
+            <div className="text-xs text-slate-400 font-medium">Labeling Progress</div>
+            <div className="text-2xl font-bold font-mono text-amber-300">
+              {decidedCount} <span className="text-slate-500 text-sm font-normal">of</span> {decidedTotal}
+            </div>
+            <div className="text-xs text-slate-500">players ready</div>
+            
+            {/* Simple progress bar */}
+            <div className="w-full bg-slate-800 rounded-full h-1.5 mt-2 overflow-hidden">
+              <div 
+                className="bg-amber-500 h-1.5 rounded-full transition-all duration-500 ease-out" 
+                style={{ width: `${decidedTotal > 0 ? (decidedCount / decidedTotal) * 100 : 0}%` }}
+              />
+            </div>
+          </div>
+
+          {me?.isHost && (
+            <button
+              onClick={() => {
+                if (window.confirm('Force skip this labeling checkpoint for everyone?')) {
+                  socket.emit('label:force_skip', (r) => {
+                    if (!r.success) alert(r.error ?? 'Failed to force skip')
+                  })
+                }
+              }}
+              className="mt-2 px-4 py-2 bg-red-900/60 hover:bg-red-800/60 border border-red-700 text-red-100 text-xs font-semibold rounded cursor-pointer transition-colors"
+            >
+              Force Skip Checkpoint (Host)
+            </button>
+          )}
+
+          <div className="text-xs text-slate-500 animate-pulse mt-2">
+            Please wait for the next phase to start...
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (countdown !== null) {
+    return (
+      <div className="fixed top-16 left-1/2 -translate-x-1/2 z-50 bg-slate-900/95 border border-amber-500/30 rounded-2xl py-2.5 px-6 shadow-[0_0_20px_rgba(245,158,11,0.15)] flex items-center gap-4 animate-fade-in backdrop-blur-sm">
+        <div className="relative flex items-center justify-center">
+          <span className="absolute w-6 h-6 rounded-full bg-amber-500/10 animate-ping" />
+          <span className="text-lg">🏷️</span>
+        </div>
+        <div className="flex flex-col">
+          <div className="text-[10px] uppercase tracking-wider text-amber-400 font-bold leading-none mb-0.5">
+            Upcoming Checkpoint
+          </div>
+          <div className="text-xs text-slate-300 font-semibold leading-none">
+            Trust Labeling starts soon
+          </div>
+        </div>
+        <div className="w-px h-6 bg-slate-800" />
+        <div className="flex items-center gap-1">
+          <span className="text-xl font-black text-amber-500 font-mono animate-pulse w-5 text-center leading-none">
+            {countdown}
+          </span>
+          <span className="text-[9px] text-slate-500 uppercase tracking-widest font-semibold select-none leading-none">
+            s
+          </span>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="fixed inset-0 z-40 bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">

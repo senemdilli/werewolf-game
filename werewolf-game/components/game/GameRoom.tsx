@@ -75,9 +75,18 @@ export default function GameRoom({ roomCode, playerId }: Props) {
     s.on('room:kicked', (reason) => {
       // Host removed us from the lobby. Clear our session and bounce home with
       // a message that survives the navigation via sessionStorage.
-      sessionStorage.removeItem('ww_playerId')
-      sessionStorage.removeItem('ww_roomCode')
+      sessionStorage.removeItem(`ww_playerId_${roomCode}`)
+      sessionStorage.removeItem(`ww_roomCode_${roomCode}`)
+      localStorage.removeItem(`ww_playerId_${roomCode}`)
       sessionStorage.setItem('ww_lastError', reason)
+      disconnectSocket()
+      router.push('/')
+    })
+
+    s.on('room:session_replaced', () => {
+      sessionStorage.removeItem(`ww_playerId_${roomCode}`)
+      sessionStorage.removeItem(`ww_roomCode_${roomCode}`)
+      sessionStorage.setItem('ww_lastError', 'This session has been opened in another tab or device.')
       disconnectSocket()
       router.push('/')
     })
@@ -87,8 +96,9 @@ export default function GameRoom({ roomCode, playerId }: Props) {
         if (!success) {
           setError(error || 'Failed to rejoin room')
           if (error === 'Room not found' || error === 'Player not found in room') {
-            sessionStorage.removeItem('ww_playerId')
-            sessionStorage.removeItem('ww_roomCode')
+            sessionStorage.removeItem(`ww_playerId_${roomCode}`)
+            sessionStorage.removeItem(`ww_roomCode_${roomCode}`)
+            localStorage.removeItem(`ww_playerId_${roomCode}`)
             router.push('/')
           }
         }
@@ -108,6 +118,7 @@ export default function GameRoom({ roomCode, playerId }: Props) {
       s.off('seer:result')
       s.off('error')
       s.off('room:kicked')
+      s.off('room:session_replaced')
     }
   }, [roomCode, playerId, router])
 
@@ -167,10 +178,11 @@ export default function GameRoom({ roomCode, playerId }: Props) {
 
   const handlePlayAgain = useCallback(() => {
     disconnectSocket()
-    sessionStorage.removeItem('ww_playerId')
-    sessionStorage.removeItem('ww_roomCode')
+    sessionStorage.removeItem(`ww_playerId_${roomCode}`)
+    sessionStorage.removeItem(`ww_roomCode_${roomCode}`)
+    localStorage.removeItem(`ww_playerId_${roomCode}`)
     router.push('/')
-  }, [router])
+  }, [router, roomCode])
 
   if (!state) {
     return (
@@ -182,8 +194,11 @@ export default function GameRoom({ roomCode, playerId }: Props) {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <div className="fixed top-3 left-3 z-40">
+      <div className="fixed top-3 left-3 z-40 flex items-center gap-2">
         <MuteToggle />
+        {state && state.phase !== 'lobby' && (
+          <RoomCodeBadge roomCode={roomCode} />
+        )}
       </div>
 
       {error && (
@@ -220,11 +235,8 @@ export default function GameRoom({ roomCode, playerId }: Props) {
         {state.phase === 'mayor_election' && socket && (
           <MayorElection state={state} socket={socket} messages={messages} />
         )}
-        {(state.phase === 'day_discussion' || state.phase === 'day_vote') && socket && (
+        {(state.phase === 'day_discussion' || state.phase === 'day_vote' || state.phase === 'day_result') && socket && (
           <DayPhase state={state} socket={socket} messages={messages} />
-        )}
-        {state.phase === 'day_result' && socket && (
-          <DayResult state={state} socket={socket} />
         )}
         {state.phase === 'game_over' && (
           <GameOver state={state} onPlayAgain={handlePlayAgain} />
@@ -298,5 +310,31 @@ function SeerResultCard({
         &times;
       </button>
     </div>
+  )
+}
+
+function RoomCodeBadge({ roomCode }: { roomCode: string }) {
+  const [copied, setCopied] = useState(false)
+  const handleCopy = () => {
+    navigator.clipboard.writeText(roomCode)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+  return (
+    <button
+      onClick={handleCopy}
+      title="Click to copy Room Code"
+      className="flex items-center gap-1.5 bg-slate-900/60 hover:bg-slate-900/90 border border-slate-700/50 hover:border-violet-700/50 backdrop-blur-sm rounded px-2 py-1 text-xs text-slate-400 hover:text-slate-200 transition-all duration-200 shadow-md cursor-pointer group"
+    >
+      <span className="text-[9px] uppercase tracking-wider text-slate-500 font-semibold group-hover:text-slate-400 select-none">
+        Room:
+      </span>
+      <span className="font-mono font-bold text-violet-400 group-hover:text-violet-300 tracking-wider">
+        {roomCode}
+      </span>
+      <span className="text-[10px] opacity-40 group-hover:opacity-100 transition-opacity select-none">
+        {copied ? '✓ Copied' : '📋'}
+      </span>
+    </button>
   )
 }

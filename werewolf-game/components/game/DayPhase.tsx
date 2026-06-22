@@ -75,6 +75,36 @@ export default function DayPhase({ state, socket, messages }: Props) {
     socket.emit('day:vote', targetId)
   }
 
+  // Day Result outcomes
+  const outcome = state.dayVoteOutcome
+  const victim = state.lastEliminated
+
+  let resultIcon = '🌑'
+  let resultHeadline = ''
+  let resultBody: React.ReactNode = null
+  let resultTone = 'border-slate-700 bg-slate-900'
+
+  if (outcome === 'eliminated' && victim) {
+    resultIcon = '⚖️'
+    resultHeadline = `${victim.playerName} has been eliminated`
+    resultBody = (
+      <p className="text-slate-300 mt-1 text-xs">
+        They were a <span className="font-semibold capitalize text-slate-100">{victim.role}</span>.
+      </p>
+    )
+    resultTone = 'border-red-800 bg-red-950/40'
+  } else if (outcome === 'skipped') {
+    resultIcon = '⏭'
+    resultHeadline = 'The village chose to skip'
+    resultBody = <p className="text-slate-300 mt-1 text-xs">No one was eliminated today.</p>
+    resultTone = 'border-amber-800 bg-amber-950/40'
+  } else if (outcome === 'tie') {
+    resultIcon = '⚖️'
+    resultHeadline = 'The vote was tied'
+    resultBody = <p className="text-slate-300 mt-1 text-xs">No one was eliminated today.</p>
+    resultTone = 'border-slate-700 bg-slate-800/60'
+  }
+
   return (
     <div className="flex flex-col lg:flex-row gap-4 h-full p-4 max-w-5xl mx-auto w-full">
       <div className="flex-1 flex flex-col gap-4 min-w-0">
@@ -84,16 +114,21 @@ export default function DayPhase({ state, socket, messages }: Props) {
             <div className="flex items-center gap-2">
               <span className="text-lg">☀️</span>
               <h2 className="font-bold text-slate-100">
-                Day {state.round} — {isVoting ? 'Voting' : 'Discussion'}
+                Day {state.round} — {state.phase === 'day_result' ? 'Result' : isVoting ? 'Voting' : 'Discussion'}
               </h2>
               {state.phaseEndTime && countdown.remaining > 0 && (
-                <span className={`text-sm font-mono px-2 py-0.5 rounded ${countdown.remaining < 15000 ? 'text-red-400 bg-red-950/40' : isVoting ? 'text-red-300 bg-red-950/30' : 'text-amber-400 bg-amber-950/40'}`}>
+                <span className={`text-sm font-mono px-2 py-0.5 rounded ${countdown.remaining < 15000 ? 'text-red-400 bg-red-950/40' : (isVoting || state.phase === 'day_result') ? 'text-red-300 bg-red-950/30' : 'text-amber-400 bg-amber-950/40'}`}>
                   {countdown.label}
                 </span>
               )}
             </div>
             <div className="flex gap-2">
-              {isHost && !isVoting && (
+              {isHost && state.phase === 'day_result' && (
+                <Button size="sm" variant="ghost" onClick={() => socket.emit('phase:advance')}>
+                  Continue now
+                </Button>
+              )}
+              {isHost && !isVoting && state.phase !== 'day_result' && (
                 <Button size="sm" variant="warning" onClick={() => socket.emit('phase:advance')}>
                   {isArena && inConversation ? 'Skip current step' : 'Start vote now'}
                 </Button>
@@ -106,7 +141,7 @@ export default function DayPhase({ state, socket, messages }: Props) {
             </div>
           </div>
 
-          {state.lastEliminated && (
+          {state.lastEliminated && state.phase !== 'day_result' && (
             <div className="mt-3 p-3 bg-slate-800 rounded-lg border border-slate-700">
               <p className="text-sm text-slate-300">
                 <span className="text-red-400 font-semibold">{state.lastEliminated.playerName}</span>
@@ -116,6 +151,14 @@ export default function DayPhase({ state, socket, messages }: Props) {
             </div>
           )}
         </div>
+
+        {state.phase === 'day_result' && (
+          <div className={`p-5 border rounded-xl text-center ${resultTone} flex flex-col items-center gap-1.5`}>
+            <div className="text-5xl">{resultIcon}</div>
+            <h3 className="text-lg font-bold text-slate-100 leading-snug">{resultHeadline}</h3>
+            {resultBody}
+          </div>
+        )}
 
         {isArena && inConversation && (
           <ConversationPanel state={state} socket={socket} />
@@ -159,7 +202,7 @@ export default function DayPhase({ state, socket, messages }: Props) {
 
         <div className="bg-slate-900 border border-slate-700 rounded-xl p-4">
           <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wide mb-3">
-            {isVoting ? 'Vote to eliminate' : 'Players'}
+            {state.phase === 'day_result' ? 'Final Votes' : isVoting ? 'Vote to eliminate' : 'Players'}
           </h3>
 
           <ul className="space-y-2">
@@ -167,7 +210,7 @@ export default function DayPhase({ state, socket, messages }: Props) {
               const votes = tally[p.id] || 0
               const voters = voterNames[p.id] || []
               const isSelected = (selected ?? myVoteTargetId) === p.id
-              const canVote = isVoting && isAlive && p.isAlive && p.id !== state.myId
+              const canVote = isVoting && isAlive && p.isAlive && p.id !== state.myId && !state.labelCheckpoint
 
               return (
                 <li
@@ -192,12 +235,12 @@ export default function DayPhase({ state, socket, messages }: Props) {
                     </span>
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
-                    {isVoting && voters.length > 0 && (
+                    {(isVoting || state.phase === 'day_result') && voters.length > 0 && (
                       <span className="text-xs text-slate-400 italic hidden sm:block">
                         ← {voters.join(', ')}
                       </span>
                     )}
-                    {isVoting && votes > 0 && (
+                    {(isVoting || state.phase === 'day_result') && votes > 0 && (
                       <span className={`text-sm font-bold px-2 py-0.5 rounded ${votes >= 2 ? 'text-red-300 bg-red-950/60' : 'text-slate-300 bg-slate-700'}`}>
                         {votes}
                       </span>
@@ -214,8 +257,8 @@ export default function DayPhase({ state, socket, messages }: Props) {
 
           {isVoting && (
             <button
-              onClick={() => isAlive && handleVote(SKIP_VOTE)}
-              disabled={!isAlive}
+              onClick={() => isAlive && !state.labelCheckpoint && handleVote(SKIP_VOTE)}
+              disabled={!isAlive || !!state.labelCheckpoint}
               className={`
                 mt-2 w-full flex items-center justify-between px-3 py-2 rounded-lg border transition-colors text-left
                 ${myVoteTargetId === SKIP_VOTE || selected === SKIP_VOTE
@@ -241,6 +284,34 @@ export default function DayPhase({ state, socket, messages }: Props) {
                 )}
               </div>
             </button>
+          )}
+
+          {!isVoting && state.phase === 'day_result' && (
+            <div
+              className={`
+                mt-2 w-full flex items-center justify-between px-3 py-2 rounded-lg border text-left
+                ${myVoteTargetId === SKIP_VOTE
+                  ? 'border-amber-500 bg-amber-950/30'
+                  : 'border-slate-700 bg-slate-800/60'}
+              `}
+            >
+              <span className="text-sm font-medium text-slate-200">
+                ⏭ Skip vote
+                <span className="text-xs text-slate-400 ml-2">(don't eliminate anyone)</span>
+              </span>
+              <div className="flex items-center gap-3 shrink-0">
+                {skipVoters.length > 0 && (
+                  <span className="text-xs text-slate-400 italic hidden sm:block">
+                    ← {skipVoters.join(', ')}
+                  </span>
+                )}
+                {skipVotes > 0 && (
+                  <span className={`text-sm font-bold px-2 py-0.5 rounded ${skipVotes >= 2 ? 'text-amber-300 bg-amber-950/60' : 'text-slate-300 bg-slate-700'}`}>
+                    {skipVotes}
+                  </span>
+                )}
+              </div>
+            </div>
           )}
 
           {isVoting && isAlive && myVoteTargetId === SKIP_VOTE && (
@@ -269,13 +340,15 @@ export default function DayPhase({ state, socket, messages }: Props) {
           <Chat
             messages={dayMessages}
             onSend={content => socket.emit('chat:send', content)}
-            canSend={isAlive && !isVoting && (isArena ? isSpeaker : true)}
+            canSend={isAlive && !isVoting && state.phase !== 'day_result' && (isArena ? isSpeaker : true) && !state.labelCheckpoint}
             placeholder={
               isVoting
                 ? 'Voting in progress'
-                : isArena
-                  ? (isSpeaker ? 'Your one message…' : 'Wait for your bid-to-speak turn')
-                  : 'Discuss with the village…'
+                : state.phase === 'day_result'
+                  ? 'Voting completed'
+                  : isArena
+                    ? (isSpeaker ? 'Your one message…' : 'Wait for your bid-to-speak turn')
+                    : 'Discuss with the village…'
             }
           />
         </div>
