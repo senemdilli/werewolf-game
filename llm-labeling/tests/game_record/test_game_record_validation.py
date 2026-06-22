@@ -36,7 +36,7 @@ def test_repeated_load_does_not_duplicate_records(tmp_path) -> None:
     record.read_from_files([csv_path, labels_path])
 
     assert record.get_phase_count() == 3
-    assert len(record.get_phase_data(0)) == 6
+    assert len(record.get_phase_data(0)) == 9
 
 
 def test_failed_reload_preserves_previous_state(tmp_path) -> None:
