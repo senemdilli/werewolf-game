@@ -71,6 +71,18 @@ def test_post_exile_mayor_election_moves_to_next_phase(tmp_path) -> None:
             | {
                 "round": "1",
                 "phase": "DAY",
+                "type": "day_vote",
+                "player_name": "Wolf",
+                "player_role": "WEREWOLF",
+                "target_name": "Witch",
+                "content": "MAYOR",
+                "is_system": "false",
+                "timestamp": "2026-01-01T00:00:12.500Z",
+            },
+            rows[0]
+            | {
+                "round": "1",
+                "phase": "DAY",
                 "content": "The village must elect a Mayor.",
                 "timestamp": "2026-01-01T00:00:13.000Z",
             },
@@ -119,12 +131,17 @@ def test_post_exile_mayor_election_moves_to_next_phase(tmp_path) -> None:
     record.read_from_files([csv_path, labels_path])
 
     assert not any(isinstance(item, MayorElected) and item.affected_player == "Witch" for item in record.get_phase_data(2))
+    assert not any(isinstance(item, Vote) and item.reason == VoteReason.MAYOR and item.voted_for == "Witch" for item in record.get_phase_data(2))
+    assert any(isinstance(item, Vote) and item.reason == VoteReason.MAYOR and item.voted_for == "Witch" for item in record.get_phase_data(3))
     assert any(isinstance(item, MayorElected) and item.affected_player == "Witch" for item in record.get_phase_data(3))
     assert any(isinstance(item, MayorElected) and item.affected_player == "Villager" for item in record.get_phase_data(3))
 
 
 def test_day_votes_are_parsed_before_results(tmp_path) -> None:
     rows = base_rows()
+    rows[8]["timestamp"] = "2026-01-01T00:00:09.000Z"
+    rows[10]["timestamp"] = "2026-01-01T00:00:11.000Z"
+    rows[11]["timestamp"] = "2026-01-01T00:00:12.000Z"
     rows.extend(
         [
             rows[0]
@@ -134,6 +151,7 @@ def test_day_votes_are_parsed_before_results(tmp_path) -> None:
                 "player_role": "WEREWOLF",
                 "target_name": "Villager",
                 "content": "MAYOR",
+                "timestamp": "2026-01-01T00:00:08.000Z",
             },
             rows[0]
             | {
@@ -142,6 +160,7 @@ def test_day_votes_are_parsed_before_results(tmp_path) -> None:
                 "player_role": "VILLAGER",
                 "target_name": "Wolf",
                 "content": "EXILE",
+                "timestamp": "2026-01-01T00:00:11.500Z",
             },
         ]
     )
@@ -152,9 +171,92 @@ def test_day_votes_are_parsed_before_results(tmp_path) -> None:
 
     morning = record.get_phase_data(0)
     evening = record.get_phase_data(2)
-    assert [type(item).__name__ for item in morning][-2:] == ["Vote", "MayorElected"]
-    assert any(isinstance(item, Vote) and item.reason == VoteReason.MAYOR and item.voted_for == "Villager" for item in morning)
+    mayor_vote_idx = next(
+        i for i, item in enumerate(morning) if isinstance(item, Vote) and item.reason == VoteReason.MAYOR and item.voted_for == "Villager"
+    )
+    mayor_result_idx = next(i for i, item in enumerate(morning) if isinstance(item, MayorElected) and item.affected_player == "Villager")
+    assert mayor_vote_idx < mayor_result_idx
     assert [type(item).__name__ for item in evening] == ["SystemMessage", "Vote", "ExileEvent"]
+
+
+def test_repeated_mayor_elections_keep_timestamp_order(tmp_path) -> None:
+    rows = base_rows()
+    rows.extend(
+        [
+            rows[0]
+            | {
+                "round": "1",
+                "phase": "DAY",
+                "content": "The village must elect a Mayor.",
+                "timestamp": "2026-01-01T00:00:13.000Z",
+            },
+            rows[0]
+            | {
+                "round": "1",
+                "phase": "DAY",
+                "type": "day_vote",
+                "player_name": "Wolf",
+                "player_role": "WEREWOLF",
+                "target_name": "Witch",
+                "content": "MAYOR",
+                "is_system": "false",
+                "timestamp": "2026-01-01T00:00:13.500Z",
+            },
+            rows[0]
+            | {
+                "round": "1",
+                "phase": "DAY",
+                "content": "Witch has been elected Mayor. Their vote counts double.",
+                "timestamp": "2026-01-01T00:00:14.000Z",
+            },
+            rows[0] | {"round": "2", "phase": "NIGHT", "content": "Night 2 begins.", "timestamp": "2026-01-01T00:00:15.000Z"},
+            rows[0]
+            | {
+                "round": "2",
+                "phase": "DAY",
+                "content": "Dawn breaks. Witch (witch) was found dead.",
+                "timestamp": "2026-01-01T00:00:16.000Z",
+            },
+            rows[0]
+            | {
+                "round": "2",
+                "phase": "DAY",
+                "content": "The village must elect a Mayor.",
+                "timestamp": "2026-01-01T00:00:16.100Z",
+            },
+            rows[0]
+            | {
+                "round": "2",
+                "phase": "DAY",
+                "type": "day_vote",
+                "player_name": "Villager",
+                "player_role": "VILLAGER",
+                "target_name": "Villager",
+                "content": "MAYOR",
+                "is_system": "false",
+                "timestamp": "2026-01-01T00:00:16.500Z",
+            },
+            rows[0]
+            | {
+                "round": "2",
+                "phase": "DAY",
+                "content": "Villager has been elected Mayor. Their vote counts double.",
+                "timestamp": "2026-01-01T00:00:17.000Z",
+            },
+        ]
+    )
+    csv_path, labels_path = write_export(tmp_path, rows=rows)
+
+    record = GameRecord()
+    record.read_from_files([csv_path, labels_path])
+
+    morning = record.get_phase_data(3)
+    names = [
+        f"vote:{item.voted_for}" if isinstance(item, Vote) and item.reason == VoteReason.MAYOR else f"mayor:{item.affected_player}"
+        for item in morning
+        if isinstance(item, Vote | MayorElected)
+    ]
+    assert names == ["vote:Witch", "mayor:Witch", "vote:Villager", "mayor:Villager"]
 
 
 def test_random_mayor_assignment_preserves_system_text(tmp_path) -> None:
