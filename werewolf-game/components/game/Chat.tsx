@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import type { ChatMessage } from '@/types/game'
-import PlayerName from './PlayerName'
+import PlayerName, { getPlayerColor } from './PlayerName'
 
 interface Props {
   messages: ChatMessage[]
@@ -15,6 +15,14 @@ const BOTTOM_THRESHOLD_PX = 40
 
 export default function Chat({ messages, onSend, canSend, placeholder }: Props) {
   const [input, setInput] = useState('')
+  const [colorChatText, setColorChatText] = useState(false)
+
+  useEffect(() => {
+    const saved = localStorage.getItem('ww_colorChatText')
+    if (saved !== null) {
+      setColorChatText(saved === 'true')
+    }
+  }, [])
   const scrollRef = useRef<HTMLDivElement>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
   const isAtBottomRef = useRef(true)
@@ -408,6 +416,23 @@ export default function Chat({ messages, onSend, canSend, placeholder }: Props) 
 
   return (
     <div className="flex flex-col h-full relative">
+      {/* Local chat settings */}
+      <div className="px-3 py-1.5 bg-slate-900/60 border-b border-slate-800/60 flex items-center justify-between shrink-0">
+        <span className="text-[10px] text-slate-500 font-medium">Chat settings</span>
+        <label className="flex items-center gap-1.5 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={colorChatText}
+            onChange={e => {
+              setColorChatText(e.target.checked)
+              localStorage.setItem('ww_colorChatText', String(e.target.checked))
+            }}
+            className="w-3 h-3 rounded bg-slate-800 border-slate-700 text-violet-600 focus:ring-0 focus:ring-offset-0 cursor-pointer accent-violet-600"
+          />
+          <span className="text-[10px] font-medium text-slate-400">Color message text</span>
+        </label>
+      </div>
+
       <div
         ref={scrollRef}
         onScroll={handleScroll}
@@ -416,23 +441,26 @@ export default function Chat({ messages, onSend, canSend, placeholder }: Props) 
         {messages.length === 0 && (
           <p className="text-slate-500 text-sm text-center mt-4">No messages yet</p>
         )}
-        {messages.map(msg => (
-          <div key={msg.id} className={`text-sm animate-fade-in ${msg.isSystem ? 'italic text-slate-400' : ''}`}>
-            {msg.isSystem ? (
-              <span>⚙ {msg.content}</span>
-            ) : (
-              <>
-                <span className="font-semibold text-slate-300">
-                  <PlayerName name={msg.playerName} showTeammateIcon={false} />
-                </span>
-                <span className="text-slate-500 text-xs ml-1">
-                  [{msg.phase === 'night' ? 'night' : `day ${msg.round}`}]
-                </span>
-                <span className="text-slate-200 ml-1">{msg.content}</span>
-              </>
-            )}
-          </div>
-        ))}
+        {messages.map(msg => {
+          const contentColor = colorChatText ? getPlayerColor(msg.playerName) : undefined
+          return (
+            <div key={msg.id} className={`text-sm animate-fade-in ${msg.isSystem ? 'italic text-slate-400' : ''}`}>
+              {msg.isSystem ? (
+                <span>⚙ {msg.content}</span>
+              ) : (
+                <>
+                  <span className="font-semibold text-slate-300">
+                    <PlayerName name={msg.playerName} showTeammateIcon={false} />
+                  </span>
+                  <span className="text-slate-500 text-xs ml-1">
+                    [{msg.phase === 'night' ? 'night' : `day ${msg.round}`}]
+                  </span>
+                  <span className="text-slate-200 ml-1" style={contentColor ? { color: contentColor } : {}}>{msg.content}</span>
+                </>
+              )}
+            </div>
+          )
+        })}
         <div ref={bottomRef} />
       </div>
 

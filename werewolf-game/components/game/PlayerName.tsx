@@ -21,6 +21,7 @@ export const COLOR_MAP: Record<string, string> = {
   Cyan: '#22d3ee',      // cyan
   Lime: '#a3e635',      // lime
   Magenta: '#d946ef',   // magenta/fuchsia
+  Beige: '#ebdcd0',     // beige/sand
 }
 
 export function getPlayerColor(name: string): string | undefined {

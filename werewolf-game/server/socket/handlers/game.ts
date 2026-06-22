@@ -1209,9 +1209,9 @@ export async function startGame(io: GameServer, roomCode: string): Promise<void>
         ['Green', 'Lime'],
         ['Yellow', 'Gold'],
         ['Purple', 'Violet', 'Magenta'],
-        ['Orange'],
+        ['Orange', 'Brown'],
         ['White', 'Gray'],
-        ['Brown'],
+        ['Beige'],
       ]
 
       const shuffle = <T>(arr: T[]): T[] => {
