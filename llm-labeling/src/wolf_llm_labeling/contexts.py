@@ -3,7 +3,22 @@
 from typing import Protocol
 
 from wolf_llm_labeling.game_records import GameRecord
-from wolf_llm_labeling.models import Label, PlayerName, Role, WitchKilled, WitchSaved, SeerRevealed
+from wolf_llm_labeling.models import (
+    ExileEvent,
+    Forum,
+    KillEvent,
+    Label,
+    MayorElected,
+    Message,
+    PhaseItem,
+    PlayerName,
+    Role,
+    SeerRevealed,
+    SystemMessage,
+    Vote,
+    WitchKilled,
+    WitchSaved,
+)
 from wolf_llm_labeling.inner_voice import InnerVoice
 
 
@@ -156,12 +171,95 @@ class GameNowContext:
 class PhaseGameContext:
     offset: int
 
-    def __init__(self, offset: int = 0) -> None: ...
+    def __init__(self, offset: int = 0) -> None:
+        self.offset = offset
 
-    def get_context(self, game_record: GameRecord, phase_idx: int) -> "Ctx | None": ...
+    def get_context(self, game_record: GameRecord, phase_idx: int) -> "Ctx | None":
+        target_phase_idx = phase_idx - self.offset
+        phase_count = game_record.get_phase_count()
+        if target_phase_idx < 0 or target_phase_idx >= phase_count:
+            return None
+
+        phase_type = game_record.get_phase_type(target_phase_idx)
+        phase_data = game_record.get_phase_data(target_phase_idx)
+        players = game_record.get_players()
+        day_num = (target_phase_idx // 3) + 1
+
+        header = (
+            "Current Phase" if self.offset == 0 else f"Phase {self.offset} ago"
+        )
+
+        content_lines = [
+            f"Day: {day_num}",
+            f"Phase: {phase_type.value}",
+        ]
+
+        if self.offset > 0:
+            content_lines.append(
+                f"This phase occurred {self.offset} phase{'s' if self.offset != 1 else ''} before the current one."
+            )
+        else:
+            content_lines.append("This is the current phase.")
+
+        alive_players = []
+        dead_players = []
+        exiled_players = []
+        for player_name in players:
+            status = game_record.get_player_status(target_phase_idx, player_name)
+            if status.value == "Alive" or status.value == "Mayor":
+                alive_players.append(player_name)
+            elif status.value == "Dead":
+                dead_players.append(player_name)
+            elif status.value == "Exiled":
+                exiled_players.append(player_name)
+
+        content_lines.append(f"Players alive at end of phase: {len(alive_players)}")
+        if dead_players or exiled_players:
+            content_lines.append("Players no longer alive at end of phase:")
+            for player_name in dead_players:
+                content_lines.append(f"  - {player_name} (Dead)")
+            for player_name in exiled_players:
+                content_lines.append(f"  - {player_name} (Exiled)")
+
+        if phase_data:
+            content_lines.append("Phase details:")
+            for item in phase_data:
+                content_lines.append(f"  - {self._describe_phase_item(item)}")
+        else:
+            content_lines.append("No phase details available.")
+
+        return Ctx(header=header, content="\n".join(content_lines))
+
+    def _describe_phase_item(self, item: PhaseItem) -> str:
+        if isinstance(item, Message):
+            forum_prefix = {
+                Forum.VILLAGE_CHAT: "[VILLAGE]",
+                Forum.WEREWOLF_CHAT: "[WEREWOLF]",
+            }.get(item.forum, "[CHAT]")
+            return f"{forum_prefix} {item.player_name}: {item.message}"
+        if isinstance(item, SystemMessage):
+            return f"SYSTEM: {item.message}"
+        if isinstance(item, Vote):
+            return f"{item.player_name} voted for {item.voted_for} ({item.reason.value})"
+        if isinstance(item, KillEvent):
+            return f"{item.affected_player} was found dead."
+        if isinstance(item, ExileEvent):
+            if item.affected_player is None:
+                return "No one was exiled."
+            return f"{item.affected_player} was exiled."
+        if isinstance(item, MayorElected):
+            return f"{item.affected_player} was elected Mayor."
+        if isinstance(item, SeerRevealed):
+            return f"The Seer investigated {item.affected_player}."
+        if isinstance(item, WitchKilled):
+            return f"The Witch killed {item.affected_player}."
+        if isinstance(item, WitchSaved):
+            return f"The Witch healed {item.affected_player}."
+        return str(item)
 
     @staticmethod
-    def get_topness() -> float: ...
+    def get_topness() -> float:
+        return 10.0
 
 
 class PhaseTrustContext:
