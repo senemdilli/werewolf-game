@@ -79,6 +79,7 @@ model Game {
   nightActions NightAction[]
   playerNotes  PlayerNote[]
   labels       Label[]
+  dayVotes     DayVote[]
 
   @@map("games")
 }
@@ -193,4 +194,24 @@ model LabelTrustUpdate {
 
   @@unique([labelTargetId, dimension])
   @@map("label_trust_updates")
+}
+
+enum VoteType {
+  EXILE
+  MAYOR
+}
+
+model DayVote {
+  id             String   @id @default(uuid())
+  gameId         String   @map("game_id")
+  playerName     String   @map("player_name")
+  playerRole     Role     @map("player_role")
+  targetName     String   @map("target_name")
+  voteType       VoteType @map("vote_type")
+  round          Int
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  game           Game     @relation(fields: [gameId], references: [id])
+
+  @@map("day_votes")
 }
