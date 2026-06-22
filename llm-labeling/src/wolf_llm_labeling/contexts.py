@@ -120,7 +120,10 @@ class GameNowContext:
             for pname in players
         }
         
-        alive_players = [p for p, status in all_player_statuses.items() if status.value == "Alive"]
+        alive_players = [
+            p for p, status in all_player_statuses.items()
+            if status.value in {"Alive", "Mayor"}
+        ]
         dead_players = [p for p, status in all_player_statuses.items() if status.value == "Dead"]
         exiled_players = [p for p, status in all_player_statuses.items() if status.value == "Exiled"]
         
