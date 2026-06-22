@@ -1,6 +1,9 @@
 """Context builder interfaces and stubs for LLM-visible game state."""
 
-from typing import Protocol
+from __future__ import annotations
+
+from collections.abc import Iterable
+from typing import TYPE_CHECKING, Protocol
 
 from wolf_llm_labeling.game_records import GameRecord
 from wolf_llm_labeling.models import (
@@ -13,65 +16,123 @@ from wolf_llm_labeling.models import (
     PhaseItem,
     PlayerName,
     Role,
+    Score,
     SeerRevealed,
     SystemMessage,
     Vote,
     WitchKilled,
     WitchSaved,
 )
-from wolf_llm_labeling.inner_voice import InnerVoice
+
+if TYPE_CHECKING:
+    from wolf_llm_labeling.inner_voice import InnerVoice
 
 
 class Ctx:
+    __slots__ = ("header", "content", "subsections")
+
     header: str | None
     content: str | None
-    subsections: list["Ctx"]
+    subsections: tuple["Ctx", ...]
 
     def __init__(
         self,
         header: str | None = None,
         content: str | None = None,
-        subsections: list["Ctx"] | None = None,
+        subsections: Iterable["Ctx"] | None = None,
     ) -> None:
+        subsection_tuple = () if subsections is None else tuple(subsections)
+        for index, subsection in enumerate(subsection_tuple):
+            if not isinstance(subsection, Ctx):
+                raise TypeError(
+                    f"Ctx subsections must be Ctx instances, got {type(subsection).__name__} at index {index}."
+                )
+
         self.header = header
         self.content = content
-        self.subsections = list(subsections) if subsections is not None else []
+        self.subsections = subsection_tuple
+
+    def is_empty(self) -> bool:
+        return (
+            _visible_text(self.header) is None
+            and _visible_text(self.content) is None
+            and all(subsection.is_empty() for subsection in self.subsections)
+        )
 
     def to_string(self, level: int = 1) -> str:
-        parts = []
-        next_level = level
-        if self.header is not None:
-            parts.append(f"{'#' * level} {self.header}")
-            next_level = level + 1
-        if self.content is not None and self.content.strip():
-            parts.append(self.content.strip())
-        for sub in self.subsections:
-            sub_str = sub.to_string(level=next_level)
-            if sub_str.strip():
-                parts.append(sub_str.strip())
-        return "\n\n".join(parts)
+        return self._render(level)
+
+    def __str__(self) -> str:
+        return self.to_string()
+
+    def _render(self, heading_level: int) -> str:
+        header = _visible_text(self.header)
+        content = _visible_text(self.content)
+        child_heading_level = heading_level + 1 if header is not None else heading_level
+        blocks = []
+
+        if header is not None:
+            blocks.append(f"{'#' * min(heading_level, 6)} {header}")
+        if content is not None:
+            blocks.append(content)
+        for subsection in self.subsections:
+            rendered = subsection._render(child_heading_level)
+            if rendered:
+                blocks.append(rendered)
+
+        return "\n\n".join(blocks)
+
+
+def _visible_text(value: str | None) -> str | None:
+    if value is None:
+        return None
+    text = value.strip()
+    return text or None
 
 
 class ContextProvider(Protocol):
     def get_context(self, game_record: GameRecord, phase_idx: int) -> "Ctx | None": ...
 
-    @staticmethod
-    def get_topness() -> float: ...
+    def get_topness(self) -> float: ...
 
 
 class JoinedContext:
+    __slots__ = ("header", "content", "topness", "sub_contexts")
+
     def __init__(
         self,
         header: str | None,
         content: str | None,
         topness: float,
         *sub_contexts: ContextProvider,
-    ) -> None: ...
+    ) -> None:
+        self.header = header
+        self.content = content
+        self.topness = topness
+        self.sub_contexts = tuple(sub_contexts)
 
-    def get_context(self, game_record: GameRecord, phase_idx: int) -> "Ctx | None": ...
+    def get_context(self, game_record: GameRecord, phase_idx: int) -> "Ctx | None":
+        child_contexts = []
+        for provider in self.sub_contexts:
+            context = provider.get_context(game_record, phase_idx)
+            if context is None or context.is_empty():
+                continue
+            child_contexts.append((provider.get_topness(), context))
 
-    @staticmethod
-    def get_topness() -> float: ...
+        child_contexts.sort(key=lambda item: item[0], reverse=True)
+        subsections = [context for _, context in child_contexts]
+
+        if _visible_text(self.content) is None and not subsections:
+            return None
+
+        return Ctx(
+            header=self.header,
+            content=self.content,
+            subsections=subsections,
+        )
+
+    def get_topness(self) -> float:
+        return self.topness
 
 
 class StaticContext:
@@ -93,8 +154,7 @@ class StaticContext:
             content=f"Your name is: {self.player_name}\nYour role is: {role.value}",
         )
 
-    @staticmethod
-    def get_topness() -> float:
+    def get_topness(self) -> float:
         return 100.0
 
 
@@ -188,8 +248,7 @@ class GameNowContext:
             content=content,
         )
 
-    @staticmethod
-    def get_topness() -> float:
+    def get_topness(self) -> float:
         return 50.0
 
 
@@ -285,21 +344,96 @@ class PhaseGameContext:
             return f"The Witch healed {item.affected_player}."
         return str(item)
 
-    @staticmethod
-    def get_topness() -> float:
+    def get_topness(self) -> float:
         return 10.0
 
 
 class PhaseTrustContext:
     offset: int
-    injected_trust: list[dict[PlayerName, Label]] | None
+    injected_trust: tuple[dict[PlayerName, Label], ...] | None
+    player_name: PlayerName | None
 
-    def __init__(self, offset: int = 0, injected_trust: list[dict[PlayerName, Label]] | None = None) -> None: ...
+    def __init__(
+        self,
+        offset: int = 0,
+        injected_trust: list[dict[PlayerName, Label]] | None = None,
+        *,
+        player_name: PlayerName | None = None,
+    ) -> None:
+        if isinstance(offset, bool) or not isinstance(offset, int):
+            raise TypeError("PhaseTrustContext offset must be a nonnegative integer.")
+        if offset < 0:
+            raise ValueError("PhaseTrustContext offset must be nonnegative.")
 
-    def get_context(self, game_record: GameRecord, phase_idx: int) -> "Ctx | None": ...
+        self.offset = offset
+        self.player_name = player_name
+        self.injected_trust = None if injected_trust is None else tuple(dict(phase) for phase in injected_trust)
 
-    @staticmethod
-    def get_topness() -> float: ...
+    def get_context(self, game_record: GameRecord, phase_idx: int) -> "Ctx | None":
+        target_phase_idx = phase_idx - self.offset
+        if not 0 <= target_phase_idx < game_record.get_phase_count():
+            return None
+
+        if self.injected_trust is not None:
+            if target_phase_idx >= len(self.injected_trust):
+                return None
+            labels = {
+                target: (label,)
+                for target, label in self.injected_trust[target_phase_idx].items()
+            }
+        else:
+            if self.player_name is None:
+                return None
+            labels = _normalize_game_labels(game_record.get_labels(target_phase_idx).get(self.player_name, {}))
+
+        target_contexts = []
+        for target, target_labels in labels.items():
+            content = _render_target_labels(target_labels)
+            if content is not None:
+                target_contexts.append(Ctx(header=target, content=content))
+
+        if not target_contexts:
+            return None
+
+        return Ctx(header="Trust Labels", subsections=tuple(target_contexts))
+
+    def get_topness(self) -> float:
+        return 0.0
+
+
+def _normalize_game_labels(labels: dict[PlayerName, list[Label]]) -> dict[PlayerName, tuple[Label, ...]]:
+    return {target: tuple(target_labels) for target, target_labels in labels.items()}
+
+
+def _render_score(name: str, score: Score | None) -> str | None:
+    if score is None:
+        return None
+    return f"{name}: trust {score.trust}/7, confidence {score.confidence}/3"
+
+
+def _render_label(label: Label) -> str | None:
+    lines = [
+        line
+        for line in (
+            _render_score("Alignment", label.trust_scores.alignment),
+            _render_score("Strategic", label.trust_scores.strategic),
+            _render_score("Consistency", label.trust_scores.consistency),
+        )
+        if line is not None
+    ]
+    reasoning = label.reasoning.strip()
+    if reasoning:
+        lines.append(f"Reasoning: {reasoning}")
+    return "\n".join(lines) if lines else None
+
+
+def _render_target_labels(labels: tuple[Label, ...]) -> str | None:
+    rendered_labels = [rendered for label in labels if (rendered := _render_label(label)) is not None]
+    if not rendered_labels:
+        return None
+    if len(rendered_labels) == 1:
+        return rendered_labels[0]
+    return "\n\n".join(f"Label {index}:\n{rendered}" for index, rendered in enumerate(rendered_labels, start=1))
 
 
 class InnerTrustVoiceContext:
@@ -312,5 +446,4 @@ class InnerTrustVoiceContext:
 
     def get_context(self, game_record: GameRecord, phase_idx: int) -> "Ctx | None": ...
 
-    @staticmethod
-    def get_topness() -> float: ...
+    def get_topness(self) -> float: ...
