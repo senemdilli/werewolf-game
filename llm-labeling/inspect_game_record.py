@@ -11,7 +11,7 @@ from wolf_llm_labeling.game_records import GameRecord
 from wolf_llm_labeling.models import Label, Message, SystemMessage, Vote
 
 
-DEFAULT_GAME = Path(__file__).parents[1] / "results/game-output/game-AA0F7O-30bcd6c1.csv"
+DEFAULT_GAME = Path(__file__).parents[1] / "results/game-records/game-44UT6Y-d59e923e.csv"
 
 
 def describe_item(item: object) -> str:
@@ -34,7 +34,7 @@ def describe_label(label: Label) -> str:
 
 def main() -> None:
     game_path = Path(sys.argv[1]) if len(sys.argv) > 1 else DEFAULT_GAME
-    max_phases = int(sys.argv[2]) if len(sys.argv) > 2 else 10
+    max_phases = int(sys.argv[2]) if len(sys.argv) > 2 else 15
 
     record = GameRecord()
     record.read_from_files(game_path)

@@ -7,6 +7,7 @@ import json
 import re
 from collections import defaultdict
 from dataclasses import dataclass
+from datetime import datetime, timedelta
 from json import JSONDecodeError
 from pathlib import Path
 from typing import Any
@@ -71,6 +72,7 @@ _CONFIDENCE = {"LOW": 1, "MEDIUM": 2, "HIGH": 3}
 _DAWN_DEATH_RE = re.compile(r"Dawn breaks\. (?P<victims>.+?) (?:was|were) found dead\.")
 _PLAYER_WITH_ROLE_RE = re.compile(r"([^(),]+?)\s*\([^)]*\)")
 _MAYOR_RE = re.compile(r"^(?P<player>.+?) has been elected Mayor\. Their vote counts double\.$")
+_RANDOM_MAYOR_RE = re.compile(r"^No one voted\. (?P<player>.+?) was randomly selected as Mayor\. Their vote counts double\.$")
 _EXILE_RE = re.compile(r"^The village voted\. (?P<player>.+?) \([^)]*\) has been eliminated\.$")
 
 
@@ -392,16 +394,17 @@ def _build_phases(
 
 def _csv_phase_defs(rows: list[_CsvRow]) -> list[tuple[int, str]]:
     checkpoints_by_round: dict[int, set[str]] = defaultdict(set)
+    vote_results = _vote_result_rows(rows)
     for row in rows:
         if row.values["type"] != "chat" or row.values["is_system"] != "true":
             continue
         content = row.values["content"]
-        round_number = _round_number(row)
+        round_number = _effective_round(row, vote_results)
         if content.startswith("Dawn breaks."):
             checkpoints_by_round[round_number].add("BEFORE_DISCUSSION")
         elif content == "Voting begins.":
             checkpoints_by_round[round_number].add("BEFORE_VOTING")
-        elif content.startswith("The village voted"):
+        elif _is_vote_result(content):
             checkpoints_by_round[round_number].add("AFTER_VOTING")
 
     return [
@@ -412,43 +415,100 @@ def _csv_phase_defs(rows: list[_CsvRow]) -> list[tuple[int, str]]:
     ]
 
 
-def _collect_row_items(rows: list[_CsvRow]) -> dict[tuple[int, str], list[tuple[tuple[int, int], PhaseItem]]]:
+def _vote_result_rows(rows: list[_CsvRow]) -> dict[int, tuple[int, datetime | None]]:
+    results = {}
+    for row in rows:
+        if row.values["type"] == "chat" and row.values["is_system"] == "true" and _is_vote_result(row.values["content"]):
+            results.setdefault(_round_number(row), (row.number, _timestamp(row)))
+    return results
+
+
+def _effective_round(row: _CsvRow, vote_results: dict[int, tuple[int, datetime | None]]) -> int:
+    round_number = _round_number(row)
+    result = vote_results.get(round_number)
+    if result is None:
+        return round_number
+    result_row, result_time = result
+    row_time = _timestamp(row)
+    if result_time is not None and row_time is not None:
+        return round_number + 1 if row_time > result_time else round_number
+    if row.number > result_row:
+        return round_number + 1
+    return round_number
+
+
+def _timestamp(row: _CsvRow) -> datetime | None:
+    value = row.values["timestamp"]
+    if not value:
+        return None
+    try:
+        return datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError as exc:
+        raise GameRecordValidationError(
+            f"Invalid timestamp {value!r} in {row.path} row {row.number} field timestamp; expected ISO datetime."
+        ) from exc
+
+
+def _collect_row_items(rows: list[_CsvRow]) -> dict[tuple[int, str], list[tuple[tuple[datetime, int, int], PhaseItem]]]:
     dawn: dict[int, int] = {}
+    dawn_times: dict[int, datetime] = {}
+    mayor_elected: dict[int, int] = {}
     voting_begins: dict[int, int] = {}
+    vote_results = _vote_result_rows(rows)
     for row in rows:
         values = row.values
         if values["type"] == "chat" and values["is_system"] == "true":
-            round_number = _round_number(row)
+            round_number = _effective_round(row, vote_results)
             if values["content"].startswith("Dawn breaks."):
                 dawn.setdefault(round_number, row.number)
+                if (timestamp := _timestamp(row)) is not None:
+                    dawn_times.setdefault(round_number, timestamp)
+            elif _MAYOR_RE.match(values["content"]) or _RANDOM_MAYOR_RE.match(values["content"]):
+                mayor_elected[round_number] = row.number
             elif values["content"] == "Voting begins.":
                 voting_begins.setdefault(round_number, row.number)
 
-    items: dict[tuple[int, str], list[tuple[tuple[int, int], PhaseItem]]] = defaultdict(list)
+    items: dict[tuple[int, str], list[tuple[tuple[datetime, int, int], PhaseItem]]] = defaultdict(list)
     for row in rows:
         row_type = row.values["type"]
         if row_type == "note":
             # ponytail: private notes need a future role-memory model, not GameRecord phase items.
             continue
-        round_number = _round_number(row)
         if row_type == "chat":
-            checkpoint, sort_group = _chat_checkpoint(row, dawn, voting_begins)
+            round_number = _effective_round(row, vote_results)
+            checkpoint, sort_group = _chat_checkpoint(row, round_number, dawn, mayor_elected, voting_begins)
             for item in _parse_chat_row(row):
-                items[(round_number, checkpoint)].append(((sort_group, row.number), item))
+                items[(round_number, checkpoint)].append((_sort_key(row, sort_group), item))
             continue
         if row_type == "night_action":
-            items[(round_number, "BEFORE_DISCUSSION")].append(((1, row.number), _parse_night_action(row)))
+            round_number = _round_number(row)
+            # ponytail: night actions have no timestamp; place them just before dawn results.
+            fallback_time = dawn_times.get(round_number)
+            if fallback_time is not None:
+                fallback_time -= timedelta(milliseconds=1)
+            items[(round_number, "BEFORE_DISCUSSION")].append((_sort_key(row, 1, fallback_time), _parse_night_action(row)))
+            continue
+        if row_type == "day_vote":
+            round_number = _effective_round(row, vote_results)
+            checkpoint, sort_group = _day_vote_checkpoint(row)
+            items[(round_number, checkpoint)].append((_sort_key(row, sort_group), _parse_day_vote(row)))
             continue
         raise GameRecordParseError(
             f"Unknown row type {row_type!r} in {row.path} row {row.number} field type; "
-            "expected chat, night_action, or note."
+            "expected chat, day_vote, night_action, or note."
         )
     return items
 
 
+def _sort_key(row: _CsvRow, sort_group: int, fallback_time: datetime | None = None) -> tuple[datetime, int, int]:
+    return (_timestamp(row) or fallback_time or datetime.max, sort_group, row.number)
+
+
 def _chat_checkpoint(
     row: _CsvRow,
+    round_number: int,
     dawn: dict[int, int],
+    mayor_elected: dict[int, int],
     voting_begins: dict[int, int],
 ) -> tuple[str, int]:
     phase = row.values["phase"]
@@ -458,16 +518,41 @@ def _chat_checkpoint(
         raise GameRecordValidationError(
             f"Invalid phase {phase!r} in {row.path} row {row.number} field phase; expected DAY or NIGHT."
         )
-    round_number = _round_number(row)
+    if round_number != _round_number(row):
+        return "BEFORE_DISCUSSION", 0
     if row.values["content"].startswith("Dawn breaks."):
         return "BEFORE_DISCUSSION", 2
     voting_row = voting_begins.get(round_number)
-    if row.values["content"] == "Voting begins." or (voting_row is not None and row.number >= voting_row):
+    if row.values["content"] == "Voting begins.":
         return "AFTER_VOTING", 0
+    if _is_vote_result(row.values["content"]):
+        return "AFTER_VOTING", 2
+    if voting_row is not None and row.number >= voting_row:
+        return "AFTER_VOTING", 2
     dawn_row = dawn.get(round_number)
     if dawn_row is None or row.number < dawn_row:
         return "BEFORE_DISCUSSION", 2
+    mayor_row = mayor_elected.get(round_number)
+    if _MAYOR_RE.match(row.values["content"]) or _RANDOM_MAYOR_RE.match(row.values["content"]):
+        return "BEFORE_DISCUSSION", 4
+    if mayor_row is not None and row.number <= mayor_row:
+        return "BEFORE_DISCUSSION", 2
     return "BEFORE_VOTING", 0
+
+
+def _is_vote_result(content: str) -> bool:
+    return content.startswith("The village voted") or content == "The vote ended in a tie. No one was eliminated."
+
+
+def _day_vote_checkpoint(row: _CsvRow) -> tuple[str, int]:
+    if row.values["content"] == "MAYOR":
+        return "BEFORE_DISCUSSION", 3
+    if row.values["content"] == "EXILE":
+        return "AFTER_VOTING", 1
+    raise GameRecordParseError(
+        f"Unknown day_vote {row.values['content']!r} in {row.path} row {row.number} field content; "
+        "expected MAYOR or EXILE."
+    )
 
 
 def _parse_chat_row(row: _CsvRow) -> list[PhaseItem]:
@@ -515,10 +600,13 @@ def _parse_system_text(row: _CsvRow) -> list[PhaseItem]:
     mayor_match = _MAYOR_RE.match(content)
     if mayor_match:
         return [MayorElected(mayor_match.group("player"))]
+    random_mayor_match = _RANDOM_MAYOR_RE.match(content)
+    if random_mayor_match:
+        return [SystemMessage(message=content), MayorElected(random_mayor_match.group("player"))]
     exile_match = _EXILE_RE.match(content)
     if exile_match:
         return [ExileEvent(exile_match.group("player"))]
-    if content == "The village voted to skip. No one was eliminated.":
+    if content in {"The village voted to skip. No one was eliminated.", "The vote ended in a tie. No one was eliminated."}:
         return [ExileEvent(None)]
     return [SystemMessage(message=content)]
 
@@ -542,6 +630,23 @@ def _parse_night_action(row: _CsvRow) -> PhaseItem:
     raise GameRecordParseError(
         f"Unknown night_action {action!r} in {row.path} row {row.number} field content; "
         "expected KILL, INVESTIGATE, HEAL, or WITCH_KILL."
+    )
+
+
+def _parse_day_vote(row: _CsvRow) -> PhaseItem:
+    actor = row.values["player_name"]
+    target = row.values["target_name"]
+    action = row.values["content"]
+    if not actor:
+        raise GameRecordValidationError(f"Invalid empty player_name in {row.path} row {row.number} field player_name.")
+    if not target:
+        raise GameRecordValidationError(f"Invalid empty target_name in {row.path} row {row.number} field target_name.")
+    if action == "MAYOR":
+        return Vote(reason=VoteReason.MAYOR, player_name=actor, voted_for=target)
+    if action == "EXILE":
+        return Vote(reason=VoteReason.EXILE, player_name=actor, voted_for=target)
+    raise GameRecordParseError(
+        f"Unknown day_vote {action!r} in {row.path} row {row.number} field content; expected MAYOR or EXILE."
     )
 
 

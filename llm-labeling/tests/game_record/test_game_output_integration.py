@@ -17,7 +17,7 @@ from wolf_llm_labeling.models import (
     WitchKilled,
 )
 
-EXPORT_DIR = Path(__file__).parents[3] / "results" / "game-output"
+EXPORT_DIR = Path(__file__).parents[3] / "results" / "game-records"
 
 
 @pytest.mark.parametrize(
