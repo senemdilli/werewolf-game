@@ -5,13 +5,13 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent / "src"))
+sys.path.insert(0, str(Path(__file__).parents[1] / "src"))
 
 from wolf_llm_labeling.game_records import GameRecord
 from wolf_llm_labeling.models import Label, Message, SystemMessage, Vote
 
 
-DEFAULT_GAME = Path(__file__).parents[1] / "results/game-records/game-44UT6Y-d59e923e.csv"
+DEFAULT_GAME = Path(__file__).parents[2] / "results/game-records/game-44UT6Y-d59e923e.csv"
 
 
 def describe_item(item: object) -> str:
