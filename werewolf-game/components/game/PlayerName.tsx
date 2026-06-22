@@ -18,6 +18,9 @@ export const COLOR_MAP: Record<string, string> = {
   Gold: '#fbbf24',      // gold
   Mint: '#6ee7b7',      // mint
   Lavender: '#e9d5ff',  // lavender
+  Cyan: '#22d3ee',      // cyan
+  Lime: '#a3e635',      // lime
+  Magenta: '#d946ef',   // magenta/fuchsia
 }
 
 export function getPlayerColor(name: string): string | undefined {

@@ -1205,10 +1205,10 @@ export async function startGame(io: GameServer, roomCode: string): Promise<void>
       const numPlayers = state.players.length
       const families = [
         ['Red', 'Pink'],
-        ['Blue', 'Teal'],
-        ['Green', 'Mint'],
+        ['Blue', 'Cyan'],
+        ['Green', 'Lime'],
         ['Yellow', 'Gold'],
-        ['Purple', 'Violet', 'Lavender'],
+        ['Purple', 'Violet', 'Magenta'],
         ['Orange'],
         ['White', 'Gray'],
         ['Brown'],
