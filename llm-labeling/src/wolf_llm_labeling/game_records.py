@@ -392,17 +392,16 @@ def _build_phases(
 
 def _csv_phase_defs(rows: list[_CsvRow]) -> list[tuple[int, str]]:
     checkpoints_by_round: dict[int, set[str]] = defaultdict(set)
-    vote_results = _vote_result_rows(rows)
     for row in rows:
         if row.values["type"] != "chat" or row.values["is_system"] != "true":
             continue
         content = row.values["content"]
-        round_number = _effective_round(row, vote_results)
+        round_number = _round_number(row)
         if content.startswith("Dawn breaks."):
             checkpoints_by_round[round_number].add("BEFORE_DISCUSSION")
         elif content == "Voting begins.":
             checkpoints_by_round[round_number].add("BEFORE_VOTING")
-        elif _is_vote_result(content):
+        elif content.startswith("The village voted"):
             checkpoints_by_round[round_number].add("AFTER_VOTING")
 
     return [
@@ -413,34 +412,15 @@ def _csv_phase_defs(rows: list[_CsvRow]) -> list[tuple[int, str]]:
     ]
 
 
-def _vote_result_rows(rows: list[_CsvRow]) -> dict[int, int]:
-    results = {}
-    for row in rows:
-        if row.values["type"] == "chat" and row.values["is_system"] == "true" and _is_vote_result(row.values["content"]):
-            results.setdefault(_round_number(row), row.number)
-    return results
-
-
-def _effective_round(row: _CsvRow, vote_results: dict[int, int]) -> int:
-    round_number = _round_number(row)
-    if row.number > vote_results.get(round_number, 10**9):
-        return round_number + 1
-    return round_number
-
-
 def _collect_row_items(rows: list[_CsvRow]) -> dict[tuple[int, str], list[tuple[tuple[int, int], PhaseItem]]]:
     dawn: dict[int, int] = {}
-    mayor_elected: dict[int, int] = {}
     voting_begins: dict[int, int] = {}
-    vote_results = _vote_result_rows(rows)
     for row in rows:
         values = row.values
         if values["type"] == "chat" and values["is_system"] == "true":
-            round_number = _effective_round(row, vote_results)
+            round_number = _round_number(row)
             if values["content"].startswith("Dawn breaks."):
                 dawn.setdefault(round_number, row.number)
-            elif _MAYOR_RE.match(values["content"]):
-                mayor_elected[round_number] = row.number
             elif values["content"] == "Voting begins.":
                 voting_begins.setdefault(round_number, row.number)
 
@@ -450,14 +430,13 @@ def _collect_row_items(rows: list[_CsvRow]) -> dict[tuple[int, str], list[tuple[
         if row_type == "note":
             # ponytail: private notes need a future role-memory model, not GameRecord phase items.
             continue
+        round_number = _round_number(row)
         if row_type == "chat":
-            round_number = _effective_round(row, vote_results)
-            checkpoint, sort_group = _chat_checkpoint(row, round_number, dawn, mayor_elected, voting_begins)
+            checkpoint, sort_group = _chat_checkpoint(row, dawn, voting_begins)
             for item in _parse_chat_row(row):
                 items[(round_number, checkpoint)].append(((sort_group, row.number), item))
             continue
         if row_type == "night_action":
-            round_number = _round_number(row)
             items[(round_number, "BEFORE_DISCUSSION")].append(((1, row.number), _parse_night_action(row)))
             continue
         raise GameRecordParseError(
@@ -469,9 +448,7 @@ def _collect_row_items(rows: list[_CsvRow]) -> dict[tuple[int, str], list[tuple[
 
 def _chat_checkpoint(
     row: _CsvRow,
-    round_number: int,
     dawn: dict[int, int],
-    mayor_elected: dict[int, int],
     voting_begins: dict[int, int],
 ) -> tuple[str, int]:
     phase = row.values["phase"]
@@ -481,8 +458,7 @@ def _chat_checkpoint(
         raise GameRecordValidationError(
             f"Invalid phase {phase!r} in {row.path} row {row.number} field phase; expected DAY or NIGHT."
         )
-    if round_number != _round_number(row):
-        return "BEFORE_DISCUSSION", 0
+    round_number = _round_number(row)
     if row.values["content"].startswith("Dawn breaks."):
         return "BEFORE_DISCUSSION", 2
     voting_row = voting_begins.get(round_number)
@@ -490,9 +466,6 @@ def _chat_checkpoint(
         return "AFTER_VOTING", 0
     dawn_row = dawn.get(round_number)
     if dawn_row is None or row.number < dawn_row:
-        return "BEFORE_DISCUSSION", 2
-    mayor_row = mayor_elected.get(round_number)
-    if mayor_row is not None and row.number <= mayor_row:
         return "BEFORE_DISCUSSION", 2
     return "BEFORE_VOTING", 0
 
@@ -545,13 +518,9 @@ def _parse_system_text(row: _CsvRow) -> list[PhaseItem]:
     exile_match = _EXILE_RE.match(content)
     if exile_match:
         return [ExileEvent(exile_match.group("player"))]
-    if content in {"The village voted to skip. No one was eliminated.", "The vote ended in a tie. No one was eliminated."}:
+    if content == "The village voted to skip. No one was eliminated.":
         return [ExileEvent(None)]
     return [SystemMessage(message=content)]
-
-
-def _is_vote_result(content: str) -> bool:
-    return content.startswith("The village voted") or content == "The vote ended in a tie. No one was eliminated."
 
 
 def _parse_night_action(row: _CsvRow) -> PhaseItem:
