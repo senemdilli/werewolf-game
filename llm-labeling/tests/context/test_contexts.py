@@ -48,6 +48,12 @@ def test_hierarchy_rendering() -> None:
     )
 
 
+def test_to_string_accepts_starting_heading_level() -> None:
+    ctx = Ctx(header="Parent", subsections=[Ctx(header="Child")])
+
+    assert ctx.to_string(level=2) == "## Parent\n\n### Child"
+
+
 def test_headerless_wrappers_do_not_increase_heading_depth() -> None:
     assert Ctx(subsections=[Ctx(header="A")]).to_string() == "# A"
     assert Ctx(content="Introduction", subsections=[Ctx(header="Section")]).to_string() == "Introduction\n\n# Section"
