@@ -11,7 +11,7 @@ from wolf_llm_labeling.game_records import GameRecord
 from wolf_llm_labeling.models import Label, Message, SystemMessage, Vote
 
 
-DEFAULT_GAME = Path(__file__).parents[1] / "results/game-output/game-P3WO10-9eb0210d.csv"
+DEFAULT_GAME = Path(__file__).parents[1] / "results/game-output/game-44UT6Y-d59e923e.csv"
 
 
 def describe_item(item: object) -> str:
