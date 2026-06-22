@@ -14,6 +14,7 @@ from wolf_llm_labeling.models import (
     SeerRevealed,
     SystemMessage,
     Vote,
+    VoteReason,
     WitchSaved,
 )
 
@@ -120,3 +121,55 @@ def test_post_exile_mayor_election_moves_to_next_phase(tmp_path) -> None:
     assert not any(isinstance(item, MayorElected) and item.affected_player == "Witch" for item in record.get_phase_data(2))
     assert any(isinstance(item, MayorElected) and item.affected_player == "Witch" for item in record.get_phase_data(3))
     assert any(isinstance(item, MayorElected) and item.affected_player == "Villager" for item in record.get_phase_data(3))
+
+
+def test_day_votes_are_parsed_before_results(tmp_path) -> None:
+    rows = base_rows()
+    rows.extend(
+        [
+            rows[0]
+            | {
+                "type": "day_vote",
+                "player_name": "Wolf",
+                "player_role": "WEREWOLF",
+                "target_name": "Villager",
+                "content": "MAYOR",
+            },
+            rows[0]
+            | {
+                "type": "day_vote",
+                "player_name": "Villager",
+                "player_role": "VILLAGER",
+                "target_name": "Wolf",
+                "content": "EXILE",
+            },
+        ]
+    )
+    csv_path, labels_path = write_export(tmp_path, rows=rows)
+
+    record = GameRecord()
+    record.read_from_files([csv_path, labels_path])
+
+    morning = record.get_phase_data(0)
+    evening = record.get_phase_data(2)
+    assert [type(item).__name__ for item in morning][-2:] == ["Vote", "MayorElected"]
+    assert any(isinstance(item, Vote) and item.reason == VoteReason.MAYOR and item.voted_for == "Villager" for item in morning)
+    assert [type(item).__name__ for item in evening] == ["SystemMessage", "Vote", "ExileEvent"]
+
+
+def test_random_mayor_assignment_preserves_system_text(tmp_path) -> None:
+    rows = base_rows()
+    rows[8]["content"] = "No one voted. Villager was randomly selected as Mayor. Their vote counts double."
+    csv_path, labels_path = write_export(tmp_path, rows=rows)
+
+    record = GameRecord()
+    record.read_from_files([csv_path, labels_path])
+
+    morning = record.get_phase_data(0)
+    assert any(isinstance(item, SystemMessage) and item.message == "The village must elect a Mayor." for item in morning)
+    assert any(
+        isinstance(item, SystemMessage)
+        and item.message == "No one voted. Villager was randomly selected as Mayor. Their vote counts double."
+        for item in morning
+    )
+    assert any(isinstance(item, MayorElected) and item.affected_player == "Villager" for item in morning)
