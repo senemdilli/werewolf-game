@@ -197,8 +197,11 @@ class PhaseGameContext:
         self.offset = offset
 
     def get_context(self, game_record: GameRecord, phase_idx: int) -> "Ctx | None":
-        target_phase_idx = phase_idx - self.offset
         phase_count = game_record.get_phase_count()
+        if phase_idx < 0 or phase_idx >= phase_count:
+            return None
+
+        target_phase_idx = phase_idx - self.offset
         if target_phase_idx < 0 or target_phase_idx >= phase_count:
             return None
 
