@@ -27,7 +27,29 @@ class Ctx:
     content: str | None
     subsections: list["Ctx"]
 
-    def to_string(self) -> str: ...
+    def __init__(
+        self,
+        header: str | None = None,
+        content: str | None = None,
+        subsections: list["Ctx"] | None = None,
+    ) -> None:
+        self.header = header
+        self.content = content
+        self.subsections = list(subsections) if subsections is not None else []
+
+    def to_string(self, level: int = 1) -> str:
+        parts = []
+        next_level = level
+        if self.header is not None:
+            parts.append(f"{'#' * level} {self.header}")
+            next_level = level + 1
+        if self.content is not None and self.content.strip():
+            parts.append(self.content.strip())
+        for sub in self.subsections:
+            sub_str = sub.to_string(level=next_level)
+            if sub_str.strip():
+                parts.append(sub_str.strip())
+        return "\n\n".join(parts)
 
 
 class ContextProvider(Protocol):

@@ -34,6 +34,7 @@ export function createInitialState(
     players: [{
       id: hostId,
       name: hostName,
+      originalName: hostName,
       role: null,
       isAlive: true,
       socketId: hostSocketId,
@@ -105,15 +106,63 @@ function autoSimulateBotActions(state: GameState) {
     const aliveWolves = alivePlayers.filter(p => p.role === 'werewolf')
     const botWolves = bots.filter(p => p.role === 'werewolf')
     
-    // Auto-submit werewolf bot votes
-    for (const w of botWolves) {
-      if (!state.nightActions.werewolfVotes[w.id]) {
-        const targets = alivePlayers.filter(p => p.role !== 'werewolf')
-        if (targets.length > 0) {
-          const target = targets[Math.floor(Math.random() * targets.length)]
-          state.nightActions.werewolfVotes[w.id] = target.id
-        } else {
-          state.nightActions.werewolfVotes[w.id] = 'nobody'
+    // Auto-submit werewolf bot votes (classic or arena sequential)
+    if (state.gameMode === 'arena' && aliveWolves.length > 1 && state.nightActions.wolfArena) {
+      const arena = state.nightActions.wolfArena
+      if (!arena.resolved) {
+        const currentId = arena.order[arena.turn]
+        const currentSpeaker = state.players.find(p => p.id === currentId)
+        if (currentSpeaker && currentSpeaker.isBot && currentSpeaker.isAlive) {
+          const targets = alivePlayers.filter(p => p.role !== 'werewolf')
+          let targetId = 'nobody'
+          if (targets.length > 0) {
+            const mayorId = state.mayorId
+            let target = targets[Math.floor(Math.random() * targets.length)]
+            if (mayorId && target.id === mayorId && targets.length > 1 && Math.random() > 0.2) {
+              const nonMayorTargets = targets.filter(p => p.id !== mayorId)
+              target = nonMayorTargets[Math.floor(Math.random() * nonMayorTargets.length)]
+            }
+            targetId = target.id
+          }
+          
+          arena.currentVotes[currentId] = targetId
+          arena.turn += 1
+
+          if (arena.turn >= arena.order.length) {
+            arena.history.push({ round: arena.round, votes: { ...arena.currentVotes } })
+            if (arena.round >= 3) {
+              const finalVotes = arena.currentVotes
+              const distinct = new Set(Object.values(finalVotes))
+              const unanimous = distinct.size === 1 ? [...distinct][0] : null
+              const kill = unanimous && unanimous !== 'nobody' ? unanimous : null
+
+              state.nightActions.killTarget = kill
+              state.nightActions.werewolfVotes = { ...finalVotes }
+              state.nightActions.completed.werewolves = true
+              arena.resolved = true
+            } else {
+              arena.round += 1
+              arena.turn = 0
+              arena.currentVotes = {}
+            }
+          }
+        }
+      }
+    } else {
+      for (const w of botWolves) {
+        if (!state.nightActions.werewolfVotes[w.id]) {
+          const targets = alivePlayers.filter(p => p.role !== 'werewolf')
+          if (targets.length > 0) {
+            const mayorId = state.mayorId
+            let target = targets[Math.floor(Math.random() * targets.length)]
+            if (mayorId && target.id === mayorId && targets.length > 1 && Math.random() > 0.2) {
+              const nonMayorTargets = targets.filter(p => p.id !== mayorId)
+              target = nonMayorTargets[Math.floor(Math.random() * nonMayorTargets.length)]
+            }
+            state.nightActions.werewolfVotes[w.id] = target.id
+          } else {
+            state.nightActions.werewolfVotes[w.id] = 'nobody'
+          }
         }
       }
     }
@@ -206,7 +255,7 @@ function autoSimulateBotActions(state: GameState) {
   }
 
   // 4. Day vote
-  else if (state.phase === 'day_vote') {
+  else if (state.phase === 'day_vote' && !state.labelCheckpoint) {
     for (const b of bots) {
       if (!state.dayVotes.votes[b.id]) {
         if (Math.random() > 0.2) {
@@ -314,6 +363,7 @@ export function buildClientState(state: GameState, playerId: string): ClientGame
       isMayor: p.id === state.mayorId,
       isReady: p.isReady,
       isBot: p.isBot,
+      isSpectator: p.isSpectator,
     }
   })
 

@@ -45,6 +45,7 @@ export interface LabelSubmitInput {
 export interface Player {
   id: string
   name: string
+  originalName?: string
   role: Role | null
   isAlive: boolean
   socketId: string
@@ -52,6 +53,7 @@ export interface Player {
   roleAcknowledged: boolean
   isReady: boolean
   isBot?: boolean
+  isSpectator?: boolean
 }
 
 export interface WolfArenaRound {
@@ -182,6 +184,7 @@ export interface PublicPlayer {
   isMayor?: boolean
   isReady?: boolean
   isBot?: boolean
+  isSpectator?: boolean
 }
 
 export interface WolfArenaView {
@@ -299,14 +302,16 @@ export interface ServerToClientEvents {
   'chat:history': (history: ChatMessage[]) => void
   'seer:result': (result: SeerResult) => void
   'room:kicked': (reason: string) => void
+  'room:session_replaced': () => void
   error: (message: string) => void
 }
 
 export interface ClientToServerEvents {
-  'room:create': (data: { playerName: string; gameMode: GameMode; witchSelfHeal?: WitchSelfHealSetting; speakDuration?: number; bidDuration?: number; isSandbox?: boolean; forceRandomNames?: boolean; useColorsAsNames?: boolean }, cb: (r: { roomCode: string; playerId: string }) => void) => void
+  'room:create': (data: { playerName: string; gameMode: GameMode; witchSelfHeal?: WitchSelfHealSetting; speakDuration?: number; bidDuration?: number; isSandbox?: boolean; sandboxBotCount?: number; forceRandomNames?: boolean; useColorsAsNames?: boolean }, cb: (r: { roomCode: string; playerId: string }) => void) => void
   'room:join': (data: { roomCode: string; playerName: string }, cb: (r: { success: boolean; playerId?: string; error?: string }) => void) => void
   'room:rejoin': (data: { roomCode: string; playerId: string }, cb: (r: { success: boolean; error?: string }) => void) => void
   'room:ready': () => void
+  'room:toggle_spectator': () => void
   'room:kick': (targetPlayerId: string) => void
   'note:save': (content: string) => void
   'game:start': (cb: (r: { success: boolean; error?: string }) => void) => void

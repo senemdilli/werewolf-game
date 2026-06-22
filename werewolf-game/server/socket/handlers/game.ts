@@ -20,7 +20,7 @@ type GameServer = Server<ClientToServerEvents, ServerToClientEvents>
 const DAY_DISCUSSION_MS = 2 * 60 * 1000
 const DAY_VOTE_MS = 60 * 1000
 const MAYOR_ELECTION_MS = 60 * 1000
-const DAY_RESULT_MS = 8 * 1000
+const DAY_RESULT_MS = 5 * 1000
 // Minimum visible duration for the night phase. If wolf+witch act faster than
 // this, transitionAfterNight is deferred so non-acting players can register
 // that night happened. Host phase:advance still bypasses.
@@ -145,6 +145,11 @@ async function transitionToMayorElection(
   await saveGame(state)
   await persistSystem(io, state, 'The village must elect a Mayor.', 'DAY')
   await broadcastState(io, roomCode)
+
+  if (areMayorVotesDone(state)) {
+    await finalizeMayorElection(io, roomCode)
+    return
+  }
 
   const timer = setTimeout(() => {
     phaseTimers.delete(roomCode)
@@ -361,7 +366,7 @@ async function finishConversation(io: GameServer, roomCode: string) {
   } else {
     // 'day' → day vote
     await saveGame(state)
-    await transitionToDayVote(io, roomCode)
+    await transitionToDayVoteCheckpoint(io, roomCode)
   }
 }
 
@@ -626,6 +631,13 @@ async function finalizeMayorElection(io: GameServer, roomCode: string) {
     const names = tied.map(id => state.players.find(p => p.id === id)?.name ?? '?').join(', ')
     await persistSystem(io, state, `Mayor vote tied between ${names}. Runoff begins.`, 'DAY')
     await broadcastState(io, roomCode)
+
+    const alive = state.players.filter(p => p.isAlive)
+    if (alive.every(p => state.mayorRunoff!.votes[p.id] !== undefined)) {
+      await resolveMayorRunoff(io, roomCode)
+      return
+    }
+
     const timer = setTimeout(() => {
       phaseTimers.delete(roomCode)
       resolveMayorRunoff(io, roomCode)
@@ -727,12 +739,6 @@ async function resolveMayorRunoff(io: GameServer, roomCode: string) {
 }
 
 async function startDayDiscussion(io: GameServer, state: GameState) {
-  state.phase = 'day_discussion'
-  state.dayVotes = { votes: {} }
-  state.phaseEndTime = null
-  await saveGame(state)
-  await broadcastState(io, state.roomCode)
-
   // R1 has no "before_discussion" checkpoint (nobody has spoken yet to label
   // against). R2+ enters the checkpoint here; the discussion timer / arena
   // conversation begins only after every alive player has decided.
@@ -740,7 +746,20 @@ async function startDayDiscussion(io: GameServer, state: GameState) {
     await enterLabelCheckpoint(io, state.roomCode, 'before_discussion')
     return
   }
-  await startDayDiscussionTimer(io, state.roomCode)
+  await startDayDiscussionPhase(io, state.roomCode)
+}
+
+async function startDayDiscussionPhase(io: GameServer, roomCode: string) {
+  clearPhaseTimer(roomCode)
+  const state = await getGame(roomCode)
+  if (!state) return
+
+  state.phase = 'day_discussion'
+  state.dayVotes = { votes: {} }
+  state.phaseEndTime = null
+  await saveGame(state)
+  await broadcastState(io, roomCode)
+  await startDayDiscussionTimer(io, roomCode)
 }
 
 // Starts the actual discussion timer (classic) or arena conversation. Split
@@ -765,7 +784,7 @@ async function startDayDiscussionTimer(io: GameServer, roomCode: string) {
 
   const timer = setTimeout(() => {
     phaseTimers.delete(roomCode)
-    transitionToDayVote(io, roomCode)
+    transitionToDayVoteCheckpoint(io, roomCode)
   }, DAY_DISCUSSION_MS)
   phaseTimers.set(roomCode, timer)
 }
@@ -861,26 +880,20 @@ async function transitionAfterNight(io: GameServer, roomCode: string) {
   }
 }
 
-async function transitionToDayVote(io: GameServer, roomCode: string) {
+async function transitionToDayVoteCheckpoint(io: GameServer, roomCode: string) {
   clearPhaseTimer(roomCode)
   const state = await getGame(roomCode)
-  if (!state) return
-  // Allowed entry phases: day_discussion (normal) or day_vote with the
-  // before_voting checkpoint cleared (called from maybeResolveCheckpoint).
-  if (state.phase !== 'day_discussion' && state.phase !== 'day_vote') return
+  if (!state || state.phase !== 'day_discussion') return
 
-  // Insert the before_voting checkpoint before actually opening the vote.
-  // The phase is set to day_vote so the underlying UI shows the vote board
-  // behind the modal, but the timer is suppressed until the checkpoint clears.
-  if (state.phase === 'day_discussion' && !state.labelCheckpoint) {
-    state.phase = 'day_vote'
-    state.dayVotes = { votes: {} }
-    state.phaseEndTime = null
-    await saveGame(state)
-    await broadcastState(io, roomCode)
-    await enterLabelCheckpoint(io, roomCode, 'before_voting')
-    return
-  }
+  // Start the before_voting checkpoint. The phase remains 'day_discussion'
+  // so that players and bots cannot vote, and players can review discussion.
+  await enterLabelCheckpoint(io, roomCode, 'before_voting')
+}
+
+async function startDayVotePhase(io: GameServer, roomCode: string) {
+  clearPhaseTimer(roomCode)
+  const state = await getGame(roomCode)
+  if (!state || state.phase !== 'day_discussion') return
 
   state.phase = 'day_vote'
   state.dayVotes = { votes: {} }
@@ -888,6 +901,11 @@ async function transitionToDayVote(io: GameServer, roomCode: string) {
   await saveGame(state)
   await persistSystem(io, state, 'Voting begins.', 'DAY')
   await broadcastState(io, roomCode)
+
+  if (areDayVotesDone(state)) {
+    await resolveVoteAndAdvance(io, roomCode)
+    return
+  }
 
   const timer = setTimeout(() => {
     phaseTimers.delete(roomCode)
@@ -1150,6 +1168,7 @@ async function enterLabelCheckpoint(
   state.phaseEndTime = null
   await saveGame(state)
   await broadcastState(io, roomCode)
+  await maybeResolveCheckpoint(io, roomCode)
 }
 
 // Returns true if all alive players have submitted or skipped.
@@ -1175,9 +1194,9 @@ export async function maybeResolveCheckpoint(io: GameServer, roomCode: string): 
   await broadcastState(io, roomCode)
 
   if (cp === 'before_discussion') {
-    await startDayDiscussionTimer(io, roomCode)
+    await startDayDiscussionPhase(io, roomCode)
   } else if (cp === 'before_voting') {
-    await transitionToDayVote(io, roomCode)
+    await startDayVotePhase(io, roomCode)
   } else if (cp === 'after_voting') {
     await proceedFromDayResult(io, roomCode)
   }
@@ -1187,22 +1206,27 @@ export async function maybeResolveCheckpoint(io: GameServer, roomCode: string): 
 
 export async function startGame(io: GameServer, roomCode: string): Promise<void> {
   const state = await getGame(roomCode)
-  if (!state || state.phase !== 'lobby' || state.players.length < 4) return
+  if (!state || state.phase !== 'lobby') return
+
+  const spectators = state.players.filter(p => p.isSpectator)
+  const activePlayers = state.players.filter(p => !p.isSpectator)
+
+  if (activePlayers.length < 4) return
 
   // 1.  shuffle players array to avoid seating order bias
-  for (let i = state.players.length - 1; i > 0; i--) {
+  for (let i = activePlayers.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    [state.players[i], state.players[j]] = [state.players[j], state.players[i]];
+    [activePlayers[i], activePlayers[j]] = [activePlayers[j], activePlayers[i]];
   }
 
-  // 2. Assign roles normally to the shuffled list
-  state.players = assignRoles(state.players)
+  // 2. Assign roles normally to the shuffled active players list
+  const activeWithRoles = assignRoles(activePlayers)
 
   // 3. If Force Random Names is enabled, randomize player names
   if (state.forceRandomNames) {
     let namePool: string[] = []
     if (state.useColorsAsNames) {
-      const numPlayers = state.players.length
+      const numPlayers = activeWithRoles.length
       const families = [
         ['Red', 'Pink'],
         ['Blue', 'Cyan'],
@@ -1263,10 +1287,15 @@ export async function startGame(io: GameServer, roomCode: string): Promise<void>
     }
 
     let nameIdx = 0
-    state.players = state.players.map(p => ({
-      ...p,
-      name: namePool[nameIdx++]
-    }))
+    state.players = [
+      ...activeWithRoles.map(p => ({ ...p, name: namePool[nameIdx++], roleAcknowledged: p.isBot ?? false })),
+      ...spectators.map(p => ({ ...p, roleAcknowledged: true }))
+    ]
+  } else {
+    state.players = [
+      ...activeWithRoles.map(p => ({ ...p, roleAcknowledged: p.isBot ?? false })),
+      ...spectators.map(p => ({ ...p, roleAcknowledged: true }))
+    ]
   }
 
   state.phase = 'role_reveal'
@@ -1280,10 +1309,12 @@ export async function startGame(io: GameServer, roomCode: string): Promise<void>
       playerCount: state.players.length,
       startedAt: new Date(),
       players: {
-        create: state.players.map(p => ({
-          name: p.name,
-          role: p.role!.toUpperCase() as import('@prisma/client').$Enums.Role,
-        })),
+        create: state.players
+          .filter(p => !p.isSpectator)
+          .map(p => ({
+            name: p.name,
+            role: p.role!.toUpperCase() as import('@prisma/client').$Enums.Role,
+          })),
       },
     },
   })
@@ -1568,7 +1599,7 @@ export function registerGameHandlers(io: GameServer, socket: GameSocket) {
     try {
       const { playerId, roomCode } = socket.data
       const state = await getGame(roomCode)
-      if (!state || state.phase !== 'day_vote') return
+      if (!state || state.phase !== 'day_vote' || state.labelCheckpoint) return
 
       const voter = state.players.find(p => p.id === playerId)
       if (!voter || !voter.isAlive) return
@@ -1638,7 +1669,7 @@ export function registerGameHandlers(io: GameServer, socket: GameSocket) {
       else if (state.phase === 'day_discussion') {
         if (state.conversation?.active && state.conversation.sub === 'bid') await resolveBid(io, roomCode)
         else if (state.conversation?.active && state.conversation.sub === 'speak') await endSpeak(io, roomCode)
-        else await transitionToDayVote(io, roomCode)
+        else await transitionToDayVoteCheckpoint(io, roomCode)
       }
       else if (state.phase === 'day_vote') {
         if (state.pendingMayorTiebreak) await applyMayorTiebreak(io, roomCode, null)

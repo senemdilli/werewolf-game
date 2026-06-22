@@ -23,7 +23,7 @@ function uniquifyName(name: string, taken: string[]): string {
 const pendingDisconnects = new Map<string, NodeJS.Timeout>()
 
 export function registerRoomHandlers(io: GameServer, socket: GameSocket) {
-  socket.on('room:create', async ({ playerName, gameMode, witchSelfHeal, speakDuration, bidDuration, isSandbox, forceRandomNames, useColorsAsNames }, cb) => {
+  socket.on('room:create', async ({ playerName, gameMode, witchSelfHeal, speakDuration, bidDuration, isSandbox, sandboxBotCount, forceRandomNames, useColorsAsNames }, cb) => {
     try {
       let roomCode = generateRoomCode()
       let existing = await getGame(roomCode)
@@ -42,11 +42,22 @@ export function registerRoomHandlers(io: GameServer, socket: GameSocket) {
       const hostId = state.players[0].id
 
       if (isSandbox) {
-        const botNames = ['Bot Lyra', 'Bot Edmund', 'Bot Casimir']
+        const safeBotCount = typeof sandboxBotCount === 'number' && sandboxBotCount >= 1 && sandboxBotCount <= 12
+          ? sandboxBotCount
+          : 3
+        const botNamesPool = [
+          'Lyra', 'Edmund', 'Casimir', 'Aldric', 'Beatrix',
+          'Delara', 'Fiona', 'Garrett', 'Helena', 'Isidore',
+          'Juliana', 'Kieran', 'Magnus', 'Nadia', 'Oswin',
+          'Petra', 'Rowena', 'Stellan', 'Tamsin', 'Ulric',
+          'Vesper', 'Wren', 'Xander', 'Yara', 'Zephyr'
+        ]
+        const botNames = botNamesPool.slice(0, safeBotCount).map(name => `Bot ${name}`)
         for (const name of botNames) {
           state.players.push({
             id: 'bot-' + uuidv4(),
             name,
+            originalName: name,
             role: null,
             isAlive: true,
             socketId: 'bot-socket',
@@ -75,20 +86,77 @@ export function registerRoomHandlers(io: GameServer, socket: GameSocket) {
     try {
       const state = await getGame(roomCode)
       if (!state) return cb({ success: false, error: 'Room not found' })
+
+      const cleanName = playerName.trim()
+      const existing = state.players.find(
+        p => 
+          p.name.toLowerCase() === cleanName.toLowerCase() || 
+          (p.originalName && p.originalName.toLowerCase() === cleanName.toLowerCase())
+      )
+
+      if (existing) {
+        // Reclaim/rejoin existing player session by matching name!
+        const pending = pendingDisconnects.get(existing.id)
+        if (pending) {
+          clearTimeout(pending)
+          pendingDisconnects.delete(existing.id)
+        }
+
+        if (existing.socketId && existing.socketId !== socket.id) {
+          const oldSocket = io.sockets.sockets.get(existing.socketId)
+          if (oldSocket) {
+            oldSocket.emit('room:session_replaced')
+            oldSocket.leave(`room:${roomCode}`)
+            oldSocket.leave(`wolves:${roomCode}`)
+          }
+        }
+
+        existing.socketId = socket.id
+        await saveGame(state)
+
+        socket.data.playerId = existing.id
+        socket.data.roomCode = roomCode
+        socket.join(`room:${roomCode}`)
+
+        if (existing.role === 'werewolf') {
+          socket.join(`wolves:${roomCode}`)
+        }
+
+        // Notify other players
+        for (const player of state.players) {
+          const clientState = buildClientState(state, player.id)
+          io.to(player.socketId).emit('game:state', clientState)
+        }
+
+        // Sync chat history
+        const history = await getChatHistory(roomCode)
+        const filtered = history.filter(msg => {
+          if (msg.isSystem) return true
+          if (msg.phase === 'night') {
+            return existing.role === 'werewolf'
+          }
+          return true
+        })
+        socket.emit('chat:history', filtered)
+
+        return cb({ success: true, playerId: existing.id })
+      }
+
       if (state.phase !== 'lobby') return cb({ success: false, error: 'Game already in progress' })
       if (state.players.length >= 12) return cb({ success: false, error: 'Room is full' })
 
       const playerId = uuidv4()
-      const finalName = uniquifyName(playerName, state.players.map(p => p.name))
       state.players.push({
         id: playerId,
-        name: finalName,
+        name: cleanName,
+        originalName: cleanName,
         role: null,
         isAlive: true,
         socketId: socket.id,
         isHost: false,
         roleAcknowledged: false,
         isReady: false,
+        isSpectator: false,
       })
 
       await saveGame(state)
@@ -122,6 +190,15 @@ export function registerRoomHandlers(io: GameServer, socket: GameSocket) {
 
       const player = state.players.find(p => p.id === playerId)
       if (!player) return cb({ success: false, error: 'Player not found in room' })
+
+      if (player.socketId && player.socketId !== socket.id) {
+        const oldSocket = io.sockets.sockets.get(player.socketId)
+        if (oldSocket) {
+          oldSocket.emit('room:session_replaced')
+          oldSocket.leave(`room:${roomCode}`)
+          oldSocket.leave(`wolves:${roomCode}`)
+        }
+      }
 
       player.socketId = socket.id
       await saveGame(state)
@@ -166,7 +243,8 @@ export function registerRoomHandlers(io: GameServer, socket: GameSocket) {
       player.isReady = !player.isReady
       await saveGame(state)
 
-      const allReady = state.players.length >= 4 && state.players.every(p => p.isReady)
+      const activePlayers = state.players.filter(p => !p.isSpectator)
+      const allReady = activePlayers.length >= 4 && activePlayers.every(p => p.isReady)
       if (allReady) {
         await startGame(io, roomCode)
       } else {
@@ -179,6 +257,31 @@ export function registerRoomHandlers(io: GameServer, socket: GameSocket) {
     }
   })
 
+  socket.on('room:toggle_spectator', async () => {
+    try {
+      const { playerId, roomCode } = socket.data
+      const state = await getGame(roomCode)
+      if (!state || state.phase !== 'lobby') return
+
+      const player = state.players.find(p => p.id === playerId)
+      if (!player) return
+
+      player.isSpectator = !player.isSpectator
+      player.isAlive = !player.isSpectator
+      if (player.isSpectator) {
+        player.isReady = false
+      }
+
+      await saveGame(state)
+
+      for (const p of state.players) {
+        io.to(p.socketId).emit('game:state', buildClientState(state, p.id))
+      }
+    } catch (err) {
+      console.error('[room:toggle_spectator]', err)
+    }
+  })
+  
   socket.on('room:kick', async (targetPlayerId) => {
     try {
       const { playerId, roomCode } = socket.data
