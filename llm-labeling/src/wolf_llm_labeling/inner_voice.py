@@ -81,17 +81,73 @@ class RandomInnerVoice:
         )
 
 
-class AskMyselfInnerVoice:
-    def ask(self, player_name: PlayerName, context: Ctx | None, game_records: GameRecord, phase_idx: int) -> TrustScores: ...
+def _trust_scores_from_schema(result: object) -> TrustScores:
+    def to_score(s: object) -> Score | None:
+        if s is None:
+            return None
+        return Score(trust=getattr(s, "trust"), confidence=getattr(s, "confidence"))
 
-    def tool_description(self) -> str: ...
+    return TrustScores(
+        alignment=to_score(getattr(result, "alignment", None)),
+        strategic=to_score(getattr(result, "strategic", None)),
+        consistency=to_score(getattr(result, "consistency", None)),
+    )
+
+
+def _ask_llm_for_trust(player_name: PlayerName, context_str: str) -> TrustScores:
+    from wolf_llm_labeling.models import TrustScoresSchema, active_llm_provider, active_system_prompt
+
+    llm_provider = active_llm_provider.get()
+    system_prompt = active_system_prompt.get()
+    if llm_provider is None:
+        return _neutral_trust_scores()
+
+    user_content = (
+        f"Here is the game context:\n{context_str}\n\n"
+        f"Provide your gut-feeling trust assessment for player '{player_name}' "
+        "without any rationale. Only provide trust scores."
+    )
+    messages = []
+    if system_prompt:
+        messages.append(("system", system_prompt))
+    messages.append(("human", user_content))
+
+    try:
+        structured_llm = llm_provider.with_structured_output(TrustScoresSchema)
+        result = structured_llm.invoke(messages)
+        if result is None:
+            return _neutral_trust_scores()
+        return _trust_scores_from_schema(result)
+    except Exception:
+        return _neutral_trust_scores()
+
+
+class AskMyselfInnerVoice:
+    def ask(self, player_name: PlayerName, context: Ctx | None, game_records: GameRecord, phase_idx: int) -> TrustScores:
+        context_str = context.to_string() if context is not None else "No context available."
+        return _ask_llm_for_trust(player_name, context_str)
+
+    def tool_description(self) -> str:
+        return (
+            "Asks the same LLM with its current context for a gut-feeling trust assessment "
+            "toward the given player. Returns trust scores without rationale."
+        )
 
 
 class OtherContextInnerVoice:
     context: ContextProvider
 
-    def __init__(self, context: ContextProvider) -> None: ...
+    def __init__(self, context: ContextProvider) -> None:
+        self.context = context
 
-    def ask(self, player_name: PlayerName, context: Ctx | None, game_records: GameRecord, phase_idx: int) -> TrustScores: ...
+    def ask(self, player_name: PlayerName, context: Ctx | None, game_records: GameRecord, phase_idx: int) -> TrustScores:
+        own_context = self.context.get_context(game_records, phase_idx)
+        context_str = own_context.to_string() if own_context is not None else "No context available."
+        return _ask_llm_for_trust(player_name, context_str)
 
-    def tool_description(self) -> str: ...
+    def tool_description(self) -> str:
+        return (
+            "Asks an LLM for a gut-feeling trust assessment toward the given player "
+            "using an alternative context provider instead of the main labeling context. "
+            "Returns trust scores without rationale."
+        )
