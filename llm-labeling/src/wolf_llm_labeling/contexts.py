@@ -19,6 +19,7 @@ from wolf_llm_labeling.models import (
     Score,
     SeerRevealed,
     SystemMessage,
+    TrustScores,
     Vote,
     WitchKilled,
     WitchSaved,
@@ -436,14 +437,49 @@ def _render_target_labels(labels: tuple[Label, ...]) -> str | None:
     return "\n\n".join(f"Label {index}:\n{rendered}" for index, rendered in enumerate(rendered_labels, start=1))
 
 
+def _render_trust_scores_no_rationale(scores: TrustScores) -> str | None:
+    lines = [
+        line
+        for line in (
+            _render_score("Alignment", scores.alignment),
+            _render_score("Strategic", scores.strategic),
+            _render_score("Consistency", scores.consistency),
+        )
+        if line is not None
+    ]
+    return "\n".join(lines) if lines else None
+
+
 class InnerTrustVoiceContext:
     '''
         This context returns the scores of an inner trust voice for all players (except self).
         The inner voice is provided a custom trust context.
-    ''' 
+    '''
 
-    def __init__(self, inner_voice: InnerVoice, inner_voice_context: ContextProvider) -> None: ...
+    def __init__(self, inner_voice: InnerVoice, inner_voice_context: ContextProvider) -> None:
+        self.inner_voice = inner_voice
+        self.inner_voice_context = inner_voice_context
 
-    def get_context(self, game_record: GameRecord, phase_idx: int) -> "Ctx | None": ...
+    def get_context(self, game_record: GameRecord, phase_idx: int) -> "Ctx | None":
+        from wolf_llm_labeling.models import active_player_name
 
-    def get_topness(self) -> float: ...
+        observer = active_player_name.get()
+        players = game_record.get_players()
+        iv_context = self.inner_voice_context.get_context(game_record, phase_idx)
+
+        player_sections = []
+        for player in players:
+            if player == observer:
+                continue
+            scores = self.inner_voice.ask(player, iv_context, game_record, phase_idx)
+            content = _render_trust_scores_no_rationale(scores)
+            if content is not None:
+                player_sections.append(Ctx(header=player, content=content))
+
+        if not player_sections:
+            return None
+
+        return Ctx(header="Inner Trust Voice Advice", subsections=tuple(player_sections))
+
+    def get_topness(self) -> float:
+        return 0.0
