@@ -15,7 +15,7 @@ const BOTTOM_THRESHOLD_PX = 40
 
 export default function Chat({ messages, onSend, canSend, placeholder }: Props) {
   const [input, setInput] = useState('')
-  const [colorChatText, setColorChatText] = useState(false)
+  const [colorChatText, setColorChatText] = useState(true)
 
   useEffect(() => {
     const saved = localStorage.getItem('ww_colorChatText')
