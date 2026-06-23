@@ -739,6 +739,9 @@ async function resolveMayorRunoff(io: GameServer, roomCode: string) {
 }
 
 async function startDayDiscussion(io: GameServer, state: GameState) {
+  // Save the state first so that any prior modifications
+  await saveGame(state)
+
   // R1 has no "before_discussion" checkpoint (nobody has spoken yet to label
   // against). R2+ enters the checkpoint here; the discussion timer / arena
   // conversation begins only after every alive player has decided.
@@ -996,6 +999,7 @@ async function applyMayorTiebreak(
     }
   }
 
+  await saveGame(state)
   await applyDayElimination(io, roomCode, eliminatedId, outcome)
 }
 
