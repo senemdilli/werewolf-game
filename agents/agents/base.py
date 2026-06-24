@@ -1,4 +1,4 @@
-
+"""Base class for all agents. All agents should inherit from this class and implement the required methods."""
 from abc import ABC, abstractmethod
 
 from agents.configuration.agent_config import AgentConfig
@@ -23,3 +23,8 @@ class BaseAgent(ABC):
         llm = LLMFactory.create_ollama(self.agent_config.llm_config)
 
         return llm
+    
+    @abstractmethod
+    def get_prompt(self) -> str:
+        """Return the prompt for the agent. Based on its role."""
+        pass
