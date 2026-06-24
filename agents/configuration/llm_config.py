@@ -7,5 +7,3 @@ class LLMConfig(BaseModel):
 
     model_name: str
     temperature: float = 0.0
-    base_url: str
-    api_key: str
