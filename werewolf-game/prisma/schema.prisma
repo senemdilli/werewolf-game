@@ -146,6 +146,7 @@ model NightAction {
   targetPlayerId String     @map("target_player_id")
   round          Int
   wasBlocked     Boolean    @default(false) @map("was_blocked")
+  createdAt      DateTime   @default(now()) @map("created_at")
 
   game         Game   @relation(fields: [gameId], references: [id])
   player       Player @relation("Performer", fields: [playerId], references: [id])

@@ -1,5 +1,5 @@
 import { redis } from '@/lib/redis'
-import type { ChatMessage } from '@/types/game'
+import type { ChatMessage, Role } from '@/types/game'
 
 const CHAT_TTL = 60 * 60 * 24 // 24 hours
 
@@ -38,4 +38,19 @@ export async function clearChatHistory(roomCode: string): Promise<void> {
   } catch (err) {
     console.error('[clearChatHistory]', err)
   }
+}
+
+// Players see only the current round's chat. Persistence keeps everything; this
+// is purely the live view filter (also enforces the night-chat wolves-only rule).
+export function filterChatForPlayer(
+  history: ChatMessage[],
+  currentRound: number,
+  playerRole: Role | null,
+): ChatMessage[] {
+  return history.filter(msg => {
+    if (msg.round !== currentRound) return false
+    if (msg.isSystem) return true
+    if (msg.phase === 'night') return playerRole === 'werewolf'
+    return true
+  })
 }

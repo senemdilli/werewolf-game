@@ -13,7 +13,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ gameId:
     prisma.nightAction.findMany({
       where: { gameId },
       include: { player: true, targetPlayer: true },
-      orderBy: { round: 'asc' },
+      orderBy: [{ round: 'asc' }, { createdAt: 'asc' }],
     }),
     prisma.playerNote.findMany({
       where: { gameId },
@@ -67,7 +67,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ gameId:
       action.targetPlayer.name,
       action.actionType,
       'false',
-      '',
+      action.createdAt.toISOString(),
     ]))
   }
 

@@ -4,7 +4,7 @@ import { createInitialState, getGame, saveGame } from '@/server/game/state'
 import { buildClientState } from '@/server/game/state'
 import { startGame } from './game'
 import { v4 as uuidv4 } from 'uuid'
-import { getChatHistory } from '@/server/game/chat-store'
+import { getChatHistory, filterChatForPlayer } from '@/server/game/chat-store'
 
 type GameSocket = Socket<ClientToServerEvents, ServerToClientEvents>
 type GameServer = Server<ClientToServerEvents, ServerToClientEvents>
@@ -128,15 +128,10 @@ export function registerRoomHandlers(io: GameServer, socket: GameSocket) {
           io.to(player.socketId).emit('game:state', clientState)
         }
 
-        // Sync chat history
+        // Sync chat history (current round only — past rounds are kept in
+        // storage but hidden from the live view).
         const history = await getChatHistory(roomCode)
-        const filtered = history.filter(msg => {
-          if (msg.isSystem) return true
-          if (msg.phase === 'night') {
-            return existing.role === 'werewolf'
-          }
-          return true
-        })
+        const filtered = filterChatForPlayer(history, state.round, existing.role)
         socket.emit('chat:history', filtered)
 
         return cb({ success: true, playerId: existing.id })
@@ -215,13 +210,7 @@ export function registerRoomHandlers(io: GameServer, socket: GameSocket) {
       socket.emit('game:state', clientState)
 
       const history = await getChatHistory(roomCode)
-      const filtered = history.filter(msg => {
-        if (msg.isSystem) return true
-        if (msg.phase === 'night') {
-          return player.role === 'werewolf'
-        }
-        return true
-      })
+      const filtered = filterChatForPlayer(history, state.round, player.role)
       socket.emit('chat:history', filtered)
 
       cb({ success: true })
