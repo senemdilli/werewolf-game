@@ -5,7 +5,7 @@ import type { ClientGameState, Role } from '@/types/game'
 import type { GameSocket } from '@/app/room/[code]/page'
 import { ROLE_INFO } from '@/server/game/roles'
 import Button from '@/components/ui/Button'
-import PlayerName, { getPlayerStyle } from './PlayerName'
+import PlayerName, { getPlayerColor, getPlayerStyle } from './PlayerName'
 
 const roleStyle: Record<Role, { border: string; bg: string; icon: string }> = {
   werewolf: { border: 'border-red-700',     bg: 'bg-red-950/40',     icon: '🐺' },
@@ -41,12 +41,35 @@ export default function RoleReveal({ state, socket, onAcknowledge, acknowledged 
       <div className={`w-full max-w-sm border ${style.border} ${style.bg} rounded-2xl p-8 text-center animate-fade-in`}>
         <div className="text-6xl mb-4">{style.icon}</div>
         
-        {state.forceRandomNames && myName && (
-          <div className="bg-violet-950/60 border border-violet-800/80 rounded-xl p-4 mb-6 text-center animate-pulse">
-            <p className="text-violet-300 font-semibold text-xs uppercase tracking-wide">Your randomized name for this game:</p>
-            <p className="text-3xl font-black font-mono mt-1" style={getPlayerStyle(myName)}>{myName}</p>
-          </div>
-        )}
+        {state.forceRandomNames && myName && (() => {
+          const nameColor = getPlayerColor(myName)
+          return (
+            <div className="relative mb-6 bg-slate-900/70 border border-slate-700/70 rounded-xl px-5 py-4 overflow-hidden">
+              {nameColor && (
+                <span
+                  aria-hidden
+                  className="absolute inset-y-0 left-0 w-1"
+                  style={{ backgroundColor: nameColor }}
+                />
+              )}
+              <p className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-semibold">
+                Your name this round
+              </p>
+              <div className="flex items-center justify-center gap-2.5 mt-1.5">
+                {nameColor && (
+                  <span
+                    aria-hidden
+                    className="w-3 h-3 rounded-full shrink-0"
+                    style={{ backgroundColor: nameColor, boxShadow: `0 0 12px ${nameColor}66` }}
+                  />
+                )}
+                <p className="text-3xl font-bold tracking-tight" style={getPlayerStyle(myName)}>
+                  {myName}
+                </p>
+              </div>
+            </div>
+          )
+        })()}
 
         <h1 className="text-2xl font-bold mb-1">You are the</h1>
         <h2 className={`text-3xl font-black mb-4 text-${info.color}-400`}>{info.label}</h2>
