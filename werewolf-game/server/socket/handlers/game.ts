@@ -12,7 +12,7 @@ import {
   resolveDayVoteArena,
 } from '@/server/game/roles'
 import { prisma } from '@/lib/prisma'
-import { addChatMessage } from '@/server/game/chat-store'
+import { addChatMessage, getChatHistory, filterChatForPlayer } from '@/server/game/chat-store'
 
 type GameSocket = Socket<ClientToServerEvents, ServerToClientEvents>
 type GameServer = Server<ClientToServerEvents, ServerToClientEvents>
@@ -48,6 +48,16 @@ async function broadcastState(io: GameServer, roomCode: string) {
   }
 }
 
+// Push a fresh per-player chat:history when the round changes so clients drop
+// the previous round from view. Data stays in the chat-store (and Postgres).
+async function broadcastChatHistory(io: GameServer, state: GameState) {
+  const history = await getChatHistory(state.roomCode)
+  for (const p of state.players) {
+    const view = filterChatForPlayer(history, state.round, p.role)
+    io.to(p.socketId).emit('chat:history', view)
+  }
+}
+
 // ── Phase transitions ────────────────────────────────────────────────────────
 
 async function transitionToNight(io: GameServer, roomCode: string) {
@@ -69,6 +79,10 @@ async function transitionToNight(io: GameServer, roomCode: string) {
   }
 
   await saveGame(state)
+  // New round → drop the previous round's chat from every client's live view
+  // before any new messages (including the "Night N begins" system message)
+  // get appended, so the round we just left can't bleed in.
+  await broadcastChatHistory(io, state)
   await broadcastState(io, roomCode)
   await persistSystem(io, state, `Night ${state.round} begins.`, 'NIGHT')
 
