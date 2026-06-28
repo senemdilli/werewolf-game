@@ -28,6 +28,7 @@ python .\src\wolf_llm_labeling\main.py <game_record.json> <game_record.csv> [opt
 | `--max-phases` | `int` | Optional. Maximum number of phases to evaluate (default: 0 for all phases) |
 | `--experiment-args` | `str` | Optional. Arguments passed to the experiment. For A-C, it is `<cutoff>`. For D-F, it is `<cutoff> <variant>` (e.g. `"3 2"`) |
 | `--formatter` | `str` | Optional. Context format type: `markdown` (default) or `json` |
+| `--context-as-tool` | `flag` | Optional. If set, the game context is retrieved dynamically by the LLM via tool call instead of pre-injected in the prompt |
 | `--prompt-set` | `str` | Optional. Path to a JSON file mapping custom prompts |
 | `--output-dir` | `str` | Optional. Base directory where JSON results are saved (default: `./results/llm-labeling`) |
 

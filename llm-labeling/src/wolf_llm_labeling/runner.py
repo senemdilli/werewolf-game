@@ -33,6 +33,7 @@ def run_labeling_experiment(
     prompt_set_path: str | None = None,
     prompt_dir: str = "./prompts",
     formatter: FormatterType = "markdown",
+    context_as_tool: bool = False,
 ) -> list[str]:
     """Execute a labeling experiment for game records and save the results."""
     token = os.getenv("OLLAMA_API_KEY")
@@ -50,7 +51,7 @@ def run_labeling_experiment(
     except Exception as e:
         print(f"Error: The Ollama server at '{ollama_url}' is offline or unreachable.", file=sys.stderr)
         print(f"Details: {e}", file=sys.stderr)
-        print("Please check your network connection, VPN, or server status. Exiting early.", file=sys.stderr)
+        print("Please check your network connection or server status. Exiting early", file=sys.stderr)
         sys.exit(1)
 
     # Resolve inner voice model default
@@ -188,7 +189,8 @@ def run_labeling_experiment(
                     inner_voice=inner_voice,
                     formatter_type=formatter,
                     game_data=game_record,
-                    phase_idx=phase_idx
+                    phase_idx=phase_idx,
+                    context_as_tool=context_as_tool,
                 )
                 
                 inner_voice_calls = []

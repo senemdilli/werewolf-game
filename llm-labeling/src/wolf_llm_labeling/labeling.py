@@ -55,6 +55,7 @@ def label_once(
     formatter_type: FormatterType,
     game_data: GameRecord,
     phase_idx: int,
+    context_as_tool: bool = False,
 ) -> tuple[dict[PlayerName, Label], LLMCallInfo]:
     # Find player_name from the context if possible (e.g. from StaticContext or GameNowContext)
     player_name = getattr(context, "player_name", None)
@@ -175,10 +176,28 @@ def label_once(
                 args_schema=AskInnerVoiceArgs,
             )
 
+        # Define get_game_context tool
+        def get_game_context_fn() -> str:
+            return context_str
+
+        get_context_desc = prompt_set.get_prompt(
+            "labeling__get_game_context_desc",
+            {},
+            "Retrieve the current werewolf game conversation and history context."
+        )
+
+        get_context_tool = StructuredTool.from_function(
+            func=get_game_context_fn,
+            name="get_game_context",
+            description=get_context_desc,
+        )
+
         # 3. Setup tools list and invoke agent using custom create_agent framework
         tools = [report_tool]
         if ask_tool is not None:
             tools.append(ask_tool)
+        if context_as_tool:
+            tools.append(get_context_tool)
 
         from langchain.agents import create_agent
         agent = create_agent(
@@ -188,13 +207,20 @@ def label_once(
             middleware=[]
         )
 
+        if context_as_tool:
+            user_content = (
+                "You do not have the game context pre-injected. "
+                "Use the 'get_game_context' tool to retrieve the werewolf game conversation and history context. "
+                "Then evaluate the trust scores for all other players and report them using the report_labels tool"
+            )
+        else:
+            user_content = (
+                f"Here is the game context:\n{context_str}\n\n"
+                "Evaluate the trust scores for all other players and report them using the report_labels tool."
+            )
+
         messages = [
-            HumanMessage(
-                content=(
-                    f"Here is the game context:\n{context_str}\n\n"
-                    "Evaluate the trust scores for all other players and report them using the report_labels tool."
-                )
-            ),
+            HumanMessage(content=user_content),
         ]
 
         result = agent.invoke({"messages": messages})

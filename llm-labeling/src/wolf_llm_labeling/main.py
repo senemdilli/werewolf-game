@@ -79,6 +79,7 @@ def main():
     parser.add_argument("--prompt-set", type=str, help="Path to prompt-set JSON configuration file")
     parser.add_argument("--prompt-dir", type=str, default="./prompts", help="Directory containing prompt files")
     parser.add_argument("--formatter", type=str, default="markdown", choices=["markdown", "json"], help="Context formatting type")
+    parser.add_argument("--context-as-tool", action="store_true", help="Retrieve game context via tool call instead of pre-injecting it in prompt")
     
     args = parser.parse_args()
 
@@ -96,6 +97,7 @@ def main():
         prompt_set_path=args.prompt_set,
         prompt_dir=args.prompt_dir,
         formatter=args.formatter,
+        context_as_tool=args.context_as_tool,
     )
 
 
