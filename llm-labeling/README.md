@@ -24,7 +24,7 @@ python .\src\wolf_llm_labeling\main.py <game_record.json> <game_record.csv> [opt
 | `--ollama-url` | `str` | **Required.** Base URL of the Ollama server (e.g. `https://gpu.snet.tu-berlin.de/echelon/ollama`). |
 | `--experiment` | `str` | **Required.** The experiment file/id to run: `a`, `b`, `c`, `d`, `e`, or `f` |
 | `--inner-voice-model` | `str` | Optional. Model name to use for the inner trust voice (defaults to the primary model) |
-| `--player-name` | `str` | Optional. Specific player name or index (e.g. `Beatrix` or `0`) to run labeling for. Runs for **all players** if omitted |
+| `--player-name` | `str` | Optional. Specific player name or index (e.g. `Blue` or `0`) to run labeling for. Runs for **all players** if omitted |
 | `--max-phases` | `int` | Optional. Maximum number of phases to evaluate (default: 0 for all phases) |
 | `--experiment-args` | `str` | Optional. Arguments passed to the experiment. For A-C, it is `<cutoff>`. For D-F, it is `<cutoff> <variant>` (e.g. `"3 2"`) |
 | `--formatter` | `str` | Optional. Context format type: `markdown` (default) or `json` |
@@ -44,7 +44,7 @@ python .\src\wolf_llm_labeling\main.py `
   --ollama-url "https://gpu.snet.tu-berlin.de/echelon/ollama" `
   --experiment "a" `
   --experiment-args "3" `
-  --player-name "Beatrix"
+  --player-name "Blue"
 ```
 
 ### 2. Run Experiment D (Variant 2: Agentic Tool Loop, Cutoff 3, JSON Formatter)
@@ -57,7 +57,7 @@ python .\src\wolf_llm_labeling\main.py `
   --experiment "d" `
   --experiment-args "3 2" `
   --formatter "json" `
-  --player-name "Beatrix"
+  --player-name "Blue"
 ```
 
 ---
@@ -70,7 +70,7 @@ Results are written automatically to:
 Example Schema:
 ```json
 {
-  "player_name": "Beatrix",
+  "player_name": "Blue",
   "models": {
     "primary_model": "gemma4:26b"
   },
@@ -87,19 +87,19 @@ Example Schema:
       "context": "{ ... }",
       "inner_voice": [
         {
-          "request": { "player_name": "spcx" },
+          "request": { "player_name": "Orange" },
           "response": "{ \"alignment\": { \"trust\": 7, \"confidence\": 3 } }"
         }
       ],
       "labels": {
-        "spcx": {
+        "Orange": {
           "alignment": { "trust": 7, "confidence": 3 },
           "strategic": null,
           "consistency": null,
-          "reasoning": "spcx has been supportive of the village goals."
+          "reasoning": "Orange has been supportive of the village goals."
         }
       },
-      "reasoning": "Evaluating spcx based on the inner trust voice..."
+      "reasoning": "Evaluating Orange based on the inner trust voice..."
     }
   ]
 }
