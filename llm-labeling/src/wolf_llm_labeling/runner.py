@@ -8,6 +8,10 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 from wolf_llm_labeling.game_records import GameRecord
 from wolf_llm_labeling.inner_voice import InnerVoice
 from wolf_llm_labeling.labeling import label_once
@@ -33,6 +37,7 @@ def run_labeling_experiment(
     """Execute a labeling experiment for game records and save the results."""
     token = os.getenv("OLLAMA_API_KEY")
 
+    # Check server availability early
     available_models = []
     try:
         import requests
@@ -40,8 +45,13 @@ def run_labeling_experiment(
         resp = requests.get(f"{ollama_url.rstrip('/')}/api/tags", headers=headers, timeout=5)
         if resp.status_code == 200:
             available_models = [m["name"] for m in resp.json().get("models", [])]
+        else:
+            print(f"Warning: Ollama server returned status code {resp.status_code} when querying models.", file=sys.stderr)
     except Exception as e:
-        print(f"Warning: Could not connect to Ollama server at {ollama_url} to list available models: {e}")
+        print(f"Error: The Ollama server at '{ollama_url}' is offline or unreachable.", file=sys.stderr)
+        print(f"Details: {e}", file=sys.stderr)
+        print("Please check your network connection, VPN, or server status. Exiting early.", file=sys.stderr)
+        sys.exit(1)
 
     # Resolve inner voice model default
     iv_model = inner_voice_model if inner_voice_model else primary_model
@@ -233,6 +243,10 @@ def run_labeling_experiment(
                 })
             except Exception as e:
                 print(f"    Error in phase {phase_idx}: {e}", file=sys.stderr)
+                err_str = str(e).lower()
+                if "connection" in err_str or "timeout" in err_str or "unreachable" in err_str or "host" in err_str or "connect" in err_str:
+                    print("Connection/Timeout error detected. Aborting experiment execution.", file=sys.stderr)
+                    sys.exit(1)
 
         run_data = {
             "player_name": player,

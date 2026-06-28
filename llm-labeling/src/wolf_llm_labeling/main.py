@@ -10,6 +10,10 @@ src_dir = Path(__file__).parents[1]
 if str(src_dir) not in sys.path:
     sys.path.insert(0, str(src_dir))
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 from wolf_llm_labeling.runner import run_labeling_experiment
 from wolf_llm_labeling.game_records import GameRecord
 from wolf_llm_labeling.models import LLMModelProviders
