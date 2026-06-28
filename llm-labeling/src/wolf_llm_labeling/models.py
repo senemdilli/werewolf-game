@@ -159,3 +159,15 @@ active_llm_provider = contextvars.ContextVar("active_llm_provider", default=None
 active_system_prompt = contextvars.ContextVar("active_system_prompt", default=None)
 
 
+from typing import Literal
+
+FormatterType = Literal["markdown", "json"]
+
+
+@dataclass
+class LLMModelProviders:
+    primary: Any
+    inner_voice: Any
+
+
+

@@ -23,7 +23,9 @@ from wolf_llm_labeling.models import (
     Vote,
     WitchKilled,
     WitchSaved,
+    FormatterType,
 )
+from wolf_llm_labeling.prompts import PromptSet
 
 if TYPE_CHECKING:
     from wolf_llm_labeling.inner_voice import InnerVoice
@@ -60,8 +62,24 @@ class Ctx:
             and all(subsection.is_empty() for subsection in self.subsections)
         )
 
-    def to_string(self, level: int = 1) -> str:
-        return self._render(level)
+    def to_string(self, formatter_type: FormatterType = "markdown", level: int = 1) -> str:
+        if formatter_type == "json":
+            import json
+            return json.dumps(self.to_dict(), indent=2)
+        else:
+            return self._render(level)
+
+    def to_dict(self) -> dict[str, Any]:
+        res: dict[str, Any] = {}
+        header = _visible_text(self.header)
+        content = _visible_text(self.content)
+        if header is not None:
+            res["header"] = header
+        if content is not None:
+            res["content"] = content
+        if self.subsections:
+            res["subsections"] = [sub.to_dict() for sub in self.subsections]
+        return res
 
     def __str__(self) -> str:
         return self.to_string()
@@ -92,7 +110,7 @@ def _visible_text(value: str | None) -> str | None:
 
 
 class ContextProvider(Protocol):
-    def get_context(self, game_record: GameRecord, phase_idx: int) -> "Ctx | None": ...
+    def get_context(self, game_record: GameRecord, prompt_set: PromptSet, phase_idx: int) -> "Ctx | None": ...
 
     def get_topness(self) -> float: ...
 
@@ -112,10 +130,38 @@ class JoinedContext:
         self.topness = topness
         self.sub_contexts = tuple(sub_contexts)
 
-    def get_context(self, game_record: GameRecord, phase_idx: int) -> "Ctx | None":
+    def get_context(
+        self,
+        game_record: GameRecord,
+        prompt_set_or_phase_idx: Any = None,
+        phase_idx: int | None = None,
+    ) -> Ctx | None:
+        if phase_idx is None:
+            target_phase_idx = prompt_set_or_phase_idx
+            prompt_set = PromptSet()
+        else:
+            target_phase_idx = phase_idx
+            prompt_set = prompt_set_or_phase_idx if isinstance(prompt_set_or_phase_idx, PromptSet) else PromptSet()
+
         child_contexts = []
         for provider in self.sub_contexts:
-            context = provider.get_context(game_record, phase_idx)
+            import inspect
+            try:
+                sig = inspect.signature(provider.get_context)
+                pos_params = [
+                    p for p in sig.parameters.values()
+                    if p.kind in (inspect.Parameter.POSITIONAL_ONLY, inspect.Parameter.POSITIONAL_OR_KEYWORD)
+                ]
+                if len(pos_params) >= 3:
+                    context = provider.get_context(game_record, prompt_set, target_phase_idx)
+                else:
+                    context = provider.get_context(game_record, target_phase_idx)
+            except Exception:
+                try:
+                    context = provider.get_context(game_record, prompt_set, target_phase_idx)
+                except TypeError:
+                    context = provider.get_context(game_record, target_phase_idx)
+
             if context is None or context.is_empty():
                 continue
             child_contexts.append((provider.get_topness(), context))
@@ -142,7 +188,19 @@ class StaticContext:
     def __init__(self, player_name: PlayerName) -> None:
         self.player_name = player_name
 
-    def get_context(self, game_record: GameRecord, phase_idx: int) -> "Ctx | None":
+    def get_context(
+        self,
+        game_record: GameRecord,
+        prompt_set_or_phase_idx: Any = None,
+        phase_idx: int | None = None,
+    ) -> Ctx | None:
+        if phase_idx is None:
+            target_phase_idx = prompt_set_or_phase_idx
+            prompt_set = PromptSet()
+        else:
+            target_phase_idx = phase_idx
+            prompt_set = prompt_set_or_phase_idx if isinstance(prompt_set_or_phase_idx, PromptSet) else PromptSet()
+
         players = game_record.get_players()
         
         if self.player_name not in players:
@@ -164,8 +222,19 @@ class GameNowContext:
     def __init__(self, player_name: PlayerName) -> None:
         self.player_name = player_name
 
-    def get_context(self, game_record: GameRecord, phase_idx: int) -> "Ctx | None":
-       
+    def get_context(
+        self,
+        game_record: GameRecord,
+        prompt_set_or_phase_idx: Any = None,
+        phase_idx: int | None = None,
+    ) -> Ctx | None:
+        if phase_idx is None:
+            target_phase_idx = prompt_set_or_phase_idx
+            prompt_set = PromptSet()
+        else:
+            target_phase_idx = phase_idx
+            prompt_set = prompt_set_or_phase_idx if isinstance(prompt_set_or_phase_idx, PromptSet) else PromptSet()
+
         players = game_record.get_players()
         if self.player_name not in players:
             return None
@@ -259,9 +328,21 @@ class PhaseGameContext:
     def __init__(self, offset: int = 0) -> None:
         self.offset = offset
 
-    def get_context(self, game_record: GameRecord, phase_idx: int) -> "Ctx | None":
+    def get_context(
+        self,
+        game_record: GameRecord,
+        prompt_set_or_phase_idx: Any = None,
+        phase_idx: int | None = None,
+    ) -> Ctx | None:
+        if phase_idx is None:
+            target_phase_idx = prompt_set_or_phase_idx
+            prompt_set = PromptSet()
+        else:
+            target_phase_idx = phase_idx
+            prompt_set = prompt_set_or_phase_idx if isinstance(prompt_set_or_phase_idx, PromptSet) else PromptSet()
+
         phase_count = game_record.get_phase_count()
-        if phase_idx < 0 or phase_idx >= phase_count:
+        if target_phase_idx < 0 or target_phase_idx >= phase_count:
             return None
 
         target_phase_idx = phase_idx - self.offset
@@ -370,8 +451,20 @@ class PhaseTrustContext:
         self.player_name = player_name
         self.injected_trust = None if injected_trust is None else tuple(dict(phase) for phase in injected_trust)
 
-    def get_context(self, game_record: GameRecord, phase_idx: int) -> "Ctx | None":
-        target_phase_idx = phase_idx - self.offset
+    def get_context(
+        self,
+        game_record: GameRecord,
+        prompt_set_or_phase_idx: Any = None,
+        phase_idx: int | None = None,
+    ) -> Ctx | None:
+        if phase_idx is None:
+            target_phase_idx = prompt_set_or_phase_idx
+            prompt_set = PromptSet()
+        else:
+            target_phase_idx = phase_idx
+            prompt_set = prompt_set_or_phase_idx if isinstance(prompt_set_or_phase_idx, PromptSet) else PromptSet()
+
+        target_phase_idx = target_phase_idx - self.offset
         if not 0 <= target_phase_idx < game_record.get_phase_count():
             return None
 
@@ -460,18 +553,30 @@ class InnerTrustVoiceContext:
         self.inner_voice = inner_voice
         self.inner_voice_context = inner_voice_context
 
-    def get_context(self, game_record: GameRecord, phase_idx: int) -> "Ctx | None":
+    def get_context(
+        self,
+        game_record: GameRecord,
+        prompt_set_or_phase_idx: Any = None,
+        phase_idx: int | None = None,
+    ) -> Ctx | None:
+        if phase_idx is None:
+            target_phase_idx = prompt_set_or_phase_idx
+            prompt_set = PromptSet()
+        else:
+            target_phase_idx = phase_idx
+            prompt_set = prompt_set_or_phase_idx if isinstance(prompt_set_or_phase_idx, PromptSet) else PromptSet()
+
         from wolf_llm_labeling.models import active_player_name
 
         observer = active_player_name.get()
         players = game_record.get_players()
-        iv_context = self.inner_voice_context.get_context(game_record, phase_idx)
+        iv_context = self.inner_voice_context.get_context(game_record, prompt_set, target_phase_idx)
 
         player_sections = []
         for player in players:
             if player == observer:
                 continue
-            scores = self.inner_voice.ask(player, iv_context, game_record, phase_idx)
+            scores = self.inner_voice.ask(player, iv_context, game_record, prompt_set, phase_idx)
             content = _render_trust_scores_no_rationale(scores)
             if content is not None:
                 player_sections.append(Ctx(header=player, content=content))

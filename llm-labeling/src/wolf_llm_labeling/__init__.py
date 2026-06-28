@@ -1,8 +1,7 @@
-"""Trust-labeling scaffolding for Werewolf game records."""
+from wolf_llm_labeling.models import Label, LLMCallInfo, Score, TrustScores, LLMModelProviders
+from wolf_llm_labeling.prompts import PromptSet
 
-from wolf_llm_labeling.models import Label, LLMCallInfo, Score, TrustScores
-
-__all__ = ["Label", "LLMCallInfo", "Score", "TrustScores", "label_once"]
+__all__ = ["Label", "LLMCallInfo", "Score", "TrustScores", "LLMModelProviders", "PromptSet", "label_once"]
 
 
 def __getattr__(name: str):
@@ -11,3 +10,4 @@ def __getattr__(name: str):
 
         return label_once
     raise AttributeError(name)
+

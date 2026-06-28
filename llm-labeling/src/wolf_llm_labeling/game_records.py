@@ -98,6 +98,7 @@ class GameRecord:
         self._players: dict[PlayerName, Role] = {}
         self._phases: tuple[_Phase, ...] = ()
         self._winner: str | None = None
+        self._game_id: str | None = None
 
     def read_from_files(self, paths: str | Path | list[str | Path]) -> None:
         """Load one CSV/labels export pair, replacing current state atomically."""
@@ -116,6 +117,11 @@ class GameRecord:
         self._players = dict(players)
         self._phases = tuple(phases)
         self._winner = winner
+        self._game_id = labels_doc.get("game_id")
+
+    def get_game_id(self) -> str | None:
+        """Return the game ID of the loaded game record."""
+        return self._game_id
 
     def get_players(self) -> dict[PlayerName, Role]:
         """Return player roles known from CSV player rows and labels."""
