@@ -7,10 +7,15 @@ from wolf_llm_labeling.contexts import (
     PhaseTrustContext,
 )
 from wolf_llm_labeling.inner_voice import InnerVoice
-from wolf_llm_labeling.models import PlayerName
+from wolf_llm_labeling.models import PlayerName, LLMModelProviders
 
 
-def experiment_b(player_name: PlayerName, cutoff: int) -> tuple[ContextProvider, InnerVoice | None]:
+def experiment(
+    player_name: PlayerName,
+    args: str,
+    models: LLMModelProviders,
+) -> tuple[ContextProvider, InnerVoice | None]:
+    cutoff = int(args.strip()) if args.strip() else 0
     # Base context: Game static + Game now
     base_ctx = JoinedContext('Game Information', None, 1000, StaticContext(player_name), GameNowContext(player_name))
     
