@@ -23,9 +23,9 @@ EXPORT_DIR = Path(__file__).parents[3] / "results" / "game-records"
 @pytest.mark.parametrize(
     ("filename", "player_count", "phase_count", "known_player", "known_role", "winner"),
     [
-        ("game-706E87-97809dcb.csv", 7, 12, "Garrett", Role.SEER, "VILLAGERS"),
-        ("game-AA0F7O-30bcd6c1.csv", 8, 12, "TheTorminator", Role.WITCH, "VILLAGERS"),
-        ("game-OX8OBY-3b3beea1.csv", 7, 9, "Wren", Role.SEER, "VILLAGERS"),
+        ("MISSING_VOTING_game-706E87-97809dcb.csv", 7, 12, "Garrett", Role.SEER, "VILLAGERS"),
+        ("MISSING_VOTING_game-AA0F7O-30bcd6c1.csv", 8, 12, "TheTorminator", Role.WITCH, "VILLAGERS"),
+        ("MISSING_VOTING_game-OX8OBY-3b3beea1.csv", 7, 9, "Wren", Role.SEER, "VILLAGERS"),
     ],
 )
 def test_real_exports_load_with_known_counts_and_roles(
@@ -46,8 +46,8 @@ def test_real_exports_load_with_known_counts_and_roles(
 
 
 def test_real_export_single_path_inference_from_csv_and_labels() -> None:
-    csv_path = EXPORT_DIR / "game-AA0F7O-30bcd6c1.csv"
-    labels_path = EXPORT_DIR / "game-AA0F7O-30bcd6c1-labels.json"
+    csv_path = EXPORT_DIR / "MISSING_VOTING_game-AA0F7O-30bcd6c1.csv"
+    labels_path = EXPORT_DIR / "MISSING_VOTING_game-AA0F7O-30bcd6c1-labels.json"
 
     from_csv = GameRecord()
     from_csv.read_from_files(csv_path)
@@ -60,7 +60,7 @@ def test_real_export_single_path_inference_from_csv_and_labels() -> None:
 
 def test_706e87_known_message_label_mayor_and_exile() -> None:
     record = GameRecord()
-    record.read_from_files(EXPORT_DIR / "game-706E87-97809dcb.csv")
+    record.read_from_files(EXPORT_DIR / "MISSING_VOTING_game-706E87-97809dcb.csv")
 
     phase_0 = record.get_phase_data(0)
     assert not any(isinstance(item, SystemMessage) and item.message == "Voting begins." for item in phase_0)
@@ -79,7 +79,7 @@ def test_706e87_known_message_label_mayor_and_exile() -> None:
 
 def test_aa0f7o_known_mayor_death_and_label() -> None:
     record = GameRecord()
-    record.read_from_files(EXPORT_DIR / "game-AA0F7O-30bcd6c1.csv")
+    record.read_from_files(EXPORT_DIR / "MISSING_VOTING_game-AA0F7O-30bcd6c1.csv")
 
     assert record.get_player_status(1, "TheTorminator") == PlayerStatus.MAYOR
     assert record.get_player_status(3, "TheTorminator") == PlayerStatus.DEAD
@@ -89,10 +89,11 @@ def test_aa0f7o_known_mayor_death_and_label() -> None:
 
 def test_ox8oby_known_witch_kill_deaths_and_exile() -> None:
     record = GameRecord()
-    record.read_from_files(EXPORT_DIR / "game-OX8OBY-3b3beea1.csv")
+    record.read_from_files(EXPORT_DIR / "MISSING_VOTING_game-OX8OBY-3b3beea1.csv")
 
     assert record.get_player_status(1, "Yellow") == PlayerStatus.MAYOR
     assert any(isinstance(item, WitchKilled) and item.affected_player == "Lyra" for item in record.get_phase_data(6))
     assert {item.affected_player for item in record.get_phase_data(6) if isinstance(item, KillEvent)} == {"Wren", "Lyra"}
     assert any(isinstance(item, ExileEvent) and item.affected_player == "Beatrix" for item in record.get_phase_data(5))
     assert record.get_labels(2)["Beatrix"]["spcx"][0].trust_scores.alignment.trust == 7
+

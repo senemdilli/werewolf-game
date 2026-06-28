@@ -6,21 +6,31 @@ from unittest.mock import MagicMock
 import pytest
 
 from wolf_llm_labeling.game_records import GameRecord
-from wolf_llm_labeling.models import Label, Score, TrustScores, ReportLabelsArgs, SinglePlayerLabel, LabelSchema, TrustScoresSchema, ScoreSchema
+from wolf_llm_labeling.models import (
+    Label,
+    Score,
+    TrustScores,
+    ReportLabelsArgs,
+    SinglePlayerLabel,
+    LabelSchema,
+    TrustScoresSchema,
+    ScoreSchema,
+    LLMModelProviders,
+)
 from wolf_llm_labeling.contexts import ContextProvider, Ctx
 from wolf_llm_labeling.inner_voice import InnerVoice
 from wolf_llm_labeling.labeling import label_once
+from wolf_llm_labeling.prompts import PromptSet
 
 
 # Simple Mock Context Provider
 class DummyContextProvider:
     player_name = "Villager"
     
-    def get_context(self, game_record: GameRecord, phase_idx: int) -> Ctx:
+    def get_context(self, game_record: GameRecord, prompt_set: PromptSet, phase_idx: int) -> Ctx:
         return Ctx(header="Game Information", content="Mock context content")
         
-    @staticmethod
-    def get_topness() -> float:
+    def get_topness(self) -> float:
         return 100.0
 
 
@@ -71,7 +81,7 @@ def test_label_once_via_tool_call(tmp_path: Path) -> None:
     record = GameRecord()
     record.read_from_files([csv_path, labels_path])
 
-    # Mock response from LLM calling
+    # Mock response from LLM calling the report_labels tool
     from langchain_core.messages import AIMessage
     tool_call_response = AIMessage(
         content="",
@@ -97,13 +107,16 @@ def test_label_once_via_tool_call(tmp_path: Path) -> None:
     )
     
     llm = MockChatModel([tool_call_response])
+    models = LLMModelProviders(primary=llm, inner_voice=llm)
+    prompt_set = PromptSet()
     context = DummyContextProvider()
     
     labels, call_info = label_once(
-        llm_provider=llm,
-        system_prompt="You are a villager",
+        models=models,
+        prompt_set=prompt_set,
         context=context,
         inner_voice=None,
+        formatter_type="markdown",
         game_data=record,
         phase_idx=0,
     )
@@ -124,20 +137,23 @@ def test_label_once_structured_fallback(tmp_path: Path) -> None:
     record = GameRecord()
     record.read_from_files([csv_path, labels_path])
 
-    # Mock response that doesn't call any tools
+    # Mock response that doesn't call any tools (just outputs conversational text)
     from langchain_core.messages import AIMessage
     conversational_response = AIMessage(
         content="I think Wolf is suspicious but I am not ready to report yet."
     )
     
     llm = MockChatModel([conversational_response])
+    models = LLMModelProviders(primary=llm, inner_voice=llm)
+    prompt_set = PromptSet()
     context = DummyContextProvider()
     
     labels, call_info = label_once(
-        llm_provider=llm,
-        system_prompt="You are a villager",
+        models=models,
+        prompt_set=prompt_set,
         context=context,
         inner_voice=None,
+        formatter_type="markdown",
         game_data=record,
         phase_idx=0,
     )

@@ -18,14 +18,41 @@ from wolf_llm_labeling.models import (
     active_llm_provider,
     active_system_prompt,
     ReportLabelsArgs,
+    FormatterType,
+    LLMModelProviders,
 )
+from wolf_llm_labeling.prompts import PromptSet
+
+
+def formatted_trust_scores(scores: TrustScores, formatter_type: FormatterType) -> str:
+    """Format trust scores based on formatter type (json or markdown)."""
+    if formatter_type == "json":
+        import json
+        res = {}
+        if scores.alignment:
+            res["alignment"] = {"trust": scores.alignment.trust, "confidence": scores.alignment.confidence}
+        if scores.strategic:
+            res["strategic"] = {"trust": scores.strategic.trust, "confidence": scores.strategic.confidence}
+        if scores.consistency:
+            res["consistency"] = {"trust": scores.consistency.trust, "confidence": scores.consistency.confidence}
+        return json.dumps(res)
+    else:
+        lines = []
+        if scores.alignment:
+            lines.append(f"Alignment Trust: {scores.alignment.trust}/7 (Confidence: {scores.alignment.confidence})")
+        if scores.strategic:
+            lines.append(f"Strategic Trust: {scores.strategic.trust}/7 (Confidence: {scores.strategic.confidence})")
+        if scores.consistency:
+            lines.append(f"Consistency Trust: {scores.consistency.trust}/7 (Confidence: {scores.consistency.confidence})")
+        return "\n".join(lines)
 
 
 def label_once(
-    llm_provider: Any,
-    system_prompt: str,
+    models: LLMModelProviders,
+    prompt_set: PromptSet,
     context: ContextProvider,
     inner_voice: InnerVoice | None,
+    formatter_type: FormatterType,
     game_data: GameRecord,
     phase_idx: int,
 ) -> tuple[dict[PlayerName, Label], LLMCallInfo]:
@@ -51,15 +78,23 @@ def label_once(
         else:
             player_name = "UnknownObserver"
 
+    # Set dynamic system prompt from prompt_set
+    system_prompt = prompt_set.get_prompt(
+        "labeling__system_prompt",
+        {},
+        "You are a helpful assistant playing Werewolf. Assess the trust level of other players."
+    )
+
     # Set context variables for dynamic downstream lookup (for inside contexts or inner voices)
     t1 = active_player_name.set(player_name)
-    t2 = active_llm_provider.set(llm_provider)
+    # The inner voice queries should use the inner_voice model provider, not the primary
+    t2 = active_llm_provider.set(models.inner_voice)
     t3 = active_system_prompt.set(system_prompt)
 
     try:
         # Materialize context
-        context_ctx = context.get_context(game_data, phase_idx)
-        context_str = context_ctx.to_string() if context_ctx else "No context available."
+        context_ctx = context.get_context(game_data, prompt_set, phase_idx)
+        context_str = context_ctx.to_string(formatter_type=formatter_type) if context_ctx else "No context available."
 
         reported_labels_dict: dict[PlayerName, Label] = {}
 
@@ -97,10 +132,16 @@ def label_once(
                 )
             return "Labels successfully reported."
 
+        report_desc = prompt_set.get_prompt(
+            "labeling__report_labels_desc",
+            {},
+            "Report the final trust labels and reasoning for all other players."
+        )
+
         report_tool = StructuredTool.from_function(
             func=report_labels_fn,
             name="report_labels",
-            description="Report the final trust labels and reasoning for all other players.",
+            description=report_desc,
             args_schema=ReportLabelsArgs,
         )
 
@@ -110,21 +151,17 @@ def label_once(
 
         if has_inner_voice and inner_voice is not None:
             def ask_inner_voice_fn(player_name: str) -> str:
-                # Need to satisfy type checker that inner_voice is not None
                 if inner_voice is None:
                     return "No inner voice advice is available."
                 try:
-                    scores = inner_voice.ask(player_name, context_ctx, game_data, phase_idx)
-                    lines = []
-                    if scores.alignment is not None:
-                        lines.append(f"Alignment Trust: {scores.alignment.trust}/7 (Confidence: {scores.alignment.confidence})")
-                    if scores.strategic is not None:
-                        lines.append(f"Strategic Trust: {scores.strategic.trust}/7 (Confidence: {scores.strategic.confidence})")
-                    if scores.consistency is not None:
-                        lines.append(f"Consistency Trust: {scores.consistency.trust}/7 (Confidence: {scores.consistency.confidence})")
-                    if not lines:
+                    scores = inner_voice.ask(player_name, context_ctx, game_data, prompt_set, phase_idx)
+                    advice_content = formatted_trust_scores(scores, formatter_type)
+                    if not advice_content:
                         return f"No trust advice available for {player_name}."
-                    return f"Advice for {player_name}:\n" + "\n".join(lines)
+                    
+                    if formatter_type == "json":
+                        return advice_content
+                    return f"Advice for {player_name}:\n" + advice_content
                 except Exception as e:
                     return f"Error querying inner voice: {e}"
 
@@ -134,7 +171,7 @@ def label_once(
             ask_tool = StructuredTool.from_function(
                 func=ask_inner_voice_fn,
                 name="ask_inner_trust_voice",
-                description="Ask the inner trust voice for advice regarding a specific player name.",
+                description=inner_voice.tool_description(prompt_set),
                 args_schema=AskInnerVoiceArgs,
             )
 
@@ -145,7 +182,7 @@ def label_once(
 
         from langchain.agents import create_agent
         agent = create_agent(
-            model=llm_provider,
+            model=models.primary,
             system_prompt=system_prompt,
             tools=tools,
             middleware=[]
@@ -166,7 +203,7 @@ def label_once(
 
         # 4. Fallback if the LLM did not call report_labels
         if not reported_labels_dict:
-            structured_llm = llm_provider.with_structured_output(ReportLabelsArgs)
+            structured_llm = models.primary.with_structured_output(ReportLabelsArgs)
             try:
                 final_messages = current_messages + [
                     HumanMessage(content="Please provide the final trust scores and reasoning for all other players as structured output now.")
@@ -174,21 +211,19 @@ def label_once(
                 final_res = structured_llm.invoke(final_messages)
                 if final_res and hasattr(final_res, "labels") and final_res.labels:
                     report_labels_fn(final_res.labels)
-            except Exception as e:
-                # Direct fallback on the original prompt
+            except Exception:
                 try:
                     final_res = structured_llm.invoke(messages)
                     if final_res and hasattr(final_res, "labels") and final_res.labels:
                         report_labels_fn(final_res.labels)
-                except Exception as inner_e:
-                    # Let the exception bubble up or log it, but ensure we return what we can
+                except Exception:
                     pass
 
         # 5. Build LLMCallInfo
         provider_name = (
-            getattr(llm_provider, "model_name", None)
-            or getattr(llm_provider, "model", None)
-            or type(llm_provider).__name__
+            getattr(models.primary, "model_name", None)
+            or getattr(models.primary, "model", None)
+            or type(models.primary).__name__
         )
 
         tool_calls = []
@@ -201,7 +236,7 @@ def label_once(
             provider_name=provider_name,
             context=context_str,
             tool_calls=tool_calls,
-            raw_response=last_response,
+            raw_response=current_messages,
             metadata=getattr(last_response, "response_metadata", {}) if last_response else {},
         )
 
@@ -211,4 +246,3 @@ def label_once(
         active_player_name.reset(t1)
         active_llm_provider.reset(t2)
         active_system_prompt.reset(t3)
-
