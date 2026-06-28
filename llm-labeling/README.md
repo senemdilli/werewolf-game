@@ -105,3 +105,24 @@ Example Schema:
   ]
 }
 ```
+
+---
+
+## Local Testing with LM Studio
+
+LM Studio hosts local models behind an OpenAI-compatible API endpoint (default: `http://localhost:1234/v1`). 
+
+If the `--ollama-url` parameter contains `1234` or `/v1`, the labeling engine automatically switches to the `ChatOpenAI` client behind the scenes. This allows you to run trust evaluations locally against any loaded model (e.g. Gemma, Llama, etc.)
+
+Example local command:
+```powershell
+python .\src\wolf_llm_labeling\main.py `
+  "..\results\game-records\game-44UT6Y-d59e923e-labels.json" `
+  "..\results\game-records\game-44UT6Y-d59e923e.csv" `
+  --primary-model "your-local-model-name" `
+  --ollama-url "http://localhost:1234/v1" `
+  --experiment "a" `
+  --experiment-args "3" `
+  --player-name "Blue" `
+  --max-phases 1
+```

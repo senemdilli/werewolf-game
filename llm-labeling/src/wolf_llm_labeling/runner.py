@@ -38,23 +38,25 @@ def run_labeling_experiment(
     """Execute a labeling experiment for game records and save the results."""
     token = os.getenv("OLLAMA_API_KEY")
 
-    # Check server availability early
-    available_models = []
-    try:
-        import requests
-        headers = {"Authorization": f"Bearer {token}"} if token else {}
-        resp = requests.get(f"{ollama_url.rstrip('/')}/api/tags", headers=headers, timeout=5)
-        if resp.status_code == 200:
-            available_models = [m["name"] for m in resp.json().get("models", [])]
-        else:
-            print(f"Warning: Ollama server returned status code {resp.status_code} when querying models.", file=sys.stderr)
-    except Exception as e:
-        print(f"Error: The Ollama server at '{ollama_url}' is offline or unreachable.", file=sys.stderr)
-        print(f"Details: {e}", file=sys.stderr)
-        print("Please check your network connection or server status. Exiting early", file=sys.stderr)
-        sys.exit(1)
+    # Check if LM Studio is used
+    is_openai = "1234" in ollama_url or "/v1" in ollama_url
 
-    # Resolve inner voice model default
+    available_models = []
+    if not is_openai:
+        try:
+            import requests
+            headers = {"Authorization": f"Bearer {token}"} if token else {}
+            resp = requests.get(f"{ollama_url.rstrip('/')}/api/tags", headers=headers, timeout=5)
+            if resp.status_code == 200:
+                available_models = [m["name"] for m in resp.json().get("models", [])]
+            else:
+                print(f"Warning: Ollama server returned status code {resp.status_code} when querying models.", file=sys.stderr)
+        except Exception as e:
+            print(f"Error: The Ollama server at '{ollama_url}' is offline or unreachable.", file=sys.stderr)
+            print(f"Details: {e}", file=sys.stderr)
+            print("Please check your network connection or server status. Exiting early", file=sys.stderr)
+            sys.exit(1)
+
     iv_model = inner_voice_model if inner_voice_model else primary_model
 
     if available_models:
@@ -65,36 +67,58 @@ def run_labeling_experiment(
             print(f"Error: inner voice model '{iv_model}' is not supported by the server. Available models: {available_models}", file=sys.stderr)
             sys.exit(1)
 
-    try:
-        from langchain_ollama import ChatOllama
-    except ImportError:
+    if is_openai:
         try:
-            from langchain_community.chat_models import ChatOllama
+            from langchain_openai import ChatOpenAI
         except ImportError:
-            print("Error: Neither langchain_ollama nor langchain_community is installed.", file=sys.stderr)
-            sys.exit(1)
+            try:
+                from langchain_community.chat_models import ChatOpenAI
+            except ImportError:
+                print("Error: Neither langchain_openai nor langchain_community is installed", file=sys.stderr)
+                sys.exit(1)
 
-    primary_llm = ChatOllama(
-        model=primary_model,
-        temperature=0.0,
-        base_url=ollama_url,
-        client_kwargs={
-            "headers": {
-                "Authorization": f"Bearer {token}"
-            }
-        } if token else {}
-    )
+        primary_llm = ChatOpenAI(
+            model=primary_model,
+            temperature=0.0,
+            base_url=ollama_url,
+            api_key=token or "lm-studio",
+        )
+        inner_voice_llm = ChatOpenAI(
+            model=iv_model,
+            temperature=0.0,
+            base_url=ollama_url,
+            api_key=token or "lm-studio",
+        )
+    else:
+        try:
+            from langchain_ollama import ChatOllama
+        except ImportError:
+            try:
+                from langchain_community.chat_models import ChatOllama
+            except ImportError:
+                print("Error: langchain_ollama or langchain_community not installed", file=sys.stderr)
+                sys.exit(1)
 
-    inner_voice_llm = ChatOllama(
-        model=iv_model,
-        temperature=0.0,
-        base_url=ollama_url,
-        client_kwargs={
-            "headers": {
-                "Authorization": f"Bearer {token}"
-            }
-        } if token else {}
-    )
+        primary_llm = ChatOllama(
+            model=primary_model,
+            temperature=0.0,
+            base_url=ollama_url,
+            client_kwargs={
+                "headers": {
+                    "Authorization": f"Bearer {token}"
+                }
+            } if token else {}
+        )
+        inner_voice_llm = ChatOllama(
+            model=iv_model,
+            temperature=0.0,
+            base_url=ollama_url,
+            client_kwargs={
+                "headers": {
+                    "Authorization": f"Bearer {token}"
+                }
+            } if token else {}
+        )
 
     models = LLMModelProviders(primary=primary_llm, inner_voice=inner_voice_llm)
 
