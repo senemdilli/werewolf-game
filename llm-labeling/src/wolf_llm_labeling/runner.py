@@ -172,8 +172,8 @@ def run_labeling_experiment(
         target_players = player_names
 
     output_path = Path(output_dir)
-    game_id = game_record.get_game_id() or "unknown_game"
-    base_out_path = output_path / experiment_name / game_id
+    game_file = Path(game_record_csv).stem
+    base_out_path = output_path / experiment_name / game_file
     base_out_path.mkdir(parents=True, exist_ok=True)
 
     written_files = []
@@ -281,7 +281,8 @@ def run_labeling_experiment(
                     sys.exit(1)
 
         run_data = {
-            "game_id": game_id,
+            "game_id": game_record.get_game_id() or "unknown_game",
+            "game_file": game_file,
             "player_name": player,
             "models": {
                 "primary_model": primary_model,
