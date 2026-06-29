@@ -126,3 +126,45 @@ python .\src\wolf_llm_labeling\main.py `
   --player-name "Blue" `
   --max-phases 1
 ```
+
+---
+
+## Batch Execution & Automation
+
+There are two ways to automate runs across multiple games, models and experiments:
+
+### 1. Fully Automated Python Script (`run_all.py`)
+
+The `run_all.py` script automatically scans for all healthy game records inside `./results/game-records/` and executes experiments A through F for the specified models by calling the labeling engine directly:
+
+```powershell
+python .\run_all.py
+```
+
+You can edit `run_all.py` directly to adjust the list of active models, the Ollama server URL, or the experiments you wish to run.
+
+### 2. Config-Driven Batch Runner (`batch_runner.py`)
+
+Alternatively, you can run custom configurations defined in a JSON file (args are for phases or inner trust):
+
+1. Create a `batch_config.json` file:
+```json
+{
+  "ollama_url": "https://gpu.snet.tu-berlin.de/echelon/ollama",
+  "primary_model": "gemma4:26b",
+  "runs": [
+    { "experiment": "a", "args": "3" },
+    { "experiment": "d", "args": "3 2" }
+  ]
+}
+```
+
+2. Execute the batch:
+```powershell
+python .\src\wolf_llm_labeling\batch_runner.py --config batch_config.json
+```
+
+To run default presets across all game files without a configuration file:
+```powershell
+python .\src\wolf_llm_labeling\batch_runner.py --primary-model "gemma4:26b"
+```
