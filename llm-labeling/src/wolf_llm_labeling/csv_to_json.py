@@ -117,7 +117,7 @@ def main():
         game_file = csv_path_obj.name.replace(".csv", "")
         game_dict = convert_game_to_dict(record, game_file=game_file, room_code=room_code)
         
-        out_dir = Path(args.output_dir) if args.output_dir else csv_path_obj.parent / "converted"
+        out_dir = Path(args.output_dir) if args.output_dir else csv_path_obj.parent / "converted-grouped"
         out_dir.mkdir(parents=True, exist_ok=True)
         
         out_file = out_dir / csv_path_obj.name.replace(".csv", "-converted-grouped.json")
