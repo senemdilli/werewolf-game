@@ -1,0 +1,179 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ExperimentPlayerLabels",
+  "type": "object",
+  "required": [
+    "game_id",
+    "player_name",
+    "models",
+    "experiment",
+    "formatter",
+    "total_phases",
+    "alive_phases",
+    "phases"
+  ],
+  "properties": {
+    "game_id": {
+      "type": "string",
+      "description": "Unique identifier of the game record"
+    },
+    "player_name": {
+      "type": "string",
+      "description": "Name of the player being labeled"
+    },
+    "models": {
+      "type": "object",
+      "required": ["primary_model"],
+      "properties": {
+        "primary_model": {
+          "type": "string"
+        },
+        "inner_voice_model": {
+          "type": "string"
+        }
+      }
+    },
+    "prompts": {
+      "type": "object",
+      "description": "Mapping of prompt IDs to templates used"
+    },
+    "time": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "experiment": {
+      "type": "string"
+    },
+    "formatter": {
+      "type": "string",
+      "enum": ["markdown", "json"]
+    },
+    "experiment_args": {
+      "type": "string"
+    },
+    "total_phases": {
+      "type": "integer"
+    },
+    "alive_phases": {
+      "type": "integer"
+    },
+    "phases": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "phase_idx",
+          "context",
+          "inner_voice",
+          "labels"
+        ],
+        "properties": {
+          "phase_idx": {
+            "type": "integer"
+          },
+          "context": {
+            "type": "string"
+          },
+          "inner_voice": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "request",
+                "response"
+              ],
+              "properties": {
+                "request": {
+                  "type": "object"
+                },
+                "response": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "labels": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "alignment": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "trust": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ]
+                    },
+                    "confidence": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ]
+                    }
+                  }
+                },
+                "strategic": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "trust": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ]
+                    },
+                    "confidence": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ]
+                    }
+                  }
+                },
+                "consistency": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "trust": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ]
+                    },
+                    "confidence": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ]
+                    }
+                  }
+                },
+                "reasoning": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              }
+            }
+          },
+          "reasoning": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      }
+    }
+  }
+}

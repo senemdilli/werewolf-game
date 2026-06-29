@@ -1,0 +1,183 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "HumanGameLabels",
+  "type": "object",
+  "required": [
+    "game_id",
+    "room_code",
+    "game_mode",
+    "winner",
+    "exported_at",
+    "rounds"
+  ],
+  "properties": {
+    "game_id": {
+      "type": "string"
+    },
+    "room_code": {
+      "type": "string"
+    },
+    "game_mode": {
+      "type": "string"
+    },
+    "winner": {
+      "type": "string"
+    },
+    "exported_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "rounds": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "round",
+          "checkpoints"
+        ],
+        "properties": {
+          "round": {
+            "type": "integer"
+          },
+          "checkpoints": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "checkpoint",
+                "labels"
+              ],
+              "properties": {
+                "checkpoint": {
+                  "type": "string"
+                },
+                "labels": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "id",
+                      "created_at",
+                      "observer",
+                      "targets"
+                    ],
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                      },
+                      "observer": {
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "name",
+                          "role"
+                        ],
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "role": {
+                            "type": "string"
+                          }
+                        }
+                      },
+                      "targets": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "required": [
+                            "player",
+                            "reasoning",
+                            "alignment",
+                            "information",
+                            "consistency"
+                          ],
+                          "properties": {
+                            "player": {
+                              "type": "object",
+                              "required": [
+                                "id",
+                                "name",
+                                "role"
+                              ],
+                              "properties": {
+                                "id": {
+                                  "type": "string"
+                                },
+                                "name": {
+                                  "type": "string"
+                                },
+                                "role": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            "reasoning": {
+                              "type": "string"
+                            },
+                            "alignment": {
+                              "type": "object",
+                              "required": [
+                                "score",
+                                "confidence"
+                              ],
+                              "properties": {
+                                "score": {
+                                  "type": "integer"
+                                },
+                                "confidence": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            "information": {
+                              "type": "object",
+                              "required": [
+                                "score",
+                                "confidence"
+                              ],
+                              "properties": {
+                                "score": {
+                                  "type": "integer"
+                                },
+                                "confidence": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            "consistency": {
+                              "type": "object",
+                              "required": [
+                                "score",
+                                "confidence"
+                              ],
+                              "properties": {
+                                "score": {
+                                  "type": "integer"
+                                },
+                                "confidence": {
+                                  "type": "string"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
