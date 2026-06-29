@@ -20,9 +20,21 @@ class PromptSet:
         
         self.raw_mapping = mapping
         for prompt_id, relative_path in mapping.items():
+            target_id = "labeling__system_prompt" if prompt_id == "system_prompt" else prompt_id
+            
             full_path = self.prompt_dir / relative_path
+            if not full_path.exists():
+                alt_path = None
+                if relative_path.endswith(".md"):
+                    alt_path = self.prompt_dir / relative_path.replace(".md", ".txt")
+                elif relative_path.endswith(".txt"):
+                    alt_path = self.prompt_dir / relative_path.replace(".txt", ".md")
+                
+                if alt_path and alt_path.exists():
+                    full_path = alt_path
+            
             with open(full_path, "r", encoding="utf-8") as pf:
-                self.prompts[prompt_id] = pf.read()
+                self.prompts[target_id] = pf.read()
 
     def get_prompt(self, prompt_id: str, args: dict[str, str], default_prompt: str | None = None) -> str:
         """

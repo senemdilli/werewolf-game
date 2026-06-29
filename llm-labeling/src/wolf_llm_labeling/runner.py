@@ -281,6 +281,7 @@ def run_labeling_experiment(
                     sys.exit(1)
 
         run_data = {
+            "game_id": game_id,
             "player_name": player,
             "models": {
                 "primary_model": primary_model,

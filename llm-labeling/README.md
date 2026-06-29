@@ -71,6 +71,7 @@ Results are written automatically to:
 Example Schema:
 ```json
 {
+  "game_id": "game-44UT6Y-d59e923e",
   "player_name": "Blue",
   "models": {
     "primary_model": "gemma4:26b"
