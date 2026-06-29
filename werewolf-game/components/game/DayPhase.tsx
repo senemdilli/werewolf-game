@@ -52,10 +52,10 @@ export default function DayPhase({ state, socket, messages }: Props) {
   const myVoteTargetId = state.dayVotes[state.myId]
   const myVoteTarget = state.players.find(p => p.id === myVoteTargetId)
 
-  // Vote tally: arena uses 1x for mayor; classic uses 2x.
+  // Vote tally: all votes have 1x weight except mayor which is 1.5x in Classic.
   const tally: Record<string, number> = {}
   for (const [voterId, targetId] of Object.entries(state.dayVotes)) {
-    const weight = isArena ? 1 : (voterId === state.mayorId ? 2 : 1)
+    const weight = isArena ? 1 : (voterId === state.mayorId ? 1.5 : 1)
     tally[targetId] = (tally[targetId] || 0) + weight
   }
 
@@ -64,7 +64,7 @@ export default function DayPhase({ state, socket, messages }: Props) {
   for (const [voterId, targetId] of Object.entries(state.dayVotes)) {
     const voterName = state.players.find(p => p.id === voterId)?.name ?? '?'
     if (!voterNames[targetId]) voterNames[targetId] = []
-    voterNames[targetId].push(voterName + (!isArena && voterId === state.mayorId ? ' ×2' : ''))
+    voterNames[targetId].push(voterName + (!isArena && voterId === state.mayorId ? ' ×1.5' : ''))
   }
 
   const skipVotes = tally[SKIP_VOTE] || 0
@@ -77,7 +77,7 @@ export default function DayPhase({ state, socket, messages }: Props) {
 
   // Day Result outcomes
   const outcome = state.dayVoteOutcome
-  const victim = state.lastEliminated
+  const victim = state.lastEliminated?.[0]
 
   let resultIcon = '🌑'
   let resultHeadline = ''
@@ -141,13 +141,15 @@ export default function DayPhase({ state, socket, messages }: Props) {
             </div>
           </div>
 
-          {state.lastEliminated && state.phase !== 'day_result' && (
-            <div className="mt-3 p-3 bg-slate-800 rounded-lg border border-slate-700">
-              <p className="text-sm text-slate-300">
-                <span className="text-red-400 font-semibold">{state.lastEliminated.playerName}</span>
-                {' '}was eliminated last night. They were a{' '}
-                <span className="font-semibold">{state.lastEliminated.role}</span>.
-              </p>
+          {state.lastEliminated && state.lastEliminated.length > 0 && state.phase !== 'day_result' && (
+            <div className="mt-3 p-3 bg-slate-800 rounded-lg border border-slate-700 flex flex-col gap-1.5">
+              {state.lastEliminated.map(v => (
+                <p key={v.playerId} className="text-sm text-slate-300">
+                  <span className="text-red-400 font-semibold">{v.playerName}</span>
+                  {' '}was eliminated last night. They were a{' '}
+                  <span className="font-semibold">{v.role}</span>.
+                </p>
+              ))}
             </div>
           )}
         </div>

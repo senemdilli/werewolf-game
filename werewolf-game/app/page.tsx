@@ -175,7 +175,7 @@ export default function Home() {
                   }`}
                 >
                   <p className="text-sm font-semibold">Classic</p>
-                  <p className="text-xs text-slate-400 mt-0.5">Free-form chat, group day-vote, double-weight Mayor.</p>
+                  <p className="text-xs text-slate-400 mt-0.5">Free-form chat, group day-vote, tie-breaking Mayor.</p>
                 </button>
                 <button
                   type="button"

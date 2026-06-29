@@ -73,12 +73,27 @@ export default function MayorElection({ state, socket, messages }: Props) {
                 : inRunoff
                   ? 'Top candidates tied. Vote again to break the tie.'
                   : 'Vote for a player to become Mayor. The Mayor breaks ties in day votes.'
-              : 'Vote for a player to become Mayor. The Mayor’s vote counts double during day votes.'}
+              : 'Vote for a player to become Mayor. The Mayor breaks ties in day votes.'}
           </p>
           {inVote && timeLeft !== null && (
             <p className={`text-lg font-mono font-bold mt-2 ${timeLeft <= 10 ? 'text-red-400' : 'text-violet-400'}`}>
               {timeLeft}s
             </p>
+          )}
+
+          {state.lastEliminated && state.lastEliminated.length > 0 && (
+            <div className="mt-4 p-3 bg-slate-950/40 border border-violet-900/60 rounded-lg text-left flex flex-col gap-1.5 max-w-md mx-auto">
+              <div className="text-[10px] uppercase tracking-wider text-amber-500 font-semibold text-center mb-0.5">
+                Last Night report
+              </div>
+              {state.lastEliminated.map(v => (
+                <p key={v.playerId} className="text-xs text-slate-300">
+                  <span className="text-red-400 font-semibold">{v.playerName}</span>
+                  {' '}was eliminated last night. They were a{' '}
+                  <span className="font-semibold">{v.role}</span>.
+                </p>
+              ))}
+            </div>
           )}
         </div>
 

@@ -54,7 +54,7 @@ export function resolveDayVote(
 ): { outcome: DayVoteOutcome; eliminatedId: string | null } {
   const voteCounts: Record<string, number> = {}
   for (const [voterId, targetId] of Object.entries(votes)) {
-    const weight = voterId === mayorId ? 2 : 1
+    const weight = voterId === mayorId ? 1.5 : 1
     voteCounts[targetId] = (voteCounts[targetId] || 0) + weight
   }
 
