@@ -42,6 +42,10 @@ class InnerVoice(Protocol):
         """Natural-language description registered with the LLM tool call."""
         ...
 
+    def feed_context(self, game_records: GameRecord, phase_idx: int) -> None:
+        """Feed the game context to the inner trust voice (e.g. for updating a knowledge graph)."""
+        ...
+
 
 class HistoricInnerVoice:
     observer: PlayerName
@@ -81,6 +85,9 @@ class HistoricInnerVoice:
             "toward the given player at this point in the recorded game."
         )
 
+    def feed_context(self, game_records: GameRecord, phase_idx: int) -> None:
+        pass
+
 
 class RandomInnerVoice:
     def ask(
@@ -115,6 +122,9 @@ class RandomInnerVoice:
             "Returns a random trust assessment for the given player. This is a "
             "baseline control and is not grounded in any game evidence."
         )
+
+    def feed_context(self, game_records: GameRecord, phase_idx: int) -> None:
+        pass
 
 
 def _trust_scores_from_schema(result: object) -> TrustScores:
@@ -187,6 +197,9 @@ class AskMyselfInnerVoice:
             "toward the given player. Returns trust scores without rationale."
         )
 
+    def feed_context(self, game_records: GameRecord, phase_idx: int) -> None:
+        pass
+
 
 class OtherContextInnerVoice:
     context: ContextProvider
@@ -223,4 +236,7 @@ class OtherContextInnerVoice:
             "using an alternative context provider instead of the main labeling context. "
             "Returns trust scores without rationale."
         )
+
+    def feed_context(self, game_records: GameRecord, phase_idx: int) -> None:
+        pass
 

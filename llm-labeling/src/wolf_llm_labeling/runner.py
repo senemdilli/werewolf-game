@@ -205,6 +205,12 @@ def run_labeling_experiment(
         for idx, phase_idx in enumerate(phases_to_label, start=1):
             print(f"  [{idx}/{len(phases_to_label)}] Labeling phase {phase_idx}...")
             
+            if inner_voice is not None and hasattr(inner_voice, "feed_context"):
+                try:
+                    inner_voice.feed_context(game_record, phase_idx)
+                except Exception as e:
+                    print(f"    Warning: Failed to feed context to inner voice: {e}", file=sys.stderr)
+            
             try:
                 labels, call_info = label_once(
                     models=models,
