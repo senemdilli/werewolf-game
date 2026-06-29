@@ -69,6 +69,9 @@ def convert_game_to_dict(record: GameRecord, game_file: str, room_code: str | No
             elif isinstance(item, WitchSaved):
                 item_dict["affected_player"] = item.affected_player
                 
+            if hasattr(item, "timestamp") and item.timestamp:
+                item_dict["timestamp"] = item.timestamp
+                
             events.append(item_dict)
             
         data["phases"].append({
@@ -114,10 +117,10 @@ def main():
         game_file = csv_path_obj.name.replace(".csv", "")
         game_dict = convert_game_to_dict(record, game_file=game_file, room_code=room_code)
         
-        out_dir = Path(args.output_dir) if args.output_dir else csv_path_obj.parent
+        out_dir = Path(args.output_dir) if args.output_dir else csv_path_obj.parent / "converted"
         out_dir.mkdir(parents=True, exist_ok=True)
         
-        out_file = out_dir / csv_path_obj.name.replace(".csv", "-converted.json")
+        out_file = out_dir / csv_path_obj.name.replace(".csv", "-converted-grouped.json")
         with open(out_file, "w", encoding="utf-8") as f:
             json.dump(game_dict, f, indent=2)
             

@@ -62,12 +62,14 @@ class Message:
     forum: Forum
     player_name: PlayerName
     message: str
+    timestamp: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
 class SystemMessage:
     message: str
     forum: Forum | None = None
+    timestamp: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -75,42 +77,49 @@ class Vote:
     reason: VoteReason
     player_name: PlayerName
     voted_for: PlayerName
+    timestamp: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
 class KillEvent:
     affected_player: PlayerName | None
     kind: Literal["KillEvent"] = field(init=False, default="KillEvent")
+    timestamp: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
 class ExileEvent:
     affected_player: PlayerName | None
     kind: Literal["ExileEvent"] = field(init=False, default="ExileEvent")
+    timestamp: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
 class MayorElected:
     affected_player: PlayerName | None
     kind: Literal["MayorElected"] = field(init=False, default="MayorElected")
+    timestamp: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
 class SeerRevealed:
     affected_player: PlayerName
     kind: Literal["SeerRevealed"] = field(init=False, default="SeerRevealed")
+    timestamp: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
 class WitchKilled:
     affected_player: PlayerName
     kind: Literal["WitchKilled"] = field(init=False, default="WitchKilled")
+    timestamp: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
 class WitchSaved:
     affected_player: PlayerName
     kind: Literal["WitchSaved"] = field(init=False, default="WitchSaved")
+    timestamp: str | None = None
 
 
 Event: TypeAlias = "KillEvent | ExileEvent | MayorElected | SeerRevealed | WitchKilled | WitchSaved"
