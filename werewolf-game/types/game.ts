@@ -252,6 +252,7 @@ export interface ClientGameState {
   mayorVotes: Record<string, string>
   mayorId: string | null
   aliveWerewolvesVoted?: string[]
+  werewolfVotes?: Record<string, string>
   phaseEndTime: number | null
   // werewolf-only (arena mode, >1 wolves)
   wolfArena?: WolfArenaView | null

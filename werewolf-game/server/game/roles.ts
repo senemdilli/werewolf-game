@@ -45,7 +45,13 @@ export function resolveWerewolfKill(
     voteCounts[targetId] = (voteCounts[targetId] || 0) + 1
   }
   const sorted = Object.entries(voteCounts).sort((a, b) => b[1] - a[1])
-  return sorted[0]?.[0] ?? null
+  if (sorted.length === 0) return null
+
+  const topScore = sorted[0][1]
+  const tied = sorted.filter(([, v]) => v === topScore).map(([k]) => k)
+
+  // Randomly select one of the tied targets
+  return tied[Math.floor(Math.random() * tied.length)]
 }
 
 export function resolveDayVote(

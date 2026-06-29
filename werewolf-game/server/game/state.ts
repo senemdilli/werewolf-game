@@ -497,6 +497,8 @@ export function buildClientState(state: GameState, playerId: string): ClientGame
     mayorId: state.mayorId,
     aliveWerewolvesVoted:
       me?.role === 'werewolf' ? Object.keys(state.nightActions.werewolfVotes) : undefined,
+    werewolfVotes:
+      me?.role === 'werewolf' ? state.nightActions.werewolfVotes : undefined,
     phaseEndTime: state.phaseEndTime,
     wolfArena,
     wolvesActed,

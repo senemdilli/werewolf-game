@@ -320,11 +320,31 @@ export default function NightPhase({ state, socket, messages }: Props) {
           <div className="bg-slate-900 border border-red-900 rounded-xl p-3">
             <p className="text-xs text-red-400 font-semibold mb-1">Wolf pack votes</p>
             <div className="space-y-1">
-              {state.players.filter(p => p.role === 'werewolf').map(w => (
-                <p key={w.id} className="text-xs text-slate-400">
-                  <PlayerName name={w.name} role={w.role} />: {state.aliveWerewolvesVoted?.includes(w.id) ? '✓ voted' : 'waiting…'}
-                </p>
-              ))}
+              {state.players.filter(p => p.role === 'werewolf').map(w => {
+                const targetId = state.werewolfVotes?.[w.id]
+                let statusNode = <span className="text-slate-500">deciding…</span>
+
+                if (targetId) {
+                  if (targetId === 'nobody') {
+                    statusNode = <span className="text-emerald-400 font-medium">voted to spare everyone</span>
+                  } else {
+                    const targetName = state.players.find(p => p.id === targetId)?.name ?? 'unknown'
+                    statusNode = (
+                      <span className="text-red-400 font-medium">
+                        voted to kill <span className="underline">{targetName}</span>
+                      </span>
+                    )
+                  }
+                } else if (state.aliveWerewolvesVoted?.includes(w.id)) {
+                  statusNode = <span className="text-slate-300">✓ voted</span>
+                }
+
+                return (
+                  <p key={w.id} className="text-xs text-slate-400">
+                    <PlayerName name={w.name} role={w.role} />: {statusNode}
+                  </p>
+                )
+              })}
             </div>
           </div>
         )}
