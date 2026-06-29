@@ -25,7 +25,7 @@ export default function DayResult({ state, socket }: Props) {
   }, [state.phaseEndTime])
 
   const outcome = state.dayVoteOutcome
-  const victim = state.lastEliminated
+  const victim = state.lastEliminated?.[0]
 
   let icon = '🌑'
   let headline = ''

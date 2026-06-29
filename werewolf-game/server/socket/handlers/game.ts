@@ -69,6 +69,7 @@ async function transitionToNight(io: GameServer, roomCode: string) {
   state = resetNightActions(state)
   state.phase = 'night'
   state.lastEliminated = null
+  state.morningAnnouncement = null
   // phaseEndTime here is the *earliest* moment the night may end, not a deadline.
   state.phaseEndTime = Date.now() + NIGHT_MIN_MS
 
@@ -127,6 +128,7 @@ async function transitionToMayorElection(
 
   state.mayorVotes = {}
   state.postElectionPhase = postPhase
+  state.morningAnnouncement = null
 
   if (state.gameMode === 'arena') {
     // Arena: advocacy → conversation (4 rounds) → vote
@@ -774,6 +776,7 @@ async function startDayDiscussionPhase(io: GameServer, roomCode: string) {
   state.phase = 'day_discussion'
   state.dayVotes = { votes: {} }
   state.phaseEndTime = null
+  state.morningAnnouncement = null
   await saveGame(state)
   await broadcastState(io, roomCode)
   await startDayDiscussionTimer(io, roomCode)
@@ -862,9 +865,8 @@ async function transitionAfterNight(io: GameServer, roomCode: string) {
     systemMsg = `Dawn breaks. ${victims.map(v => `${v.name} (${v.role})`).join(' and ')} ${victims.length > 1 ? 'were' : 'was'} found dead.`
   }
 
-  if (victims.length === 1) {
-    state.lastEliminated = { playerId: victims[0].id, playerName: victims[0].name, role: victims[0].role }
-  }
+  state.lastEliminated = victims.length > 0 ? victims.map(v => ({ playerId: v.id, playerName: v.name, role: v.role })) : null
+  state.morningAnnouncement = systemMsg
 
   const winner = checkWinCondition(state.players)
   if (winner) {
@@ -1034,7 +1036,7 @@ async function applyDayElimination(
     const victim = state.players.find(p => p.id === eliminatedId)
     if (victim) {
       victim.isAlive = false
-      state.lastEliminated = { playerId: victim.id, playerName: victim.name, role: victim.role as Role }
+      state.lastEliminated = [{ playerId: victim.id, playerName: victim.name, role: victim.role as Role }]
       systemMsg = `The village voted. ${victim.name} (${victim.role}) has been eliminated.`
       if (state.dbGameId) {
         const dbP = await prisma.player.findFirst({ where: { gameId: state.dbGameId, name: victim.name } })
@@ -1089,7 +1091,7 @@ async function proceedFromDayResult(io: GameServer, roomCode: string) {
   const state = await getGame(roomCode)
   if (!state || state.phase !== 'day_result') return
 
-  const mayorDied = state.lastEliminated?.playerId === state.mayorId
+  const mayorDied = state.lastEliminated?.some(v => v.playerId === state.mayorId) ?? false
   if (mayorDied) state.mayorId = null
 
   state.dayVoteOutcome = null
