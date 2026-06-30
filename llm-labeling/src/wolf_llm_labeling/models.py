@@ -128,15 +128,15 @@ PhaseItem: TypeAlias = "Message | SystemMessage | Vote | Event"
 from pydantic import BaseModel, Field
 
 
-class ScoreSchema(BaseModel):
+class TrustConfidence(BaseModel):
     trust: int = Field(description="Trust score from 1 (lowest trust) to 7 (highest trust)", ge=1, le=7)
     confidence: int = Field(description="Confidence in this score from 1 (low) to 3 (high)", ge=1, le=3)
 
 
 class TrustScoresSchema(BaseModel):
-    alignment: ScoreSchema | None = Field(default=None, description="Score on how aligned the player is with our goals/team")
-    strategic: ScoreSchema | None = Field(default=None, description="Score on how strategic and competent the player's play is")
-    consistency: ScoreSchema | None = Field(default=None, description="Score on how consistent the player's behavior is")
+    alignment: TrustConfidence | None = Field(default=None, description="Score on how aligned the player is with our goals/team")
+    strategic: TrustConfidence | None = Field(default=None, description="Score on how strategic and competent the player's play is")
+    consistency: TrustConfidence | None = Field(default=None, description="Score on how consistent the player's behavior is")
 
 
 class LabelSchema(BaseModel):

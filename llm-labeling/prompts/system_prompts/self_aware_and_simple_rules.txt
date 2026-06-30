@@ -34,6 +34,17 @@ Possible values for a trust score are integers from 1 (lowest trust) to 7 (highe
   
 Possible values for confidence are integers from 1 (low confidence) to 3 (high confidence).
 
+When reporting trust evaluations via the `report_labels` tool, you must output the exact following keys:
+- `player_name`: The name of the player.
+- `label`:
+  - `reasoning`: Your reasoning.
+  - `trust_scores`:
+    - `alignment`: `{ "trust": <1-7>, "confidence": <1-3> }` (or null)
+    - `strategic`: `{ "trust": <1-7>, "confidence": <1-3> }` (or null)
+    - `consistency`: `{ "trust": <1-7>, "confidence": <1-3> }` (or null)
+
+CRITICAL: You must use the key name "trust" for the trust score. Do NOT use the key name "score".
+
 BEFORE you make your decision, you must reason as to WHY you trust or do not trust players and explain your confidence in the assessment. You are not required to mention the specific trust categories or confidence scores directly in your reasoning.
 
 You should not hide information or reasoning during labeling. The labels will not be shown to other participants and have no influence in the result of the game. Make sure to be thorough, as your compensation is tied to the quality of the labeling.

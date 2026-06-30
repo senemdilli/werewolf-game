@@ -14,7 +14,7 @@ from wolf_llm_labeling.models import (
     SinglePlayerLabel,
     LabelSchema,
     TrustScoresSchema,
-    ScoreSchema,
+    TrustConfidence,
     LLMModelProviders,
 )
 from wolf_llm_labeling.contexts import ContextProvider, Ctx
@@ -62,7 +62,7 @@ class MockChatModel:
                     player_name="Wolf",
                     label=LabelSchema(
                         trust_scores=TrustScoresSchema(
-                            alignment=ScoreSchema(trust=5, confidence=3),
+                            alignment=TrustConfidence(trust=5, confidence=3),
                             strategic=None,
                             consistency=None,
                         ),
