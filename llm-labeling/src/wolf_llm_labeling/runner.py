@@ -34,6 +34,7 @@ def run_labeling_experiment(
     prompt_dir: str = "./prompts",
     formatter: FormatterType = "markdown",
     context_as_tool: bool = False,
+    temperature: float = 0.0,
 ) -> list[str]:
     """Execute a labeling experiment for game records and save the results."""
     token = os.getenv("OLLAMA_API_KEY")
@@ -59,6 +60,23 @@ def run_labeling_experiment(
 
     iv_model = inner_voice_model if inner_voice_model else primary_model
 
+    if is_openai:
+        try:
+            import requests
+            headers = {"Authorization": f"Bearer {token}"} if token else {}
+            resp = requests.get(f"{ollama_url.rstrip('/')}/models", headers=headers, timeout=5)
+            if resp.status_code == 200:
+                models_data = resp.json().get("data", [])
+                if models_data:
+                    loaded_model = models_data[0]["id"]
+                    print(f"Auto-detected active LM Studio model: {loaded_model}")
+                    if primary_model in ("lm-studio-model", "any", "default"):
+                        primary_model = loaded_model
+                    if iv_model in ("lm-studio-model", "any", "default"):
+                        iv_model = loaded_model
+        except Exception as e:
+            print(f"Warning: Could not query active LM Studio model: {e}", file=sys.stderr)
+
     if available_models:
         if primary_model not in available_models:
             print(f"Error: primary model '{primary_model}' is not supported by the server. Available models: {available_models}", file=sys.stderr)
@@ -79,13 +97,13 @@ def run_labeling_experiment(
 
         primary_llm = ChatOpenAI(
             model=primary_model,
-            temperature=0.0,
+            temperature=temperature,
             base_url=ollama_url,
             api_key=token or "lm-studio",
         )
         inner_voice_llm = ChatOpenAI(
             model=iv_model,
-            temperature=0.0,
+            temperature=temperature,
             base_url=ollama_url,
             api_key=token or "lm-studio",
         )
@@ -101,7 +119,7 @@ def run_labeling_experiment(
 
         primary_llm = ChatOllama(
             model=primary_model,
-            temperature=0.0,
+            temperature=temperature,
             base_url=ollama_url,
             client_kwargs={
                 "headers": {
@@ -111,7 +129,7 @@ def run_labeling_experiment(
         )
         inner_voice_llm = ChatOllama(
             model=iv_model,
-            temperature=0.0,
+            temperature=temperature,
             base_url=ollama_url,
             client_kwargs={
                 "headers": {

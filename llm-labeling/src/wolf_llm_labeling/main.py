@@ -80,6 +80,7 @@ def main():
     parser.add_argument("--prompt-dir", type=str, default="./prompts", help="Directory containing prompt files")
     parser.add_argument("--formatter", type=str, default="markdown", choices=["markdown", "json"], help="Context formatting type")
     parser.add_argument("--context-as-tool", action="store_true", help="Retrieve game context via tool call instead of pre-injecting it in prompt")
+    parser.add_argument("--temperature", type=float, default=0.0, help="LLM generation temperature (default: 0.0)")
     
     args = parser.parse_args()
 
@@ -98,6 +99,7 @@ def main():
         prompt_dir=args.prompt_dir,
         formatter=args.formatter,
         context_as_tool=args.context_as_tool,
+        temperature=args.temperature,
     )
 
 
