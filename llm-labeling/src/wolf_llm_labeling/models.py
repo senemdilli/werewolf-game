@@ -40,8 +40,10 @@ class PlayerStatus(StrEnum):
 
 @dataclass(frozen=True, slots=True)
 class Score:
-    trust: int
-    confidence: int
+    trust: int | str
+    confidence: int | str
+    trust_likert: str | None = None
+    confidence_likert: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -151,6 +153,43 @@ class SinglePlayerLabel(BaseModel):
 
 class ReportLabelsArgs(BaseModel):
     labels: list[SinglePlayerLabel] = Field(description="List of trust labels for other players in the game")
+
+
+from enum import Enum
+
+class TrustLikert(str, Enum):
+    VERY_LOW = "VERY_LOW_TRUST"
+    LOW = "LOW_TRUST"
+    SLIGHTLY_LOW = "SLIGHTLY_LOW_TRUST"
+    NEUTRAL = "NEUTRAL_TRUST"
+    SLIGHTLY_HIGH = "SLIGHTLY_HIGH_TRUST"
+    HIGH = "HIGH_TRUST"
+    VERY_HIGH = "VERY_HIGH_TRUST"
+
+class ConfidenceLikert(str, Enum):
+    LOW = "LOW_CONFIDENCE"
+    MEDIUM = "MEDIUM_CONFIDENCE"
+    HIGH = "HIGH_CONFIDENCE"
+
+class TrustConfidenceLikert(BaseModel):
+    trust: TrustLikert = Field(description="Trust assessment on a 7-point Likert scale (VERY_LOW_TRUST, LOW_TRUST, SLIGHTLY_LOW_TRUST, NEUTRAL_TRUST, SLIGHTLY_HIGH_TRUST, HIGH_TRUST, VERY_HIGH_TRUST)")
+    confidence: ConfidenceLikert = Field(description="Confidence in this assessment on a 3-point Likert scale (LOW_CONFIDENCE, MEDIUM_CONFIDENCE, HIGH_CONFIDENCE)")
+
+class TrustScoresLikertSchema(BaseModel):
+    alignment: TrustConfidenceLikert | None = Field(default=None, description="Assessment on how aligned the player is with our goals/team")
+    strategic: TrustConfidenceLikert | None = Field(default=None, description="Assessment on how strategic and competent the player's play is")
+    consistency: TrustConfidenceLikert | None = Field(default=None, description="Assessment on how consistent the player's behavior is")
+
+class LabelLikertSchema(BaseModel):
+    trust_scores: TrustScoresLikertSchema = Field(description="The trust scores dimensions")
+    reasoning: str = Field(description="A concise text explanation/rationale for these trust scores")
+
+class SinglePlayerLikertLabel(BaseModel):
+    player_name: str = Field(description="Name of the player being labeled")
+    label: LabelLikertSchema = Field(description="Label containing trust scores and reasoning for this player")
+
+class ReportLabelsLikertArgs(BaseModel):
+    labels: list[SinglePlayerLikertLabel] = Field(description="List of trust labels for other players in the game")
 
 
 @dataclass

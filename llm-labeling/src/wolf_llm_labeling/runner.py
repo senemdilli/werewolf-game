@@ -35,6 +35,7 @@ def run_labeling_experiment(
     formatter: FormatterType = "markdown",
     context_as_tool: bool = False,
     temperature: float = 0.0,
+    use_likert: bool = False,
 ) -> list[str]:
     """Execute a labeling experiment for game records and save the results."""
     token = os.getenv("OLLAMA_API_KEY")
@@ -239,6 +240,7 @@ def run_labeling_experiment(
                     game_data=game_record,
                     phase_idx=phase_idx,
                     context_as_tool=context_as_tool,
+                    use_likert=use_likert,
                 )
                 
                 inner_voice_calls = []
@@ -271,15 +273,21 @@ def run_labeling_experiment(
                     labels_out[target_player] = {
                         "alignment": {
                             "trust": ts.alignment.trust,
-                            "confidence": ts.alignment.confidence
+                            "trust_likert": ts.alignment.trust_likert,
+                            "confidence": ts.alignment.confidence,
+                            "confidence_likert": ts.alignment.confidence_likert
                         } if ts.alignment else None,
                         "strategic": {
                             "trust": ts.strategic.trust,
-                            "confidence": ts.strategic.confidence
+                            "trust_likert": ts.strategic.trust_likert,
+                            "confidence": ts.strategic.confidence,
+                            "confidence_likert": ts.strategic.confidence_likert
                         } if ts.strategic else None,
                         "consistency": {
                             "trust": ts.consistency.trust,
-                            "confidence": ts.consistency.confidence
+                            "trust_likert": ts.consistency.trust_likert,
+                            "confidence": ts.consistency.confidence,
+                            "confidence_likert": ts.consistency.confidence_likert
                         } if ts.consistency else None,
                         "reasoning": lbl.reasoning
                     }
@@ -302,6 +310,7 @@ def run_labeling_experiment(
             "game_id": game_record.get_game_id() or "unknown_game",
             "game_file": game_file,
             "player_name": player,
+            "trust_scale_mode": "likert" if use_likert else "numeric",
             "models": {
                 "primary_model": primary_model,
                 "inner_voice_model": iv_model if iv_model != primary_model else None

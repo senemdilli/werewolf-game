@@ -6,6 +6,7 @@
     "game_id",
     "game_file",
     "player_name",
+    "trust_scale_mode",
     "models",
     "experiment",
     "formatter",
@@ -25,6 +26,11 @@
     "player_name": {
       "type": "string",
       "description": "Name of the player being labeled"
+    },
+    "trust_scale_mode": {
+      "type": "string",
+      "enum": ["numeric", "likert"],
+      "description": "Indicates whether trust and confidence were evaluated using numeric scores or Likert scales"
     },
     "models": {
       "type": "object",
@@ -114,9 +120,21 @@
                         "null"
                       ]
                     },
+                    "trust_likert": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "confidence": {
                       "type": [
                         "integer",
+                        "null"
+                      ]
+                    },
+                    "confidence_likert": {
+                      "type": [
+                        "string",
                         "null"
                       ]
                     }
@@ -134,9 +152,21 @@
                         "null"
                       ]
                     },
+                    "trust_likert": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "confidence": {
                       "type": [
                         "integer",
+                        "null"
+                      ]
+                    },
+                    "confidence_likert": {
+                      "type": [
+                        "string",
                         "null"
                       ]
                     }
@@ -154,9 +184,21 @@
                         "null"
                       ]
                     },
+                    "trust_likert": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
                     "confidence": {
                       "type": [
                         "integer",
+                        "null"
+                      ]
+                    },
+                    "confidence_likert": {
+                      "type": [
+                        "string",
                         "null"
                       ]
                     }

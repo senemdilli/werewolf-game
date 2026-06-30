@@ -74,6 +74,7 @@ Example Schema:
   "game_id": "d59e923e-8478-4514-9ccd-8d4ac5a18d5a",
   "game_file": "game-44UT6Y-d59e923e",
   "player_name": "Blue",
+  "trust_scale_mode": "likert",
   "models": {
     "primary_model": "gemma4:26b"
   },
@@ -96,7 +97,12 @@ Example Schema:
       ],
       "labels": {
         "Orange": {
-          "alignment": { "trust": 7, "confidence": 3 },
+          "alignment": {
+            "trust": 7,
+            "trust_likert": "VERY_HIGH_TRUST",
+            "confidence": 3,
+            "confidence_likert": "HIGH_CONFIDENCE"
+          },
           "strategic": null,
           "consistency": null,
           "reasoning": "Orange has been supportive of the village goals."

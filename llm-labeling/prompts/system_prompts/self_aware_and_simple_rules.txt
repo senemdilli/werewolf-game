@@ -30,20 +30,7 @@ The study has defined the following categories for measuring trust:
 - Alignment trust: Do I trust that the player and I have aligned goals? Or simpler: Are we in the same faction (villagers/werewolves)?
 - Strategic trust: Do I trust their reasoning, accusations and deductions? Do I have any reason to not believe their words even if I think our goals align?
 - Consistency trust: Do I trust that the other player will act consistently and that I can rely on them being consistent with their words and actions?
-Possible values for a trust score are integers from 1 (lowest trust) to 7 (highest trust).
-  
-Possible values for confidence are integers from 1 (low confidence) to 3 (high confidence).
-
-When reporting trust evaluations via the `report_labels` tool, you must output the exact following keys:
-- `player_name`: The name of the player.
-- `label`:
-  - `reasoning`: Your reasoning.
-  - `trust_scores`:
-    - `alignment`: `{ "trust": <1-7>, "confidence": <1-3> }` (or null)
-    - `strategic`: `{ "trust": <1-7>, "confidence": <1-3> }` (or null)
-    - `consistency`: `{ "trust": <1-7>, "confidence": <1-3> }` (or null)
-
-CRITICAL: You must use the key name "trust" for the trust score. Do NOT use the key name "score".
+${trust_instructions}
 
 BEFORE you make your decision, you must reason as to WHY you trust or do not trust players and explain your confidence in the assessment. You are not required to mention the specific trust categories or confidence scores directly in your reasoning.
 
