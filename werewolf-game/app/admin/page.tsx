@@ -144,12 +144,20 @@ export default function AdminPage() {
           <h1 className="text-2xl font-bold text-slate-100 mt-2">Research Admin</h1>
           <p className="text-slate-400 text-sm mt-1">{total} games found</p>
         </div>
-        <button
-          onClick={handleLogout}
-          className="text-xs px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded transition-colors cursor-pointer text-slate-300"
-        >
-          Logout
-        </button>
+        <div className="flex items-center gap-2">
+          <a
+            href="/admin/review"
+            className="text-xs px-3 py-1.5 bg-violet-950/40 hover:bg-violet-900/40 border border-violet-800/60 text-violet-200 rounded transition-colors cursor-pointer"
+          >
+            Review files
+          </a>
+          <button
+            onClick={handleLogout}
+            className="text-xs px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded transition-colors cursor-pointer text-slate-300"
+          >
+            Logout
+          </button>
+        </div>
       </div>
 
       {/* Tabs */}
