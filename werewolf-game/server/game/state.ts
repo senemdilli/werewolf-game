@@ -58,6 +58,7 @@ export function createInitialState(
     postElectionPhase: null,
     witchPotions: { heal: true, kill: true },
     lastEliminated: null,
+    morningAnnouncement: null,
     dayVoteOutcome: null,
     winner: null,
     hostId,
@@ -496,6 +497,8 @@ export function buildClientState(state: GameState, playerId: string): ClientGame
     mayorId: state.mayorId,
     aliveWerewolvesVoted:
       me?.role === 'werewolf' ? Object.keys(state.nightActions.werewolfVotes) : undefined,
+    werewolfVotes:
+      me?.role === 'werewolf' ? state.nightActions.werewolfVotes : undefined,
     phaseEndTime: state.phaseEndTime,
     wolfArena,
     wolvesActed,
@@ -510,6 +513,7 @@ export function buildClientState(state: GameState, playerId: string): ClientGame
     labelMeDecided,
     labelDecidedCount,
     labelDecidedTotal,
+    morningAnnouncement: state.morningAnnouncement ?? null,
     isSandbox: state.isSandbox,
     serverTime: Date.now(),
     forceRandomNames: state.forceRandomNames,

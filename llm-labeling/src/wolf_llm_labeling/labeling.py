@@ -56,6 +56,7 @@ def label_once(
     game_data: GameRecord,
     phase_idx: int,
     context_as_tool: bool = False,
+    use_likert: bool = False,
 ) -> tuple[dict[PlayerName, Label], LLMCallInfo]:
     # Find player_name from the context if possible (e.g. from StaticContext or GameNowContext)
     player_name = getattr(context, "player_name", None)
@@ -79,10 +80,50 @@ def label_once(
         else:
             player_name = "UnknownObserver"
 
+    # Set dynamic trust instructions based on mode
+    if use_likert:
+        trust_instructions = (
+            "Possible values for trust are the following 7-point Likert scale string constants:\n"
+            "- 'VERY_LOW_TRUST' (Sehr niedriges Vertrauen)\n"
+            "- 'LOW_TRUST' (Niedriges Vertrauen)\n"
+            "- 'SLIGHTLY_LOW_TRUST' (Eher niedriges Vertrauen)\n"
+            "- 'NEUTRAL_TRUST' (Neutral)\n"
+            "- 'SLIGHTLY_HIGH_TRUST' (Eher hohes Vertrauen)\n"
+            "- 'HIGH_TRUST' (Hohes Vertrauen)\n"
+            "- 'VERY_HIGH_TRUST' (Sehr hohes Vertrauen)\n\n"
+            "Possible values for confidence are the following 3-point Likert scale string constants:\n"
+            "- 'LOW_CONFIDENCE'\n"
+            "- 'MEDIUM_CONFIDENCE'\n"
+            "- 'HIGH_CONFIDENCE'\n\n"
+            "When reporting trust evaluations via the `report_labels` tool, you must output the exact following keys:\n"
+            "- `player_name`: The name of the player.\n"
+            "- `label`:\n"
+            "  - `reasoning`: Your reasoning.\n"
+            "  - `trust_scores`:\n"
+            "    - `alignment`: `{ \"trust\": \"<Likert string>\", \"confidence\": \"<Likert string>\" }` (or null)\n"
+            "    - `strategic`: `{ \"trust\": \"<Likert string>\", \"confidence\": \"<Likert string>\" }` (or null)\n"
+            "    - `consistency`: `{ \"trust\": \"<Likert string>\", \"confidence\": \"<Likert string>\" }` (or null)\n\n"
+            "CRITICAL: You are running in LIKERT SCALE mode. You MUST use string enum values for trust and confidence in the report_labels tool call. Do NOT use numbers."
+        )
+    else:
+        trust_instructions = (
+            "Possible values for trust are integers from 1 (lowest trust) to 7 (highest trust).\n\n"
+            "Possible values for confidence are integers from 1 (low confidence) to 3 (high confidence).\n\n"
+            "When reporting trust evaluations via the `report_labels` tool, you must output the exact following keys:\n"
+            "- `player_name`: The name of the player.\n"
+            "- `label`:\n"
+            "  - `reasoning`: Your reasoning.\n"
+            "  - `trust_scores`:\n"
+            "    - `alignment`: `{ \"trust\": <1-7>, \"confidence\": <1-3> }` (or null)\n"
+            "    - `strategic`: `{ \"trust\": <1-7>, \"confidence\": <1-3> }` (or null)\n"
+            "    - `consistency`: `{ \"trust\": <1-7>, \"confidence\": <1-3> }` (or null)\n\n"
+            "CRITICAL: You must use the key name \"trust\" for the trust value. Do NOT use the key name \"score\"."
+        )
+
     # Set dynamic system prompt from prompt_set
     system_prompt = prompt_set.get_prompt(
         "labeling__system_prompt",
-        {},
+        {"trust_instructions": trust_instructions},
         "You are a helpful assistant playing Werewolf. Assess the trust level of other players."
     )
 
@@ -117,7 +158,56 @@ def label_once(
                     c_val = getattr(s, "confidence", None) or (s.get("confidence") if isinstance(s, dict) else None)
                     if t_val is None or c_val is None:
                         return None
-                    return Score(trust=t_val, confidence=c_val)
+
+                    t_likert = None
+                    c_likert = None
+
+                    if isinstance(t_val, str):
+                        t_likert = t_val
+                        trust_mapping = {
+                            "VERY_LOW_TRUST": 1,
+                            "LOW_TRUST": 2,
+                            "SLIGHTLY_LOW_TRUST": 3,
+                            "NEUTRAL_TRUST": 4,
+                            "SLIGHTLY_HIGH_TRUST": 5,
+                            "HIGH_TRUST": 6,
+                            "VERY_HIGH_TRUST": 7
+                        }
+                        t_val = trust_mapping.get(t_val, 4)
+                    elif isinstance(t_val, int):
+                        reverse_trust = {
+                            1: "VERY_LOW_TRUST",
+                            2: "LOW_TRUST",
+                            3: "SLIGHTLY_LOW_TRUST",
+                            4: "NEUTRAL_TRUST",
+                            5: "SLIGHTLY_HIGH_TRUST",
+                            6: "HIGH_TRUST",
+                            7: "VERY_HIGH_TRUST"
+                        }
+                        t_likert = reverse_trust.get(t_val, "NEUTRAL_TRUST")
+
+                    if isinstance(c_val, str):
+                        c_likert = c_val
+                        confidence_mapping = {
+                            "LOW_CONFIDENCE": 1,
+                            "MEDIUM_CONFIDENCE": 2,
+                            "HIGH_CONFIDENCE": 3
+                        }
+                        c_val = confidence_mapping.get(c_val, 2)
+                    elif isinstance(c_val, int):
+                        reverse_conf = {
+                            1: "LOW_CONFIDENCE",
+                            2: "MEDIUM_CONFIDENCE",
+                            3: "HIGH_CONFIDENCE"
+                        }
+                        c_likert = reverse_conf.get(c_val, "MEDIUM_CONFIDENCE")
+
+                    return Score(
+                        trust=t_val,
+                        confidence=c_val,
+                        trust_likert=t_likert,
+                        confidence_likert=c_likert
+                    )
 
                 alignment_val = parse_score(getattr(ts, "alignment", None) or (ts.get("alignment") if isinstance(ts, dict) else None))
                 strategic_val = parse_score(getattr(ts, "strategic", None) or (ts.get("strategic") if isinstance(ts, dict) else None))
@@ -139,11 +229,14 @@ def label_once(
             "Report the final trust labels and reasoning for all other players."
         )
 
+        from wolf_llm_labeling.models import ReportLabelsArgs, ReportLabelsLikertArgs
+        schema_class = ReportLabelsLikertArgs if use_likert else ReportLabelsArgs
+
         report_tool = StructuredTool.from_function(
             func=report_labels_fn,
             name="report_labels",
             description=report_desc,
-            args_schema=ReportLabelsArgs,
+            args_schema=schema_class,
         )
 
         # 2. Define ask_inner_trust_voice tool if available
@@ -229,7 +322,7 @@ def label_once(
 
         # 4. Fallback if the LLM did not call report_labels
         if not reported_labels_dict:
-            structured_llm = models.primary.with_structured_output(ReportLabelsArgs)
+            structured_llm = models.primary.with_structured_output(schema_class)
             try:
                 final_messages = current_messages + [
                     HumanMessage(content="Please provide the final trust scores and reasoning for all other players as structured output now.")

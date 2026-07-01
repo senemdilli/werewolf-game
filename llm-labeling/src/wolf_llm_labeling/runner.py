@@ -34,6 +34,8 @@ def run_labeling_experiment(
     prompt_dir: str = "./prompts",
     formatter: FormatterType = "markdown",
     context_as_tool: bool = False,
+    temperature: float = 0.0,
+    use_likert: bool = False,
 ) -> list[str]:
     """Execute a labeling experiment for game records and save the results."""
     token = os.getenv("OLLAMA_API_KEY")
@@ -59,6 +61,23 @@ def run_labeling_experiment(
 
     iv_model = inner_voice_model if inner_voice_model else primary_model
 
+    if is_openai:
+        try:
+            import requests
+            headers = {"Authorization": f"Bearer {token}"} if token else {}
+            resp = requests.get(f"{ollama_url.rstrip('/')}/models", headers=headers, timeout=5)
+            if resp.status_code == 200:
+                models_data = resp.json().get("data", [])
+                if models_data:
+                    loaded_model = models_data[0]["id"]
+                    print(f"Auto-detected active LM Studio model: {loaded_model}")
+                    if primary_model in ("lm-studio-model", "any", "default"):
+                        primary_model = loaded_model
+                    if iv_model in ("lm-studio-model", "any", "default"):
+                        iv_model = loaded_model
+        except Exception as e:
+            print(f"Warning: Could not query active LM Studio model: {e}", file=sys.stderr)
+
     if available_models:
         if primary_model not in available_models:
             print(f"Error: primary model '{primary_model}' is not supported by the server. Available models: {available_models}", file=sys.stderr)
@@ -79,13 +98,13 @@ def run_labeling_experiment(
 
         primary_llm = ChatOpenAI(
             model=primary_model,
-            temperature=0.0,
+            temperature=temperature,
             base_url=ollama_url,
             api_key=token or "lm-studio",
         )
         inner_voice_llm = ChatOpenAI(
             model=iv_model,
-            temperature=0.0,
+            temperature=temperature,
             base_url=ollama_url,
             api_key=token or "lm-studio",
         )
@@ -101,7 +120,7 @@ def run_labeling_experiment(
 
         primary_llm = ChatOllama(
             model=primary_model,
-            temperature=0.0,
+            temperature=temperature,
             base_url=ollama_url,
             client_kwargs={
                 "headers": {
@@ -111,7 +130,7 @@ def run_labeling_experiment(
         )
         inner_voice_llm = ChatOllama(
             model=iv_model,
-            temperature=0.0,
+            temperature=temperature,
             base_url=ollama_url,
             client_kwargs={
                 "headers": {
@@ -172,8 +191,8 @@ def run_labeling_experiment(
         target_players = player_names
 
     output_path = Path(output_dir)
-    game_id = game_record.get_game_id() or "unknown_game"
-    base_out_path = output_path / experiment_name / game_id
+    game_file = Path(game_record_csv).stem
+    base_out_path = output_path / experiment_name / game_file
     base_out_path.mkdir(parents=True, exist_ok=True)
 
     written_files = []
@@ -221,6 +240,7 @@ def run_labeling_experiment(
                     game_data=game_record,
                     phase_idx=phase_idx,
                     context_as_tool=context_as_tool,
+                    use_likert=use_likert,
                 )
                 
                 inner_voice_calls = []
@@ -253,15 +273,21 @@ def run_labeling_experiment(
                     labels_out[target_player] = {
                         "alignment": {
                             "trust": ts.alignment.trust,
-                            "confidence": ts.alignment.confidence
+                            "trust_likert": ts.alignment.trust_likert,
+                            "confidence": ts.alignment.confidence,
+                            "confidence_likert": ts.alignment.confidence_likert
                         } if ts.alignment else None,
                         "strategic": {
                             "trust": ts.strategic.trust,
-                            "confidence": ts.strategic.confidence
+                            "trust_likert": ts.strategic.trust_likert,
+                            "confidence": ts.strategic.confidence,
+                            "confidence_likert": ts.strategic.confidence_likert
                         } if ts.strategic else None,
                         "consistency": {
                             "trust": ts.consistency.trust,
-                            "confidence": ts.consistency.confidence
+                            "trust_likert": ts.consistency.trust_likert,
+                            "confidence": ts.consistency.confidence,
+                            "confidence_likert": ts.consistency.confidence_likert
                         } if ts.consistency else None,
                         "reasoning": lbl.reasoning
                     }
@@ -281,7 +307,10 @@ def run_labeling_experiment(
                     sys.exit(1)
 
         run_data = {
+            "game_id": game_record.get_game_id() or "unknown_game",
+            "game_file": game_file,
             "player_name": player,
+            "trust_scale_mode": "likert" if use_likert else "numeric",
             "models": {
                 "primary_model": primary_model,
                 "inner_voice_model": iv_model if iv_model != primary_model else None

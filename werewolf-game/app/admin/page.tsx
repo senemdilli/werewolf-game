@@ -59,8 +59,8 @@ export default function AdminPage() {
     fetchGames()
   }, [page, filter])
 
-  function exportCsv(gameId: string) {
-    window.open(`/api/admin/export/${gameId}`, '_blank')
+  function exportEvents(gameId: string, format: 'csv' | 'json') {
+    window.open(`/api/admin/export/${gameId}?format=${format}`, '_blank')
   }
 
   function exportLabelsJson(gameId: string) {
@@ -238,21 +238,37 @@ export default function AdminPage() {
                       <div className="flex items-center gap-1.5 flex-wrap">
                         {/* Exports for non-active/finished games */}
                         {g.status === 'FINISHED' && (
-                          <>
-                            <button
-                              onClick={() => exportCsv(g.id)}
-                              className="text-xs px-2 py-1 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded transition-colors cursor-pointer"
-                            >
-                              CSV
-                            </button>
-                            <button
-                              onClick={() => exportLabelsJson(g.id)}
-                              className="text-xs px-2 py-1 bg-slate-800 hover:bg-slate-700 border border-amber-800/60 text-amber-200 rounded transition-colors cursor-pointer"
-                              title="Trust-label survey data"
-                            >
-                              JSON
-                            </button>
-                          </>
+                          <div className="flex flex-col gap-1 text-[11px] text-slate-400 border border-slate-800 rounded p-1.5 bg-slate-950/20">
+                            <div className="flex items-center gap-2 justify-between">
+                              <span className="font-medium text-slate-400">Events:</span>
+                              <div className="flex items-center gap-1">
+                                <button
+                                  onClick={() => exportEvents(g.id, 'csv')}
+                                  className="px-1.5 py-0.5 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded text-slate-300 transition-colors cursor-pointer text-[10px] font-semibold"
+                                  title="Export game timeline in CSV"
+                                >
+                                  CSV
+                                </button>
+                                <button
+                                  onClick={() => exportEvents(g.id, 'json')}
+                                  className="px-1.5 py-0.5 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded text-slate-300 transition-colors cursor-pointer text-[10px] font-semibold"
+                                  title="Export game timeline in JSON"
+                                >
+                                  JSON
+                                </button>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2 justify-between mt-1 border-t border-slate-800/80 pt-1">
+                              <span className="font-medium text-slate-400">Labels:</span>
+                              <button
+                                onClick={() => exportLabelsJson(g.id)}
+                                className="px-1.5 py-0.5 bg-slate-800 hover:bg-slate-700 border border-amber-800/60 text-amber-200 rounded transition-colors cursor-pointer text-[10px] font-semibold"
+                                title="Export trust labeling survey data in JSON"
+                              >
+                                JSON
+                              </button>
+                            </div>
+                          </div>
                         )}
 
                         {/* Stop active games */}

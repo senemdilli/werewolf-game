@@ -1,0 +1,79 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "GameEvents",
+  "type": "object",
+  "required": [
+    "game_id",
+    "room_code",
+    "game_mode",
+    "winner",
+    "exported_at",
+    "events"
+  ],
+  "properties": {
+    "game_id": {
+      "type": "string"
+    },
+    "room_code": {
+      "type": "string"
+    },
+    "game_mode": {
+      "type": "string"
+    },
+    "winner": {
+      "type": "string"
+    },
+    "exported_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "events": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "type",
+          "round",
+          "phase",
+          "player_name",
+          "player_role",
+          "target_name",
+          "content",
+          "is_system",
+          "timestamp"
+        ],
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "round": {
+            "type": "integer"
+          },
+          "phase": {
+            "type": "string",
+            "enum": ["NIGHT", "MORNING", "DAY", "EVENING"]
+          },
+          "player_name": {
+            "type": "string"
+          },
+          "player_role": {
+            "type": "string"
+          },
+          "target_name": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          },
+          "is_system": {
+            "type": "boolean"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      }
+    }
+  }
+}

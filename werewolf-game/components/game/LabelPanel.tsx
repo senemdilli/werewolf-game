@@ -538,9 +538,19 @@ export default function LabelPanel({ socket, state }: Props) {
           <div className="flex-1 flex flex-col items-center justify-center px-6 py-10 gap-3">
             <div className="text-3xl">✓</div>
             <div className="text-amber-100 font-semibold">You&apos;re ready.</div>
-            <div className="text-sm text-slate-400 text-center">
+            <div className="text-sm text-slate-400 text-center mb-2">
               Waiting for {decidedTotal - decidedCount} other player{decidedTotal - decidedCount === 1 ? '' : 's'} to finish.
             </div>
+            {checkpoint === 'before_discussion' && state.morningAnnouncement && (
+              <div className="w-full max-w-md bg-slate-950/40 border border-slate-800 rounded-xl p-4 flex flex-col gap-1 text-center my-2">
+                <div className="text-[10px] uppercase tracking-wider text-amber-500 font-semibold">
+                  Morning Report
+                </div>
+                <div className="text-sm font-medium text-slate-200">
+                  {state.morningAnnouncement}
+                </div>
+              </div>
+            )}
             {me?.isHost && (
               <button
                 onClick={() => {
@@ -562,6 +572,17 @@ export default function LabelPanel({ socket, state }: Props) {
               Label any players whose trustworthiness changed for you. Or hit{' '}
               <span className="text-slate-200 font-semibold">Don&apos;t label</span> to skip this checkpoint.
             </p>
+
+            {checkpoint === 'before_discussion' && state.morningAnnouncement && (
+              <div className="bg-slate-950/40 border border-slate-800 rounded-xl p-4 flex flex-col gap-1 text-center">
+                <div className="text-[10px] uppercase tracking-wider text-amber-500 font-semibold">
+                  Morning Report
+                </div>
+                <div className="text-sm font-medium text-slate-200">
+                  {state.morningAnnouncement}
+                </div>
+              </div>
+            )}
 
             <div>
               <div className="text-xs text-slate-400 font-semibold mb-1.5">Players</div>

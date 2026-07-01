@@ -14,7 +14,7 @@ from wolf_llm_labeling.models import (
     SinglePlayerLabel,
     LabelSchema,
     TrustScoresSchema,
-    ScoreSchema,
+    TrustConfidence,
     LLMModelProviders,
 )
 from wolf_llm_labeling.contexts import ContextProvider, Ctx
@@ -54,23 +54,40 @@ class MockChatModel:
         return AIMessage(content="")
 
     def with_structured_output(self, schema: Any) -> Any:
+        from wolf_llm_labeling.models import ReportLabelsLikertArgs, SinglePlayerLikertLabel, LabelLikertSchema, TrustScoresLikertSchema, TrustConfidenceLikert
         structured_mock = MagicMock()
-        # Mocking the response for the fallback structured invoke call
-        structured_mock.invoke.return_value = ReportLabelsArgs(
-            labels=[
-                SinglePlayerLabel(
-                    player_name="Wolf",
-                    label=LabelSchema(
-                        trust_scores=TrustScoresSchema(
-                            alignment=ScoreSchema(trust=5, confidence=3),
-                            strategic=None,
-                            consistency=None,
-                        ),
-                        reasoning="fallback logic reasoning",
+        if schema.__name__ == "ReportLabelsLikertArgs":
+            structured_mock.invoke.return_value = ReportLabelsLikertArgs(
+                labels=[
+                    SinglePlayerLikertLabel(
+                        player_name="Wolf",
+                        label=LabelLikertSchema(
+                            trust_scores=TrustScoresLikertSchema(
+                                alignment=TrustConfidenceLikert(trust="HIGH_TRUST", confidence="MEDIUM_CONFIDENCE"),
+                                strategic=None,
+                                consistency=None,
+                            ),
+                            reasoning="fallback logic reasoning",
+                        )
                     )
-                )
-            ]
-        )
+                ]
+            )
+        else:
+            structured_mock.invoke.return_value = ReportLabelsArgs(
+                labels=[
+                    SinglePlayerLabel(
+                        player_name="Wolf",
+                        label=LabelSchema(
+                            trust_scores=TrustScoresSchema(
+                                alignment=TrustConfidence(trust=5, confidence=3),
+                                strategic=None,
+                                consistency=None,
+                            ),
+                            reasoning="fallback logic reasoning",
+                        )
+                    )
+                ]
+            )
         return structured_mock
 
 
@@ -161,4 +178,40 @@ def test_label_once_structured_fallback(tmp_path: Path) -> None:
     # Assert fallback logic successfully triggered and parsed values
     assert "Wolf" in labels
     assert labels["Wolf"].trust_scores.alignment.trust == 5
+    assert labels["Wolf"].reasoning == "fallback logic reasoning"
+
+
+def test_label_once_hybrid_likert(tmp_path: Path) -> None:
+    # Setup a dummy game records export
+    from game_record.conftest import write_export
+    csv_path, labels_path = write_export(tmp_path)
+    record = GameRecord()
+    record.read_from_files([csv_path, labels_path])
+
+    # Mock response that doesn't call any tools (just outputs conversational text)
+    from langchain_core.messages import AIMessage
+    conversational_response = AIMessage(
+        content="I think Wolf is suspicious but I am not ready to report yet."
+    )
+    
+    llm = MockChatModel([conversational_response])
+    models = LLMModelProviders(primary=llm, inner_voice=llm)
+    prompt_set = PromptSet()
+    context = DummyContextProvider()
+    
+    labels, call_info = label_once(
+        models=models,
+        prompt_set=prompt_set,
+        context=context,
+        inner_voice=None,
+        formatter_type="markdown",
+        game_data=record,
+        phase_idx=0,
+        use_likert=True,
+    )
+    
+    # Assert Likert strings were mapped to correct integer values
+    assert "Wolf" in labels
+    assert labels["Wolf"].trust_scores.alignment.trust == 6  # HIGH_TRUST maps to 6
+    assert labels["Wolf"].trust_scores.alignment.confidence == 2  # MEDIUM_CONFIDENCE maps to 2
     assert labels["Wolf"].reasoning == "fallback logic reasoning"

@@ -50,9 +50,9 @@ const roles = [
 
 const mayorDescriptions: Record<Mode, string> = {
   classic:
-    "Elected on the first morning (and re-elected if killed). The Mayor's day vote counts double, breaking ties. Werewolves will want them gone.",
+    "Elected on the first morning (and re-elected if killed). The Mayor breaks ties in day votes. Werewolves will want them gone.",
   arena:
-    'Elected after a structured advocacy + discussion phase. In Arena, the Mayor does NOT have a double vote — instead, they break ties at the end of the day vote.',
+    'Elected after a structured advocacy + discussion phase. In Arena, the Mayor breaks ties at the end of the day vote.',
 }
 
 const classicPhases = [
@@ -64,9 +64,9 @@ const classicPhases = [
   },
   { icon: '🃏', name: 'Role Reveal', description: 'Each player privately sees their assigned role. Acknowledge to continue; once everyone has, the first night begins.' },
   { icon: '🌙', name: 'Night', description: 'Werewolves vote on a victim (free chat among the pack). The Seer investigates one player. The Witch sees the wolves\' target and decides whether to heal and/or use her kill potion.' },
-  { icon: '🗳️', name: 'Mayor Election', description: 'First morning only (or after the Mayor dies): everyone votes for a Mayor. Free chat during the election. The Mayor\'s day vote counts double.' },
+  { icon: '🗳️', name: 'Mayor Election', description: 'First morning only (or after the Mayor dies): everyone votes for a Mayor. Free chat during the election. The Mayor breaks ties in day votes.' },
   { icon: '☀️', name: 'Day Discussion', description: 'Last night\'s outcome is announced. Free chat for ~2 minutes — make accusations, defend yourself, share Seer info if you dare.' },
-  { icon: '⚖️', name: 'Day Vote', description: 'Players vote to exile someone, or vote skip. The Mayor\'s vote weighs double. Result is announced on a shared screen, then back to night.' },
+  { icon: '⚖️', name: 'Day Vote', description: 'Players vote to exile someone, or vote skip. The Mayor breaks ties in day votes. Result is announced on a shared screen, then back to night.' },
 ]
 
 const arenaPhases = [
@@ -136,7 +136,7 @@ const arenaRules = [
   'Mayor advocacy gives every player exactly one opening message in a random order.',
   'Mayor vote allows voting for yourself. Individual votes are published. Ties → runoff → random.',
   'Day vote requires more than one vote on a single target to exile. Tied vote → Mayor decides.',
-  'The Mayor breaks ties; their vote does NOT count double in Arena mode.',
+  'The Mayor breaks ties in day votes.',
   'Eliminated players\' roles are always revealed.',
 ]
 

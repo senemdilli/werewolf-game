@@ -149,7 +149,7 @@ export interface GameState {
   mayorElected: boolean                // true after first election
   postElectionPhase: 'day_discussion' | 'night' | null
   witchPotions: WitchPotions
-  lastEliminated: { playerId: string; playerName: string; role: Role } | null
+  lastEliminated: { playerId: string; playerName: string; role: Role }[] | null
   dayVoteOutcome: DayVoteOutcome | null
   winner: Winner
   hostId: string
@@ -168,6 +168,7 @@ export interface GameState {
   // both set this to true. The checkpoint resolves once every alive player has
   // a true entry here.
   labelDecisions: Record<string, boolean>
+  morningAnnouncement: string | null
   // Testing/sandbox mode: when true, bot players auto-act on every saveGame.
   isSandbox?: boolean
   forceRandomNames?: boolean
@@ -243,7 +244,7 @@ export interface ClientGameState {
   myRole: Role | null
   myId: string
   winner: Winner
-  lastEliminated: { playerId: string; playerName: string; role: Role } | null
+  lastEliminated: { playerId: string; playerName: string; role: Role }[] | null
   dayVoteOutcome: DayVoteOutcome | null
   werewolfTeammates?: string[]
   nightActionsCompleted: boolean
@@ -251,6 +252,7 @@ export interface ClientGameState {
   mayorVotes: Record<string, string>
   mayorId: string | null
   aliveWerewolvesVoted?: string[]
+  werewolfVotes?: Record<string, string>
   phaseEndTime: number | null
   // werewolf-only (arena mode, >1 wolves)
   wolfArena?: WolfArenaView | null
@@ -273,6 +275,7 @@ export interface ClientGameState {
   // Counts for the "X of N ready" progress chip.
   labelDecidedCount: number
   labelDecidedTotal: number
+  morningAnnouncement: string | null
   isSandbox?: boolean
   serverTime: number
   forceRandomNames?: boolean

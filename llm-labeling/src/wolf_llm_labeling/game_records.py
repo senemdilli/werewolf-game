@@ -70,10 +70,10 @@ _CHECKPOINT_TYPES = {
 _CHECKPOINT_ORDER = tuple(_CHECKPOINT_TYPES)
 _CONFIDENCE = {"LOW": 1, "MEDIUM": 2, "HIGH": 3}
 _DAWN_DEATH_RE = re.compile(r"Dawn breaks\. (?P<victims>.+?) (?:was|were) found dead\.")
-_PLAYER_WITH_ROLE_RE = re.compile(r"([^(),]+?)\s*\([^)]*\)")
+_PLAYER_WITH_ROLE_RE = re.compile(r"([^(),]+?)\s*\(([^)]+)\)")
 _MAYOR_RE = re.compile(r"^(?P<player>.+?) has been elected Mayor\. Their vote counts double\.$")
 _RANDOM_MAYOR_RE = re.compile(r"^No one voted\. (?P<player>.+?) was randomly selected as Mayor\. Their vote counts double\.$")
-_EXILE_RE = re.compile(r"^The village voted\. (?P<player>.+?) \([^)]*\) has been eliminated\.$")
+_EXILE_RE = re.compile(r"^The village voted\. (?P<player>.+?) \((?P<role>[^)]+)\) has been eliminated\.$")
 
 
 @dataclass(frozen=True, slots=True)
@@ -247,14 +247,26 @@ def _parse_winner(rows: list[_CsvRow], labels_doc: dict[str, Any], csv_path: Pat
 def _parse_csv_players(rows: list[_CsvRow], players: dict[PlayerName, Role]) -> None:
     for row in rows:
         name = row.values["player_name"]
-        if not name or name == "System":
-            continue
-        role_value = row.values["player_role"]
-        if not role_value:
-            raise GameRecordValidationError(
-                f"Invalid empty player_role in {row.path} row {row.number} field player_role for player {name}."
-            )
-        _add_player(players, name, _role(role_value, f"{row.path} row {row.number} field player_role"), str(row.path))
+        if name and name != "System":
+            role_value = row.values["player_role"]
+            if not role_value:
+                raise GameRecordValidationError(
+                    f"Invalid empty player_role in {row.path} row {row.number} field player_role for player {name}."
+                )
+            _add_player(players, name, _role(role_value, f"{row.path} row {row.number} field player_role"), str(row.path))
+        elif name == "System":
+            content = row.values["content"]
+            death_match = _DAWN_DEATH_RE.match(content)
+            if death_match:
+                for match in _PLAYER_WITH_ROLE_RE.finditer(death_match.group("victims")):
+                    p_name = match.group(1).strip()
+                    p_role = match.group(2).strip()
+                    _add_player(players, p_name, _role(p_role, f"{row.path} row {row.number} system death content"), str(row.path))
+            exile_match = _EXILE_RE.match(content)
+            if exile_match:
+                p_name = exile_match.group("player").strip()
+                p_role = exile_match.group("role").strip()
+                _add_player(players, p_name, _role(p_role, f"{row.path} row {row.number} system exile content"), str(row.path))
 
 
 def _parse_labels(
@@ -590,11 +602,12 @@ def _parse_chat_row(row: _CsvRow) -> list[PhaseItem]:
         raise GameRecordValidationError(
             f"Invalid phase {phase!r} in {row.path} row {row.number} field phase; expected DAY or NIGHT."
         )
-    return [Message(forum=forum, player_name=player_name, message=row.values["content"])]
+    return [Message(forum=forum, player_name=player_name, message=row.values["content"], timestamp=row.values["timestamp"])]
 
 
 def _parse_system_text(row: _CsvRow) -> list[PhaseItem]:
     content = row.values["content"]
+    timestamp = row.values["timestamp"]
     death_match = _DAWN_DEATH_RE.match(content)
     if death_match:
         victims = [
@@ -602,37 +615,41 @@ def _parse_system_text(row: _CsvRow) -> list[PhaseItem]:
             for match in _PLAYER_WITH_ROLE_RE.finditer(death_match.group("victims"))
         ]
         if victims:
-            return [KillEvent(victim) for victim in victims]
+            return [KillEvent(victim, timestamp=timestamp) for victim in victims]
     mayor_match = _MAYOR_RE.match(content)
     if mayor_match:
-        return [MayorElected(mayor_match.group("player"))]
+        return [MayorElected(mayor_match.group("player"), timestamp=timestamp)]
     random_mayor_match = _RANDOM_MAYOR_RE.match(content)
     if random_mayor_match:
-        return [SystemMessage(message=content), MayorElected(random_mayor_match.group("player"))]
+        return [
+            SystemMessage(message=content, timestamp=timestamp),
+            MayorElected(random_mayor_match.group("player"), timestamp=timestamp)
+        ]
     exile_match = _EXILE_RE.match(content)
     if exile_match:
-        return [ExileEvent(exile_match.group("player"))]
+        return [ExileEvent(exile_match.group("player"), timestamp=timestamp)]
     if content in {"The village voted to skip. No one was eliminated.", "The vote ended in a tie. No one was eliminated."}:
-        return [ExileEvent(None)]
-    return [SystemMessage(message=content)]
+        return [ExileEvent(None, timestamp=timestamp)]
+    return [SystemMessage(message=content, timestamp=timestamp)]
 
 
 def _parse_night_action(row: _CsvRow) -> PhaseItem:
     actor = row.values["player_name"]
     target = row.values["target_name"]
     action = row.values["content"]
+    timestamp = row.values["timestamp"]
     if not actor:
         raise GameRecordValidationError(f"Invalid empty player_name in {row.path} row {row.number} field player_name.")
     if not target:
         raise GameRecordValidationError(f"Invalid empty target_name in {row.path} row {row.number} field target_name.")
     if action == "KILL":
-        return Vote(reason=VoteReason.KILL, player_name=actor, voted_for=target)
+        return Vote(reason=VoteReason.KILL, player_name=actor, voted_for=target, timestamp=timestamp)
     if action == "INVESTIGATE":
-        return SeerRevealed(target)
+        return SeerRevealed(target, timestamp=timestamp)
     if action == "HEAL":
-        return WitchSaved(target)
+        return WitchSaved(target, timestamp=timestamp)
     if action == "WITCH_KILL":
-        return WitchKilled(target)
+        return WitchKilled(target, timestamp=timestamp)
     raise GameRecordParseError(
         f"Unknown night_action {action!r} in {row.path} row {row.number} field content; "
         "expected KILL, INVESTIGATE, HEAL, or WITCH_KILL."
@@ -643,14 +660,15 @@ def _parse_day_vote(row: _CsvRow) -> PhaseItem:
     actor = row.values["player_name"]
     target = row.values["target_name"]
     action = row.values["content"]
+    timestamp = row.values["timestamp"]
     if not actor:
         raise GameRecordValidationError(f"Invalid empty player_name in {row.path} row {row.number} field player_name.")
     if not target:
         raise GameRecordValidationError(f"Invalid empty target_name in {row.path} row {row.number} field target_name.")
     if action == "MAYOR":
-        return Vote(reason=VoteReason.MAYOR, player_name=actor, voted_for=target)
+        return Vote(reason=VoteReason.MAYOR, player_name=actor, voted_for=target, timestamp=timestamp)
     if action == "EXILE":
-        return Vote(reason=VoteReason.EXILE, player_name=actor, voted_for=target)
+        return Vote(reason=VoteReason.EXILE, player_name=actor, voted_for=target, timestamp=timestamp)
     raise GameRecordParseError(
         f"Unknown day_vote {action!r} in {row.path} row {row.number} field content; expected MAYOR or EXILE."
     )

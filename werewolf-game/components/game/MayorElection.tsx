@@ -63,7 +63,17 @@ export default function MayorElection({ state, socket, messages }: Props) {
   return (
     <div className="flex flex-col lg:flex-row gap-4 h-full p-4 max-w-5xl mx-auto w-full">
       <div className="flex-1 flex flex-col gap-4 min-w-0">
-        <div className="text-center bg-slate-900 border border-violet-800/50 rounded-xl p-4">
+        <div className="relative text-center bg-slate-900 border border-violet-800/50 rounded-xl p-4">
+          {me?.isHost && (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => socket.emit('phase:advance')}
+              className="absolute top-3 right-3"
+            >
+              Force End
+            </Button>
+          )}
           <div className="text-4xl mb-2">👑</div>
           <h2 className="text-xl font-bold text-slate-100">Mayor Election</h2>
           <p className="text-slate-400 text-sm mt-1">
@@ -73,12 +83,26 @@ export default function MayorElection({ state, socket, messages }: Props) {
                 : inRunoff
                   ? 'Top candidates tied. Vote again to break the tie.'
                   : 'Vote for a player to become Mayor. The Mayor breaks ties in day votes.'
-              : 'Vote for a player to become Mayor. The Mayor’s vote counts double during day votes.'}
+              : 'Vote for a player to become Mayor. The Mayor breaks ties in day votes.'}
           </p>
           {inVote && timeLeft !== null && (
             <p className={`text-lg font-mono font-bold mt-2 ${timeLeft <= 10 ? 'text-red-400' : 'text-violet-400'}`}>
               {timeLeft}s
             </p>
+          )}
+
+          {state.lastEliminated && state.lastEliminated.length > 0 && (
+            <div className="mt-3 text-xs text-slate-400">
+              <span className="text-red-400/90 font-medium">Last night:</span>{' '}
+              {state.lastEliminated.map((v, i) => (
+                <span key={v.playerId}>
+                  {i > 0 && (i === state.lastEliminated!.length - 1 ? ' and ' : ', ')}
+                  <span className="text-red-300 font-semibold">{v.playerName}</span>{' '}
+                  <span className="text-slate-400">({v.role})</span>
+                </span>
+              ))}
+              {state.lastEliminated.length > 1 ? ' were found dead.' : ' was found dead.'}
+            </div>
           )}
         </div>
 
