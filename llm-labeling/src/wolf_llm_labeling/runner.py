@@ -320,6 +320,9 @@ def run_labeling_experiment(
             "experiment": experiment_name,
             "formatter": formatter,
             "experiment_args": experiment_args,
+            "temperature": temperature,
+            "max_phases": max_phases,
+            "context_as_tool": context_as_tool,
             "total_phases": total_phases,
             "alive_phases": alive_phases,
             "phases": phase_results

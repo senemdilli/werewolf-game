@@ -1,0 +1,342 @@
+{
+  "game_id": "d59e923e-8478-4514-9ccd-8d4ac5a18d5a",
+  "game_file": "game-44UT6Y-d59e923e",
+  "player_name": "Blue",
+  "trust_scale_mode": "likert",
+  "models": {
+    "primary_model": "google/gemma-4-12b-qat"
+  },
+  "prompts": {
+    "system_prompt": "system_prompts/self_aware_and_simple_rules.md",
+    "inner_voice__random_voice": "inner_voices/tool_descriptions/simple1.txt"
+  },
+  "time": "2026-07-01T07:39:33.310611Z",
+  "experiment": "a",
+  "formatter": "markdown",
+  "experiment_args": "",
+  "temperature": 1.0,
+  "max_phases": 3,
+  "context_as_tool": false,
+  "total_phases": 9,
+  "alive_phases": 5,
+  "phases": [
+    {
+      "phase_idx": 0,
+      "context": "# Game Information\n\n## Static Data\n\nYour name is: Blue\nYour role is: Werewolf\n\n## Current Game State\n\nCurrent Day: 1\nLast Phase: None\nCurrent Phase: Morning\nPlayers Alive: 8\nNext Phase: Day\nDead Players:\n  - Purple (Villager): killed\n\n# Current Phase\n\nDay: 1\nPhase: Morning\nThis is the current phase.\nPlayers alive at end of phase: 8\nPlayers no longer alive at end of phase:\n  - Purple (Dead)\nPhase details:\n  - SYSTEM: Night 1 begins.\n  - [WEREWOLF] Blue: who do you think we should kill?\n  - [WEREWOLF] Gold: no idea\n  - [WEREWOLF] Gold: random?\n  - [WEREWOLF] Blue: ok I picked purple\n  - [WEREWOLF] Gold: ok\n  - The Seer investigated Purple.\n  - Blue voted for Purple (Kill)\n  - Gold voted for Purple (Kill)\n  - Purple was found dead.\n  - SYSTEM: The village must elect a Mayor.\n  - [VILLAGE] Orange: I can do it\n  - [VILLAGE] Lime: motivated ain ya\n  - [VILLAGE] Blue: hahaha\n  - [VILLAGE] Gold: everyone can but why you?\n  - [VILLAGE] Orange: born to lead\n  - [VILLAGE] Gold: ahhahhah Lime\n  - [VILLAGE] Blue: nice one\n  - [VILLAGE] Orange: I will always maximize shareholder value\n  - [VILLAGE] Orange: promise\n  - Gold voted for Blue (Mayor)\n  - Red voted for Blue (Mayor)\n  - Blue was elected Mayor.",
+      "inner_voice": [],
+      "labels": {
+        "Gold": {
+          "alignment": {
+            "trust": 7,
+            "trust_likert": "VERY_HIGH_TRUST",
+            "confidence": 3,
+            "confidence_likert": "HIGH_CONFIDENCE"
+          },
+          "strategic": {
+            "trust": 6,
+            "trust_likert": "HIGH_TRUST",
+            "confidence": 3,
+            "confidence_likert": "HIGH_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 7,
+            "trust_likert": "VERY_HIGH_TRUST",
+            "confidence": 3,
+            "confidence_likert": "HIGH_CONFIDENCE"
+          },
+          "reasoning": "Gold is my werewolf teammate. They have consistently aligned with my goals by agreeing to my kill choice and voting for me as Mayor, which is a significant advantage for our faction. I trust their consistency and strategic alignment perfectly."
+        },
+        "Orange": {
+          "alignment": {
+            "trust": 1,
+            "trust_likert": "VERY_LOW_TRUST",
+            "confidence": 3,
+            "confidence_likert": "HIGH_CONFIDENCE"
+          },
+          "strategic": {
+            "trust": 2,
+            "trust_likert": "LOW_TRUST",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL_TRUST",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "reasoning": "Orange is a villager. They are trying to lead the village, but I have no reason to trust their reasoning as they are on the opposite team. Their strategic play seems somewhat impulsive."
+        },
+        "Lime": {
+          "alignment": {
+            "trust": 1,
+            "trust_likert": "VERY_LOW_TRUST",
+            "confidence": 3,
+            "confidence_likert": "HIGH_CONFIDENCE"
+          },
+          "strategic": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL_TRUST",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL_TRUST",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "reasoning": "Lime is a villager. There is very little information to judge their behavior yet, but they are clearly on the opposite team."
+        },
+        "Red": {
+          "alignment": {
+            "trust": 1,
+            "trust_likert": "VERY_LOW_TRUST",
+            "confidence": 3,
+            "confidence_likert": "HIGH_CONFIDENCE"
+          },
+          "strategic": {
+            "trust": 2,
+            "trust_likert": "LOW_TRUST",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL_TRUST",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "reasoning": "Red is a villager. Red committed a major strategic blunder by voting for me (a werewolf) as Mayor, which suggests they might be easily manipulated or are not thinking clearly."
+        },
+        "Purple": {
+          "alignment": {
+            "trust": 1,
+            "trust_likert": "VERY_LOW_TRUST",
+            "confidence": 3,
+            "confidence_likert": "HIGH_CONFIDENCE"
+          },
+          "strategic": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL_TRUST",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL_TRUST",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "reasoning": "Purple is a dead villager. No trust can be established with a deceased player."
+        }
+      },
+      "reasoning": "The game has just begun, and I have identified my werewolf teammate, Gold. Since I am a werewolf and Gold is also a werewolf, we have perfectly aligned goals. Gold agreed to my first kill and supported my election as Mayor, which gives me high confidence in our alignment and their willingness to collaborate strategically.\n\nThe other living players are villagers, meaning they have opposing goals to mine. Orange is actively trying to lead, which I view as a potential threat to my position as Mayor. Red's vote for me as Mayor was a significant error on their part, suggesting they might be easily swayed or less strategically capable. Lime and the others have shown little, but their roles are fundamentally opposed to mine. Purple is deceased, so they are no longer a factor.\n\nMy trust scores reflect these dynamics: very high for my teammate Gold, and very low for the villagers, with varying levels of strategic and consistency trust based on their early actions."
+    },
+    {
+      "phase_idx": 1,
+      "context": "# Game Information\n\n## Static Data\n\nYour name is: Blue\nYour role is: Werewolf\n\n## Current Game State\n\nCurrent Day: 1\nLast Phase: Morning\nCurrent Phase: Day\nPlayers Alive: 8\nNext Phase: Evening\nDead Players:\n  - Purple (Villager): killed\n\n# Current Phase\n\nDay: 1\nPhase: Day\nThis is the current phase.\nPlayers alive at end of phase: 8\nPlayers no longer alive at end of phase:\n  - Purple (Dead)\nPhase details:\n  - [VILLAGE] Orange: Maybe we need to skip for now\n  - [VILLAGE] Gold: hang in there orange\n  - [VILLAGE] Orange: My time will come\n  - [VILLAGE] Orange: but I will remember that none of you believed in me\n  - [VILLAGE] Gold: does this mean that you will take the crown by killing the current mayor????\n  - [VILLAGE] Blue: oh pls don't\n  - [VILLAGE] Orange: do we find a majority for that?\n  - [VILLAGE] Orange: anyone for killing blue?\n  - [VILLAGE] Red: reason?\n  - [VILLAGE] Gold: i don't know maybe you don't need the majority",
+      "inner_voice": [],
+      "labels": {
+        "Orange": {
+          "alignment": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL_TRUST",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "strategic": {
+            "trust": 2,
+            "trust_likert": "LOW_TRUST",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL_TRUST",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "reasoning": "Orange is making a direct, unsupported accusation against me (\"anyone for killing blue?\") while also showing some inconsistency in their behavior, moving from suggesting a skip to asking for a majority. This suggests they might be a villager who is guessing or a wolf trying to stir conflict. Because their accusation is baseless, I have low strategic trust in their reasoning."
+        },
+        "Gold": {
+          "alignment": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL_TRUST",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "strategic": {
+            "trust": 5,
+            "trust_likert": "SLIGHTLY_HIGH_TRUST",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL_TRUST",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "reasoning": "Gold is asking about the game mechanics regarding the Mayor and the \"crown.\" This indicates an engagement with the game's rules and strategic possibilities, which gives me slightly higher trust in their strategic competence compared to Orange."
+        },
+        "Red": {
+          "alignment": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL_TRUST",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "strategic": {
+            "trust": 6,
+            "trust_likert": "HIGH_TRUST",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL_TRUST",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "reasoning": "Red is asking for a reason behind the accusation against me. This is a logical and analytical approach, seeking to verify claims before acting. This demonstrates a high degree of strategic competence and a preference for reasoned deduction."
+        }
+      },
+      "reasoning": null
+    },
+    {
+      "phase_idx": 2,
+      "context": "# Game Information\n\n## Static Data\n\nYour name is: Blue\nYour role is: Werewolf\n\n## Current Game State\n\nCurrent Day: 1\nLast Phase: Day\nCurrent Phase: Evening\nPlayers Alive: 8\nNext Phase: Morning\nDead Players:\n  - Purple (Villager): killed\n\n# Current Phase\n\nDay: 1\nPhase: Evening\nThis is the current phase.\nPlayers alive at end of phase: 8\nPlayers no longer alive at end of phase:\n  - Purple (Dead)\nPhase details:\n  - SYSTEM: Voting begins.\n  - Orange voted for skip (Exile)\n  - Brown voted for skip (Exile)\n  - Blue voted for skip (Exile)\n  - Gold voted for skip (Exile)\n  - Lime voted for skip (Exile)\n  - Gray voted for skip (Exile)\n  - Red voted for skip (Exile)\n  - No one was exiled.",
+      "inner_voice": [],
+      "labels": {
+        "Orange": {
+          "alignment": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL_TRUST",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "strategic": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL_TRUST",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL_TRUST",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "reasoning": "It is the first day of the game. Every player, including Orange, has skipped their vote, which is a common neutral opening move. There is currently no information available to determine their role, strategy, or alignment."
+        },
+        "Brown": {
+          "alignment": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL_TRUST",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "strategic": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL_TRUST",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL_TRUST",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "reasoning": "It is the first day of the game. Brown skipped their vote, providing no information about their role or faction. No trust can be established yet."
+        },
+        "Gold": {
+          "alignment": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL_TRUST",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "strategic": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL_TRUST",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL_TRUST",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "reasoning": "It is the first day of the game. Gold skipped their vote. No information is available to evaluate their trustworthiness or role."
+        },
+        "Lime": {
+          "alignment": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL_TRUST",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "strategic": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL_TRUST",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL_TRUST",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "reasoning": "It is the first day of the game. Lime skipped their vote. No information is available to evaluate their trustworthiness or role."
+        },
+        "Gray": {
+          "alignment": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL_TRUST",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "strategic": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL_TRUST",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL_TRUST",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "reasoning": "It is the first day of the game. Gray skipped their vote. No information is available to evaluate their trustworthiness or role."
+        },
+        "Red": {
+          "alignment": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL_TRUST",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "strategic": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL_TRUST",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL_TRUST",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "reasoning": "It is the first day of the game. Red skipped their vote. No information is available to evaluate their trustworthiness or role."
+        }
+      },
+      "reasoning": null
+    }
+  ]
+}

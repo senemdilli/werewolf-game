@@ -83,6 +83,9 @@ Example Schema:
   "experiment": "d",
   "formatter": "json",
   "experiment_args": "3 2",
+  "temperature": 1.0,
+  "max_phases": 3,
+  "context_as_tool": false,
   "total_phases": 9,
   "alive_phases": 6,
   "phases": [
