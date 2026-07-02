@@ -26,7 +26,10 @@ python .\src\wolf_llm_labeling\main.py <game_record.json> <game_record.csv> [opt
 | `--inner-voice-model` | `str` | Optional. Model name to use for the inner trust voice (defaults to the primary model) |
 | `--player-name` | `str` | Optional. Specific player name or index (e.g. `Blue` or `0`) to run labeling for. Runs for **all players** if omitted |
 | `--max-phases` | `int` | Optional. Maximum number of phases to evaluate (default: 0 for all phases) |
-| `--experiment-args` | `str` | Optional. Arguments passed to the experiment. For A-C, it is `<cutoff>`. For D-F, it is `<cutoff> <variant>` (e.g. `"3 2"`) |
+| `--cutoff` | `int` | Optional. Number of historical phases to look back for context (used in experiments A-F) |
+| `--variant` | `int` | Optional. Inner trust voice variant for experiments D-F (`1` for pre-injected context, `2` for agentic tool loop) |
+| `--inner-voice-type` | `str` | Optional. Inner trust voice type for experiments D-F (`llm` (default), `human`, or `random`) |
+| `--experiment-args` | `str` | Legacy. Space-separated string argument containing `<cutoff> [variant] [inner_voice_type]` (e.g. `"3 2 human"`) |
 | `--formatter` | `str` | Optional. Context format type: `markdown` (default) or `json` |
 | `--context-as-tool` | `flag` | Optional. If set, the game context is retrieved dynamically by the LLM via tool call instead of pre-injected in the prompt |
 | `--prompt-set` | `str` | Optional. Path to a JSON file mapping custom prompts |
@@ -44,7 +47,7 @@ python .\src\wolf_llm_labeling\main.py `
   --primary-model "gemma4:26b" `
   --ollama-url "https://gpu.snet.tu-berlin.de/echelon/ollama" `
   --experiment "a" `
-  --experiment-args "3" `
+  --cutoff 3 `
   --player-name "Blue"
 ```
 
@@ -56,7 +59,8 @@ python .\src\wolf_llm_labeling\main.py `
   --primary-model "gemma4:26b" `
   --ollama-url "https://gpu.snet.tu-berlin.de/echelon/ollama" `
   --experiment "d" `
-  --experiment-args "3 2" `
+  --cutoff 3 `
+  --variant 2 `
   --formatter "json" `
   --player-name "Blue"
 ```
@@ -155,7 +159,10 @@ python .\src\wolf_llm_labeling\main.py `
 | `--player-name` | String | Player name or index to label (runs for all players if omitted). |
 | `--output-dir` | String | Base output directory (default: `./results/llm-labeling`). |
 | `--experiment` | String | Experiment ID module to load (e.g. `a`, `b`, etc.). |
-| `--experiment-args` | String | Configuration arguments passed to the experiment (e.g. `"3 2"`). |
+| `--cutoff` | Integer | Historical context cutoff (number of phases to look back). |
+| `--variant` | Integer | Inner trust voice variant (1: pre-injected context, 2: agentic tool call). |
+| `--inner-voice-type` | String | Inner voice type: `llm` (default), `human`, or `random`. |
+| `--experiment-args` | String | Legacy configuration arguments passed to the experiment (e.g. `"3 2 human"`). |
 | `--max-phases` | Integer | Maximum number of phases to label (default: `0` for all alive phases). |
 | `--prompt-set` | String | Path to prompt-set JSON configuration file. |
 | `--prompt-dir` | String | Directory containing the prompts (default: `./prompts`). |
@@ -165,6 +172,23 @@ python .\src\wolf_llm_labeling\main.py `
 | `--use-likert` | Flag | If set, LLM evaluates trust via a 7-point Likert scale (translated to numbers in JSON). |
 | `--runs` | Integer | Number of independent repeated runs to execute (default: `1`). Useful for gathering averages. |
 | `--chronology` | String | Chronology formatting type: `numeric` (default) or `timestamp` (for time prefixes). |
+
+## Multi-Model Setup (Primary vs. Inner Voice)
+
+The labeling engine is designed to support running two independent LLM models simultaneously to analyze decision-making dynamics:
+1. **Primary Model (`--primary-model`)**: The main "deciding" agent that receives the game context, makes arguments, and reports the final trust labels.
+2. **Inner Voice Model (`--inner-voice-model`)**: The independent "gut-feeling" voice called inside Variant 2 tool loops.
+
+```text
+Main Labeling Agent / Decider (primary_model)
+└── [Exposed Tool] ask_inner_trust_voice
+    └── [Calls] Inner Voice Provider
+        ├── Option 1: llm      ──> Independent Inner Voice Model (inner_voice_model)
+        ├── Option 2: human    ──> Human Labels JSON Loader
+        └── Option 3: random   ──> Random Control Baseline
+```
+
+This separation allows you to study whether a primary agent (e.g., `gemma-2-9b`) "listens" to a different inner voice model (e.g., `mistral-7b`) when given the choice during tool calling.
 
 ---
 

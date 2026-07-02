@@ -75,7 +75,10 @@ def main():
     parser.add_argument("--output-dir", type=str, default="./results/llm-labeling", help="Base output directory")
     parser.add_argument("--experiment", required=True, type=str, help="Experiment id e.g. a.py or b.py")
     parser.add_argument("--max-phases", type=int, default=0, help="Limit maximum number of phases to label (0 for infinite)")
-    parser.add_argument("--experiment-args", type=str, default="", help="Config args for the experiment")
+    parser.add_argument("--experiment-args", type=str, default="", help="Config args for the experiment (legacy space-separated string)")
+    parser.add_argument("--cutoff", type=int, help="Historical context cutoff (number of phases to look back)")
+    parser.add_argument("--variant", type=int, choices=[1, 2], help="Inner trust voice variant (1: pre-injected context, 2: agentic tool call)")
+    parser.add_argument("--inner-voice-type", type=str, choices=["llm", "human", "random"], help="Implementation type of the inner trust voice")
     parser.add_argument("--prompt-set", type=str, help="Path to prompt-set JSON configuration file")
     parser.add_argument("--prompt-dir", type=str, default="./prompts", help="Directory containing prompt files")
     parser.add_argument("--formatter", type=str, default="markdown", choices=["markdown", "json"], help="Context formatting type")
@@ -86,6 +89,22 @@ def main():
     parser.add_argument("--chronology", type=str, default="numeric", choices=["numeric", "timestamp"], help="Chronology formatting type (default: numeric)")
     
     args = parser.parse_args()
+
+    # Compile separate parameters into experiment_args if provided
+    if args.cutoff is not None or args.variant is not None or args.inner_voice_type is not None:
+        compiled_parts = []
+        cutoff_val = args.cutoff if args.cutoff is not None else 0
+        compiled_parts.append(str(cutoff_val))
+        
+        if args.variant is not None or args.inner_voice_type is not None:
+            variant_val = args.variant if args.variant is not None else 2
+            compiled_parts.append(str(variant_val))
+            
+            if args.inner_voice_type is not None:
+                compiled_parts.append(args.inner_voice_type)
+        
+        if not args.experiment_args:
+            args.experiment_args = " ".join(compiled_parts)
 
     for run_idx in range(args.runs):
         if args.runs > 1:
