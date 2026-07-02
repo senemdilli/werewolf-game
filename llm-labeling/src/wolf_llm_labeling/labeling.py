@@ -84,17 +84,17 @@ def label_once(
     if use_likert:
         trust_instructions = (
             "Possible values for trust are the following 7-point Likert scale string constants:\n"
-            "- 'VERY_LOW_TRUST' (Sehr niedriges Vertrauen)\n"
-            "- 'LOW_TRUST' (Niedriges Vertrauen)\n"
-            "- 'SLIGHTLY_LOW_TRUST' (Eher niedriges Vertrauen)\n"
-            "- 'NEUTRAL_TRUST' (Neutral)\n"
-            "- 'SLIGHTLY_HIGH_TRUST' (Eher hohes Vertrauen)\n"
-            "- 'HIGH_TRUST' (Hohes Vertrauen)\n"
-            "- 'VERY_HIGH_TRUST' (Sehr hohes Vertrauen)\n\n"
+            "- \"VERY_LOW_TRUST\"\n"
+            "- \"LOW_TRUST\"\n"
+            "- \"SLIGHTLY_LOW_TRUST\"\n"
+            "- \"NEUTRAL_TRUST\"\n"
+            "- \"SLIGHTLY_HIGH_TRUST\"\n"
+            "- \"HIGH_TRUST\"\n"
+            "- \"VERY_HIGH_TRUST\"\n\n"
             "Possible values for confidence are the following 3-point Likert scale string constants:\n"
-            "- 'LOW_CONFIDENCE'\n"
-            "- 'MEDIUM_CONFIDENCE'\n"
-            "- 'HIGH_CONFIDENCE'\n\n"
+            "- \"LOW_CONFIDENCE\"\n"
+            "- \"MEDIUM_CONFIDENCE\"\n"
+            "- \"HIGH_CONFIDENCE\"\n\n"
             "When reporting trust evaluations via the `report_labels` tool, you must output the exact following keys:\n"
             "- `player_name`: The name of the player.\n"
             "- `label`:\n"
@@ -163,17 +163,28 @@ def label_once(
                     c_likert = None
 
                     if isinstance(t_val, str):
-                        t_likert = t_val
-                        trust_mapping = {
-                            "VERY_LOW_TRUST": 1,
-                            "LOW_TRUST": 2,
-                            "SLIGHTLY_LOW_TRUST": 3,
-                            "NEUTRAL_TRUST": 4,
-                            "SLIGHTLY_HIGH_TRUST": 5,
-                            "HIGH_TRUST": 6,
-                            "VERY_HIGH_TRUST": 7
-                        }
-                        t_val = trust_mapping.get(t_val, 4)
+                        t_val_clean = t_val.upper().replace("_", " ").replace("-", " ").strip()
+                        if "VERY LOW" in t_val_clean:
+                            t_val = 1
+                            t_likert = "VERY_LOW_TRUST"
+                        elif "SLIGHTLY LOW" in t_val_clean:
+                            t_val = 3
+                            t_likert = "SLIGHTLY_LOW_TRUST"
+                        elif "LOW" in t_val_clean:
+                            t_val = 2
+                            t_likert = "LOW_TRUST"
+                        elif "VERY HIGH" in t_val_clean:
+                            t_val = 7
+                            t_likert = "VERY_HIGH_TRUST"
+                        elif "SLIGHTLY HIGH" in t_val_clean:
+                            t_val = 5
+                            t_likert = "SLIGHTLY_HIGH_TRUST"
+                        elif "HIGH" in t_val_clean:
+                            t_val = 6
+                            t_likert = "HIGH_TRUST"
+                        else:
+                            t_val = 4
+                            t_likert = "NEUTRAL_TRUST"
                     elif isinstance(t_val, int):
                         reverse_trust = {
                             1: "VERY_LOW_TRUST",
@@ -187,13 +198,16 @@ def label_once(
                         t_likert = reverse_trust.get(t_val, "NEUTRAL_TRUST")
 
                     if isinstance(c_val, str):
-                        c_likert = c_val
-                        confidence_mapping = {
-                            "LOW_CONFIDENCE": 1,
-                            "MEDIUM_CONFIDENCE": 2,
-                            "HIGH_CONFIDENCE": 3
-                        }
-                        c_val = confidence_mapping.get(c_val, 2)
+                        c_val_clean = c_val.upper().replace("_", " ").replace("-", " ").strip()
+                        if "LOW" in c_val_clean:
+                            c_val = 1
+                            c_likert = "LOW_CONFIDENCE"
+                        elif "HIGH" in c_val_clean:
+                            c_val = 3
+                            c_likert = "HIGH_CONFIDENCE"
+                        else:
+                            c_val = 2
+                            c_likert = "MEDIUM_CONFIDENCE"
                     elif isinstance(c_val, int):
                         reverse_conf = {
                             1: "LOW_CONFIDENCE",

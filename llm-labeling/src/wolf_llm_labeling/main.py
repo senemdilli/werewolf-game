@@ -82,27 +82,34 @@ def main():
     parser.add_argument("--context-as-tool", action="store_true", help="Retrieve game context via tool call instead of pre-injecting it in prompt")
     parser.add_argument("--temperature", type=float, default=0.0, help="LLM generation temperature (default: 0.0)")
     parser.add_argument("--use-likert", action="store_true", help="Output trust evaluations on a Likert scale instead of integers")
+    parser.add_argument("--runs", type=int, default=1, help="Number of times to run the labeling experiment (default: 1)")
+    parser.add_argument("--chronology", type=str, default="numeric", choices=["numeric", "timestamp"], help="Chronology formatting type (default: numeric)")
     
     args = parser.parse_args()
 
-    run_labeling_experiment(
-        game_record_json=args.game_record_json,
-        game_record_csv=args.game_record_csv,
-        primary_model=args.primary_model,
-        inner_voice_model=args.inner_voice_model,
-        ollama_url=args.ollama_url,
-        player_name=args.player_name,
-        output_dir=args.output_dir,
-        experiment=args.experiment,
-        max_phases=args.max_phases,
-        experiment_args=args.experiment_args,
-        prompt_set_path=args.prompt_set,
-        prompt_dir=args.prompt_dir,
-        formatter=args.formatter,
-        context_as_tool=args.context_as_tool,
-        temperature=args.temperature,
-        use_likert=args.use_likert,
-    )
+    for run_idx in range(args.runs):
+        if args.runs > 1:
+            print(f"Starting Run {run_idx + 1} of {args.runs}: \n\n")
+
+        run_labeling_experiment(
+            game_record_json=args.game_record_json,
+            game_record_csv=args.game_record_csv,
+            primary_model=args.primary_model,
+            inner_voice_model=args.inner_voice_model,
+            ollama_url=args.ollama_url,
+            player_name=args.player_name,
+            output_dir=args.output_dir,
+            experiment=args.experiment,
+            max_phases=args.max_phases,
+            experiment_args=args.experiment_args,
+            prompt_set_path=args.prompt_set,
+            prompt_dir=args.prompt_dir,
+            formatter=args.formatter,
+            context_as_tool=args.context_as_tool,
+            temperature=args.temperature,
+            use_likert=args.use_likert,
+            chronology=args.chronology,
+        )
 
 
 if __name__ == "__main__":

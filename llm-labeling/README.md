@@ -66,7 +66,8 @@ python .\src\wolf_llm_labeling\main.py `
 ## Output Location & Schema
 
 Results are written automatically to:
-`results/<experiment>/<game_id>/<player_name>-<uuid>.json`
+*   `results/<experiment>/<game_id>/<player_name>-<uuid>.json` (Structured JSON results)
+*   `results/<experiment>/<game_id>/<player_name>-<uuid>-thinking.md` (Readable markdown companion file containing the complete thinking traces / chains of thought of the LLM for each phase and step)
 
 Example Schema:
 ```json
@@ -83,6 +84,9 @@ Example Schema:
   "experiment": "d",
   "formatter": "json",
   "experiment_args": "3 2",
+  "temperature": 1.0,
+  "max_phases": 3,
+  "context_as_tool": false,
   "total_phases": 9,
   "alive_phases": 6,
   "phases": [
@@ -108,7 +112,11 @@ Example Schema:
           "reasoning": "Orange has been supportive of the village goals."
         }
       },
-      "reasoning": "Evaluating Orange based on the inner trust voice..."
+      "reasoning": "Evaluating Orange based on the inner trust voice...",
+      "thinking_process": [
+        "First, I need to check my role... Gold is a wolf. Orange was elected Mayor...",
+        "Now I should report the labels..."
+      ]
     }
   ]
 }
@@ -135,6 +143,29 @@ python .\src\wolf_llm_labeling\main.py `
   --max-phases 1
 ```
 
+### CLI Parameters
+
+| Parameter | Type | Description |
+| :--- | :--- | :--- |
+| `game_record_json` | Positional | Path to the game record JSON file. |
+| `game_record_csv` | Positional | Path to the game record CSV file. |
+| `--primary-model` | String | Model ID for the primary labeling agent. |
+| `--inner-voice-model` | String | Model ID for the inner voice agent (defaults to primary model). |
+| `--ollama-url` | String | URL of the Ollama server (or `http://localhost:1234/v1` for LM Studio). |
+| `--player-name` | String | Player name or index to label (runs for all players if omitted). |
+| `--output-dir` | String | Base output directory (default: `./results/llm-labeling`). |
+| `--experiment` | String | Experiment ID module to load (e.g. `a`, `b`, etc.). |
+| `--experiment-args` | String | Configuration arguments passed to the experiment (e.g. `"3 2"`). |
+| `--max-phases` | Integer | Maximum number of phases to label (default: `0` for all alive phases). |
+| `--prompt-set` | String | Path to prompt-set JSON configuration file. |
+| `--prompt-dir` | String | Directory containing the prompts (default: `./prompts`). |
+| `--formatter` | String | Context format type: `markdown` or `json`. |
+| `--context-as-tool` | Flag | If set, retrieves the game context via tool call instead of pre-injecting it. |
+| `--temperature` | Float | Generation temperature for LLM calls (default: `0.0`, recommended: `0.2` for Gemma). |
+| `--use-likert` | Flag | If set, LLM evaluates trust via a 7-point Likert scale (translated to numbers in JSON). |
+| `--runs` | Integer | Number of independent repeated runs to execute (default: `1`). Useful for gathering averages. |
+| `--chronology` | String | Chronology formatting type: `numeric` (default) or `timestamp` (for time prefixes). |
+
 ---
 
 ## Batch Execution & Automation
@@ -160,19 +191,129 @@ Alternatively, you can run custom configurations defined in a JSON file (args ar
 {
   "ollama_url": "https://gpu.snet.tu-berlin.de/echelon/ollama",
   "primary_model": "gemma4:26b",
+  "runs_count": 10,
   "runs": [
     { "experiment": "a", "args": "3" },
-    { "experiment": "d", "args": "3 2" }
+    { "experiment": "d", "args": "3 2", "runs_count": 5 }
   ]
 }
 ```
+*(Note: You can specify `"runs_count"` (or `"repeat"`) globally, or override it individually inside a specific run dictionary. Defaults to 1).*
 
 2. Execute the batch:
 ```powershell
 python .\src\wolf_llm_labeling\batch_runner.py --config batch_config.json
 ```
 
-To run default presets across all game files without a configuration file:
+To run default presets across all game files with repeated executions without a configuration file:
 ```powershell
-python .\src\wolf_llm_labeling\batch_runner.py --primary-model "gemma4:26b"
+python .\src\wolf_llm_labeling\batch_runner.py --primary-model "gemma4:26b" --runs 100
+```
+
+---
+
+## Context Structure & Information Filtering
+
+To prevent **information leakage**, the context builder dynamically filters all phase logs based on the role of the player being evaluated:
+*   **Werewolves**: Can see Werewolf chat, Werewolf night votes, and public events/chats. Cannot see Seer investigations or Witch actions
+*   **Seer**: Can see Seer investigations (`SeerRevealed`) and public events/chats. Cannot see Werewolf chat, night votes, or Witch actions.
+*   **Witch**: Can see Witch actions (`WitchKilled`, `WitchSaved`) and public events/chats.
+*   **Villagers**: Can only see public events (deaths, exiles, village chat).
+*   **Mayor Election Votes**: Individual votes for the Mayor are anonymous and hidden from all players. Only the final result is visible.
+
+All phase logs are grouped chronologically under the `[Moderator]` header (representing system events).
+
+### 1. Markdown Context Example (Default)
+Below is an example of the context generated for a **Werewolf** player (`Blue`) at Phase 0 (Morning):
+
+```markdown
+# Game Information
+
+## Static Data
+
+Your name is: Blue
+Your role is: Werewolf
+
+## Current Game State
+
+- Day: 1
+- Last Phase: None
+- Current Phase: Morning
+- Players Alive (7): Blue, Brown, Gold, Gray, Lime, Orange, Red
+- Next Phase: Day
+- Dead Players:
+  - Purple (Villager): killed
+
+# Current Phase
+
+- Day: 1
+- Phase: Morning
+- This is the current phase.
+- Players alive at end of phase: 7
+- Players no longer alive at end of phase:
+  - Purple (Dead)
+
+## Phase chronology
+1. [Moderator] Night 1 begins.
+2. Conversation among players with role Werewolf:
+   2.1 [Blue] who do you think we should kill?
+   2.2 [Gold] no idea
+   2.3 [Gold] random?
+   2.4 [Blue] ok I picked purple
+   2.5 [Gold] ok
+3. Players with role Werewolf vote whom to kill:
+   3.1 Blue voted for Purple (Kill)
+   3.2 Gold voted for Purple (Kill)
+4. Purple was found dead.
+5. [Moderator] The village must elect a Mayor.
+6. Conversation among all players:
+   6.1 [Orange] I can do it
+   6.2 [Lime] motivated ain ya
+   6.3 [Blue] hahaha
+   6.4 [Gold] everyone can but why you?
+   6.5 [Orange] born to lead
+   6.6 [Gold] ahhahhah Lime
+   6.7 [Blue] nice one
+   6.8 [Orange] I will always maximize shareholder value
+   6.9 [Orange] promise
+7. [Private] Blue did not vote in the mayor election.
+8. Blue was elected Mayor.
+```
+
+### 2. JSON Context Example (`--formatter json`)
+If `--formatter json` is passed, the same context is formatted as a recursive JSON tree structure:
+
+```json
+{
+  "subsections": [
+    {
+      "header": "Game Information",
+      "subsections": [
+        {
+          "header": "Static Data",
+          "content": "Your name is: Blue\nYour role is: Werewolf"
+        },
+        {
+          "header": "Current Game State",
+          "content": "Current Day: 1\nLast Phase: None\nCurrent Phase: Morning\nPlayers Alive (7): Blue, Brown, Gold, Gray, Lime, Orange, Red\nNext Phase: Day\nDead Players:\n  - Purple (Villager): killed"
+        }
+      ]
+    },
+    {
+      "header": "Current Phase",
+      "content": "- Day: 1\n- Phase: Morning\n- This is the current phase.\n- Players alive at end of phase: 7\n- Players no longer alive at end of phase:\n  - Purple (Dead)\n\n## Phase chronology\n1. [Moderator] Night 1 begins.\n2. Conversation among players with role Werewolf:\n   2.1 [Blue] who do you think we should kill?\n   2.2 [Gold] no idea\n   2.3 [Gold] random?\n   2.4 [Blue] ok I picked purple\n   2.5 [Gold] ok\n3. Players with role Werewolf vote whom to kill:\n   3.1 Blue voted for Purple (Kill)\n   3.2 Gold voted for Purple (Kill)\n4. Purple was found dead.\n5. [Moderator] The village must elect a Mayor.\n6. Conversation among all players:\n   6.1 [Orange] I can do it\n   6.2 [Lime] motivated ain ya\n   6.3 [Blue] hahaha\n   6.4 [Gold] everyone can but why you?\n   6.5 [Orange] born to lead\n   6.6 [Gold] ahhahhah Lime\n   6.7 [Blue] nice one\n   6.8 [Orange] I will always maximize shareholder value\n   6.9 [Orange] promise\n7. [Private] Blue did not vote in the mayor election.\n8. Blue was elected Mayor."
+    }
+  ]
+}
+```
+
+### 3. Local Context Inspection Tool
+A utility script `print_context.py` is included in the project root to inspect the filtered context generated for any game phase/player:
+
+```powershell
+# Print the Markdown context of Day 1 Morning for "Blue":
+python print_context.py --player "Blue" --phase 0
+
+# Print the JSON context of Day 1 Morning for "Blue":
+python print_context.py --player "Blue" --phase 0 --json
 ```

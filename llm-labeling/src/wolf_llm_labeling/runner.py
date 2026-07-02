@@ -36,8 +36,12 @@ def run_labeling_experiment(
     context_as_tool: bool = False,
     temperature: float = 0.0,
     use_likert: bool = False,
+    chronology: str = "numeric",
 ) -> list[str]:
     """Execute a labeling experiment for game records and save the results."""
+    from wolf_llm_labeling.models import chronology_type
+    chronology_type.set(chronology)
+    
     token = os.getenv("OLLAMA_API_KEY")
 
     # Check if LM Studio is used
@@ -267,6 +271,22 @@ def run_labeling_experiment(
                         reasoning = msg.content
                         break
 
+                # Extract thinking trace steps
+                thinking_steps = []
+                for msg in messages:
+                    if type(msg).__name__ == "AIMessage":
+                        rc = msg.additional_kwargs.get("reasoning_content")
+                        if not rc and msg.response_metadata:
+                            rc = msg.response_metadata.get("reasoning_content")
+                        
+                        if rc:
+                            thinking_steps.append(rc.strip())
+                        elif msg.content:
+                            import re
+                            think_match = re.search(r"<think>(.*?)</think>", msg.content, re.DOTALL)
+                            if think_match:
+                                thinking_steps.append(think_match.group(1).strip())
+
                 labels_out = {}
                 for target_player, lbl in labels.items():
                     ts = lbl.trust_scores
@@ -297,7 +317,8 @@ def run_labeling_experiment(
                     "context": call_info.context,
                     "inner_voice": inner_voice_calls,
                     "labels": labels_out,
-                    "reasoning": reasoning
+                    "reasoning": reasoning,
+                    "thinking_process": thinking_steps
                 })
             except Exception as e:
                 print(f"    Error in phase {phase_idx}: {e}", file=sys.stderr)
@@ -320,6 +341,9 @@ def run_labeling_experiment(
             "experiment": experiment_name,
             "formatter": formatter,
             "experiment_args": experiment_args,
+            "temperature": temperature,
+            "max_phases": max_phases,
+            "context_as_tool": context_as_tool,
             "total_phases": total_phases,
             "alive_phases": alive_phases,
             "phases": phase_results
@@ -334,6 +358,29 @@ def run_labeling_experiment(
             
         written_files.append(str(out_file))
         print(f"Saved labeling results for player '{player}' to {out_file}")
+
+        # thinking process in markdown file (extra)
+        thinking_file = out_file.with_name(out_file.stem + "-thinking.md")
+        with open(thinking_file, "w", encoding="utf-8") as think_f:
+            think_f.write(f"# Thinking Process / Chain of Thought for {player}\n\n")
+            think_f.write(f"- **Game File**: {game_file}\n")
+            think_f.write(f"- **Game ID**: {run_data.get('game_id')}\n")
+            think_f.write(f"- **Experiment**: {experiment_name}\n")
+            think_f.write(f"- **Date**: {run_data.get('time')}\n\n")
+            
+            for p_res in phase_results:
+                think_f.write(f"## Phase {p_res['phase_idx']} ({game_record.get_phase_type(p_res['phase_idx']).value})\n\n")
+                t_steps = p_res.get("thinking_process", [])
+                if t_steps:
+                    for s_idx, step in enumerate(t_steps):
+                        think_f.write(f"### Step {s_idx + 1} Thinking\n")
+                        formatted_step = "\n".join(f"> {line}" for line in step.splitlines())
+                        think_f.write(formatted_step + "\n\n")
+                else:
+                    think_f.write("*No thinking trace captured for this phase*\n\n")
+                think_f.write("---\n\n")
+                
+        written_files.append(str(thinking_file))
 
     print("\nLabeling run complete.")
     print(f"Total files written: {len(written_files)}")

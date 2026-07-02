@@ -172,8 +172,8 @@ class ConfidenceLikert(str, Enum):
     HIGH = "HIGH_CONFIDENCE"
 
 class TrustConfidenceLikert(BaseModel):
-    trust: TrustLikert = Field(description="Trust assessment on a 7-point Likert scale (VERY_LOW_TRUST, LOW_TRUST, SLIGHTLY_LOW_TRUST, NEUTRAL_TRUST, SLIGHTLY_HIGH_TRUST, HIGH_TRUST, VERY_HIGH_TRUST)")
-    confidence: ConfidenceLikert = Field(description="Confidence in this assessment on a 3-point Likert scale (LOW_CONFIDENCE, MEDIUM_CONFIDENCE, HIGH_CONFIDENCE)")
+    trust: str = Field(description="Trust assessment on a 7-point Likert scale (VERY_LOW_TRUST, LOW_TRUST, SLIGHTLY_LOW_TRUST, NEUTRAL_TRUST, SLIGHTLY_HIGH_TRUST, HIGH_TRUST, VERY_HIGH_TRUST)")
+    confidence: str = Field(description="Confidence in this assessment on a 3-point Likert scale (LOW_CONFIDENCE, MEDIUM_CONFIDENCE, HIGH_CONFIDENCE)")
 
 class TrustScoresLikertSchema(BaseModel):
     alignment: TrustConfidenceLikert | None = Field(default=None, description="Assessment on how aligned the player is with our goals/team")
@@ -205,6 +205,7 @@ import contextvars
 active_player_name = contextvars.ContextVar("active_player_name", default=None)
 active_llm_provider = contextvars.ContextVar("active_llm_provider", default=None)
 active_system_prompt = contextvars.ContextVar("active_system_prompt", default=None)
+chronology_type = contextvars.ContextVar("chronology_type", default="numeric")
 
 
 from typing import Literal

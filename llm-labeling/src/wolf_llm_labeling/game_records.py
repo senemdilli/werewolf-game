@@ -259,7 +259,7 @@ def _parse_csv_players(rows: list[_CsvRow], players: dict[PlayerName, Role]) -> 
             death_match = _DAWN_DEATH_RE.match(content)
             if death_match:
                 for match in _PLAYER_WITH_ROLE_RE.finditer(death_match.group("victims")):
-                    p_name = match.group(1).strip()
+                    p_name = re.sub(r"^(?:and|or)\s+", "", match.group(1).strip())
                     p_role = match.group(2).strip()
                     _add_player(players, p_name, _role(p_role, f"{row.path} row {row.number} system death content"), str(row.path))
             exile_match = _EXILE_RE.match(content)
