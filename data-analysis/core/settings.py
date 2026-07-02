@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     # Logging settings
     log_level: str = Field("INFO", env="LOG_LEVEL")
     log_format: str = Field("%(asctime)s - %(name)s - %(levelname)s - %(message)s", env="LOG_FORMAT")
+    date_format: str = Field("%Y-%m-%d %H:%M:%S", env="DATE_FORMAT")
 
     # Ollama
     ollama_api_key: str = Field(..., env="OLLAMA_API_KEY")
