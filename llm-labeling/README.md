@@ -107,7 +107,7 @@ Example Schema:
             "confidence": 3,
             "confidence_likert": "HIGH_CONFIDENCE"
           },
-          "strategic": null,
+          "information": null,
           "consistency": null,
           "reasoning": "Orange has been supportive of the village goals."
         }

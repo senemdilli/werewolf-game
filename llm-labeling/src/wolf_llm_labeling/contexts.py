@@ -212,7 +212,7 @@ class StaticContext:
         
         return Ctx(
             header="Static Data",
-            content=f"Your name is: {self.player_name}\nYour role is: {role.value}",
+            content=f"- Your name is: {self.player_name}\n- Your role is: {role.value}",
         )
 
     def get_topness(self) -> float:
@@ -276,17 +276,17 @@ class GameNowContext:
             next_phase_type = game_record.get_phase_type(next_phase_idx)
         
         content_lines = [
-            f"Current Day: {day_num}",
-            f"Last Phase: {last_phase_type.value if last_phase_type else 'None'}",
-            f"Current Phase: {phase_type.value}",
-            f"Players Alive ({len(alive_players)}): " + ", ".join(sorted(alive_players)),
+            f"- Current Day: {day_num}",
+            f"- Last Phase: {last_phase_type.value if last_phase_type else 'None'}",
+            f"- Current Phase: {phase_type.value}",
+            f"- Players Alive ({len(alive_players)}): " + ", ".join(sorted(alive_players)),
         ]
         
         if next_phase_type:
-            content_lines.append(f"Next Phase: {next_phase_type.value}")
+            content_lines.append(f"- Next Phase: {next_phase_type.value}")
         
         if dead_info:
-            content_lines.append("Dead Players:")
+            content_lines.append("- Dead Players:")
             content_lines.extend(dead_info)
         
         if player_role == Role.WITCH:
@@ -653,7 +653,7 @@ def _render_label(label: Label) -> str | None:
         line
         for line in (
             _render_score("Alignment", label.trust_scores.alignment),
-            _render_score("Strategic", label.trust_scores.strategic),
+            _render_score("Information", label.trust_scores.information),
             _render_score("Consistency", label.trust_scores.consistency),
         )
         if line is not None
@@ -678,7 +678,7 @@ def _render_trust_scores_no_rationale(scores: TrustScores) -> str | None:
         line
         for line in (
             _render_score("Alignment", scores.alignment),
-            _render_score("Strategic", scores.strategic),
+            _render_score("Information", scores.information),
             _render_score("Consistency", scores.consistency),
         )
         if line is not None

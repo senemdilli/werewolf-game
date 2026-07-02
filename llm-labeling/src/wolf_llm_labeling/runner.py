@@ -297,12 +297,12 @@ def run_labeling_experiment(
                             "confidence": ts.alignment.confidence,
                             "confidence_likert": ts.alignment.confidence_likert
                         } if ts.alignment else None,
-                        "strategic": {
-                            "trust": ts.strategic.trust,
-                            "trust_likert": ts.strategic.trust_likert,
-                            "confidence": ts.strategic.confidence,
-                            "confidence_likert": ts.strategic.confidence_likert
-                        } if ts.strategic else None,
+                        "information": {
+                            "trust": ts.information.trust,
+                            "trust_likert": ts.information.trust_likert,
+                            "confidence": ts.information.confidence,
+                            "confidence_likert": ts.information.confidence_likert
+                        } if ts.information else None,
                         "consistency": {
                             "trust": ts.consistency.trust,
                             "trust_likert": ts.consistency.trust_likert,

@@ -64,7 +64,7 @@ class MockChatModel:
                         label=LabelLikertSchema(
                             trust_scores=TrustScoresLikertSchema(
                                 alignment=TrustConfidenceLikert(trust="HIGH_TRUST", confidence="MEDIUM_CONFIDENCE"),
-                                strategic=None,
+                                information=None,
                                 consistency=None,
                             ),
                             reasoning="fallback logic reasoning",
@@ -80,7 +80,7 @@ class MockChatModel:
                         label=LabelSchema(
                             trust_scores=TrustScoresSchema(
                                 alignment=TrustConfidence(trust=5, confidence=3),
-                                strategic=None,
+                                information=None,
                                 consistency=None,
                             ),
                             reasoning="fallback logic reasoning",
@@ -111,7 +111,7 @@ def test_label_once_via_tool_call(tmp_path: Path) -> None:
                         "label": {
                             "trust_scores": {
                                 "alignment": {"trust": 6, "confidence": 3},
-                                "strategic": None,
+                                "information": None,
                                 "consistency": None,
                             },
                             "reasoning": "we caught him",

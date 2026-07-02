@@ -23,14 +23,14 @@ class FakeGameRecord:
 def make_label(
     *,
     alignment: Score | None = None,
-    strategic: Score | None = None,
+    information: Score | None = None,
     consistency: Score | None = None,
     reasoning: str = "",
 ) -> Label:
     return Label(
         trust_scores=TrustScores(
             alignment=alignment,
-            strategic=strategic,
+            information=information,
             consistency=consistency,
         ),
         reasoning=reasoning,
@@ -40,7 +40,7 @@ def make_label(
 def full_label(reasoning: str = "fixture reason") -> Label:
     return make_label(
         alignment=Score(2, 3),
-        strategic=Score(3, 2),
+        information=Score(3, 2),
         consistency=Score(4, 1),
         reasoning=reasoning,
     )
@@ -67,7 +67,7 @@ def test_explicit_observer_renders_only_that_observer() -> None:
         "# Trust Labels\n\n"
         "## Wolf\n\n"
         "Alignment: trust 2/7, confidence 3/3\n"
-        "Strategic: trust 3/7, confidence 2/3\n"
+        "Information: trust 3/7, confidence 2/3\n"
         "Consistency: trust 4/7, confidence 1/3\n"
         "Reasoning: alice reason"
     )
@@ -154,12 +154,12 @@ def test_injected_trust_order_is_preserved_and_outer_containers_are_detached() -
         "# Trust Labels\n\n"
         "## Wolf\n\n"
         "Alignment: trust 2/7, confidence 3/3\n"
-        "Strategic: trust 3/7, confidence 2/3\n"
+        "Information: trust 3/7, confidence 2/3\n"
         "Consistency: trust 4/7, confidence 1/3\n"
         "Reasoning: first\n\n"
         "## Seer\n\n"
         "Alignment: trust 2/7, confidence 3/3\n"
-        "Strategic: trust 3/7, confidence 2/3\n"
+        "Information: trust 3/7, confidence 2/3\n"
         "Consistency: trust 4/7, confidence 1/3\n"
         "Reasoning: second"
     )
@@ -170,9 +170,9 @@ def test_missing_dimensions_and_reasoning_are_omitted_or_trimmed() -> None:
         [
             {
                 "Alice": {
-                    "NoAlignment": [make_label(strategic=Score(5, 2), consistency=Score(6, 1), reasoning="  trimmed  ")],
-                    "NoStrategic": [make_label(alignment=Score(1, 3), consistency=Score(2, 2), reasoning="")],
-                    "NoConsistency": [make_label(alignment=Score(3, 1), strategic=Score(4, 2), reasoning="   ")],
+                    "NoAlignment": [make_label(information=Score(5, 2), consistency=Score(6, 1), reasoning="  trimmed  ")],
+                    "NoInformation": [make_label(alignment=Score(1, 3), consistency=Score(2, 2), reasoning="")],
+                    "NoConsistency": [make_label(alignment=Score(3, 1), information=Score(4, 2), reasoning="   ")],
                 }
             }
         ]
@@ -180,16 +180,16 @@ def test_missing_dimensions_and_reasoning_are_omitted_or_trimmed() -> None:
 
     output = render(PhaseTrustContext(player_name="Alice").get_context(record, 0))
 
-    assert "## NoAlignment\n\nStrategic: trust 5/7, confidence 2/3\nConsistency: trust 6/7, confidence 1/3\nReasoning: trimmed" in output
-    assert "## NoStrategic\n\nAlignment: trust 1/7, confidence 3/3\nConsistency: trust 2/7, confidence 2/3" in output
-    assert "## NoConsistency\n\nAlignment: trust 3/7, confidence 1/3\nStrategic: trust 4/7, confidence 2/3" in output
+    assert "## NoAlignment\n\nInformation: trust 5/7, confidence 2/3\nConsistency: trust 6/7, confidence 1/3\nReasoning: trimmed" in output
+    assert "## NoInformation\n\nAlignment: trust 1/7, confidence 3/3\nConsistency: trust 2/7, confidence 2/3" in output
+    assert "## NoConsistency\n\nAlignment: trust 3/7, confidence 1/3\nInformation: trust 4/7, confidence 2/3" in output
     assert "Reasoning:\n" not in output
 
 
 def test_multiple_labels_are_numbered_after_empty_labels_are_omitted() -> None:
     empty = make_label()
     first = make_label(alignment=Score(2, 3), reasoning="first reason")
-    second = make_label(strategic=Score(5, 2), reasoning="second reason")
+    second = make_label(information=Score(5, 2), reasoning="second reason")
     record = FakeGameRecord([{"Alice": {"Wolf": [empty, first, second]}}])
 
     output = render(PhaseTrustContext(player_name="Alice").get_context(record, 0))
@@ -201,7 +201,7 @@ def test_multiple_labels_are_numbered_after_empty_labels_are_omitted() -> None:
         "Alignment: trust 2/7, confidence 3/3\n"
         "Reasoning: first reason\n\n"
         "Label 2:\n"
-        "Strategic: trust 5/7, confidence 2/3\n"
+        "Information: trust 5/7, confidence 2/3\n"
         "Reasoning: second reason"
     )
 

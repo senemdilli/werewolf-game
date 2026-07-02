@@ -31,8 +31,8 @@ def formatted_trust_scores(scores: TrustScores, formatter_type: FormatterType) -
         res = {}
         if scores.alignment:
             res["alignment"] = {"trust": scores.alignment.trust, "confidence": scores.alignment.confidence}
-        if scores.strategic:
-            res["strategic"] = {"trust": scores.strategic.trust, "confidence": scores.strategic.confidence}
+        if scores.information:
+            res["information"] = {"trust": scores.information.trust, "confidence": scores.information.confidence}
         if scores.consistency:
             res["consistency"] = {"trust": scores.consistency.trust, "confidence": scores.consistency.confidence}
         return json.dumps(res)
@@ -40,8 +40,8 @@ def formatted_trust_scores(scores: TrustScores, formatter_type: FormatterType) -
         lines = []
         if scores.alignment:
             lines.append(f"Alignment Trust: {scores.alignment.trust}/7 (Confidence: {scores.alignment.confidence})")
-        if scores.strategic:
-            lines.append(f"Strategic Trust: {scores.strategic.trust}/7 (Confidence: {scores.strategic.confidence})")
+        if scores.information:
+            lines.append(f"Information Trust: {scores.information.trust}/7 (Confidence: {scores.information.confidence})")
         if scores.consistency:
             lines.append(f"Consistency Trust: {scores.consistency.trust}/7 (Confidence: {scores.consistency.confidence})")
         return "\n".join(lines)
@@ -101,7 +101,7 @@ def label_once(
             "  - `reasoning`: Your reasoning.\n"
             "  - `trust_scores`:\n"
             "    - `alignment`: `{ \"trust\": \"<Likert string>\", \"confidence\": \"<Likert string>\" }` (or null)\n"
-            "    - `strategic`: `{ \"trust\": \"<Likert string>\", \"confidence\": \"<Likert string>\" }` (or null)\n"
+            "    - `information`: `{ \"trust\": \"<Likert string>\", \"confidence\": \"<Likert string>\" }` (or null)\n"
             "    - `consistency`: `{ \"trust\": \"<Likert string>\", \"confidence\": \"<Likert string>\" }` (or null)\n\n"
             "CRITICAL: You are running in LIKERT SCALE mode. You MUST use string enum values for trust and confidence in the report_labels tool call. Do NOT use numbers."
         )
@@ -115,7 +115,7 @@ def label_once(
             "  - `reasoning`: Your reasoning.\n"
             "  - `trust_scores`:\n"
             "    - `alignment`: `{ \"trust\": <1-7>, \"confidence\": <1-3> }` (or null)\n"
-            "    - `strategic`: `{ \"trust\": <1-7>, \"confidence\": <1-3> }` (or null)\n"
+            "    - `information`: `{ \"trust\": <1-7>, \"confidence\": <1-3> }` (or null)\n"
             "    - `consistency`: `{ \"trust\": <1-7>, \"confidence\": <1-3> }` (or null)\n\n"
             "CRITICAL: You must use the key name \"trust\" for the trust value. Do NOT use the key name \"score\"."
         )
@@ -224,13 +224,13 @@ def label_once(
                     )
 
                 alignment_val = parse_score(getattr(ts, "alignment", None) or (ts.get("alignment") if isinstance(ts, dict) else None))
-                strategic_val = parse_score(getattr(ts, "strategic", None) or (ts.get("strategic") if isinstance(ts, dict) else None))
+                information_val = parse_score(getattr(ts, "information", None) or (ts.get("information") if isinstance(ts, dict) else None))
                 consistency_val = parse_score(getattr(ts, "consistency", None) or (ts.get("consistency") if isinstance(ts, dict) else None))
 
                 reported_labels_dict[pname] = Label(
                     trust_scores=TrustScores(
                         alignment=alignment_val,
-                        strategic=strategic_val,
+                        information=information_val,
                         consistency=consistency_val,
                     ),
                     reasoning=reasoning,

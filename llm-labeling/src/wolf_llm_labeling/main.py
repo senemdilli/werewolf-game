@@ -57,8 +57,8 @@ def run_example(llm_provider: Any, system_prompt: str, game_path: str, player_na
         ts = label.trust_scores
         if ts.alignment:
             print(f"  - Alignment Trust: {ts.alignment.trust} (Confidence: {ts.alignment.confidence})")
-        if ts.strategic:
-            print(f"  - Strategic Trust: {ts.strategic.trust} (Confidence: {ts.strategic.confidence})")
+        if ts.information:
+            print(f"  - Information Trust: {ts.information.trust} (Confidence: {ts.information.confidence})")
         if ts.consistency:
             print(f"  - Consistency Trust: {ts.consistency.trust} (Confidence: {ts.consistency.confidence})")
 

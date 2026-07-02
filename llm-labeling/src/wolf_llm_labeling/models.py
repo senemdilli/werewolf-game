@@ -49,7 +49,7 @@ class Score:
 @dataclass(frozen=True, slots=True)
 class TrustScores:
     alignment: Score | None
-    strategic: Score | None
+    information: Score | None
     consistency: Score | None
 
 
@@ -136,9 +136,9 @@ class TrustConfidence(BaseModel):
 
 
 class TrustScoresSchema(BaseModel):
-    alignment: TrustConfidence | None = Field(default=None, description="Score on how aligned the player is with our goals/team")
-    strategic: TrustConfidence | None = Field(default=None, description="Score on how strategic and competent the player's play is")
-    consistency: TrustConfidence | None = Field(default=None, description="Score on how consistent the player's behavior is")
+    alignment: TrustConfidence | None = Field(default=None, description="Assessment on whether the player's goals are compatible with ours")
+    information: TrustConfidence | None = Field(default=None, description="Assessment on whether the player gives accurate or useful information")
+    consistency: TrustConfidence | None = Field(default=None, description="Assessment on whether the player behaves predictably over time")
 
 
 class LabelSchema(BaseModel):
@@ -176,9 +176,9 @@ class TrustConfidenceLikert(BaseModel):
     confidence: str = Field(description="Confidence in this assessment on a 3-point Likert scale (LOW_CONFIDENCE, MEDIUM_CONFIDENCE, HIGH_CONFIDENCE)")
 
 class TrustScoresLikertSchema(BaseModel):
-    alignment: TrustConfidenceLikert | None = Field(default=None, description="Assessment on how aligned the player is with our goals/team")
-    strategic: TrustConfidenceLikert | None = Field(default=None, description="Assessment on how strategic and competent the player's play is")
-    consistency: TrustConfidenceLikert | None = Field(default=None, description="Assessment on how consistent the player's behavior is")
+    alignment: TrustConfidenceLikert | None = Field(default=None, description="Assessment on whether the player's goals are compatible with ours")
+    information: TrustConfidenceLikert | None = Field(default=None, description="Assessment on whether the player gives accurate or useful information")
+    consistency: TrustConfidenceLikert | None = Field(default=None, description="Assessment on whether the player behaves predictably over time")
 
 class LabelLikertSchema(BaseModel):
     trust_scores: TrustScoresLikertSchema = Field(description="The trust scores dimensions")

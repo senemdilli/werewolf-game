@@ -29,7 +29,7 @@ def _label(trust_scores):
 
 
 def _categories(scores):
-    return [scores.alignment, scores.strategic, scores.consistency]
+    return [scores.alignment, scores.information, scores.consistency]
 
 
 class TestRandomInnerVoice:
