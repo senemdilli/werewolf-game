@@ -68,7 +68,7 @@ def main():
     parser.add_argument("game_record_json", type=str, help="Path to game record JSON file")
     parser.add_argument("game_record_csv", type=str, help="Path to game record CSV file")
     
-    parser.add_argument("--primary-model", required=True, type=str, help="Model for primary labeling agent")
+    parser.add_argument("--primary-model", required=True, type=str, help="Model for primary labeling agent (use 'any' or 'default' to auto-detect first model)")
     parser.add_argument("--inner-voice-model", type=str, help="Model for the inner voice (default: same as primary)")
     parser.add_argument("--ollama-url", required=True, type=str, help="URL of the Ollama server")
     parser.add_argument("--player-name", type=str, help="Player name or index to run labeling for (runs for all players if not specified)")

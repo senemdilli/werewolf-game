@@ -28,14 +28,28 @@ from pydantic import BaseModel, Field
 from langchain_core.tools import StructuredTool
 from langchain_core.messages import SystemMessage, HumanMessage, ToolMessage, AIMessage
 
-# List of installed models on the server
-MODELS = [
-    "gemma4:26b",
-    "gpt-oss:20b",
-    "nemotron3:33b",
-    "qwen3.6:35b",
-    "gemma4:31b"
-]
+import requests
+
+# Query installed models on the server dynamically
+MODELS = []
+url = "https://gpu.snet.tu-berlin.de/echelon/ollama"
+headers = {"Authorization": f"Bearer {token}"} if token else {}
+try:
+    resp = requests.get(f"{url.rstrip('/')}/api/tags", headers=headers, timeout=5)
+    if resp.status_code == 200:
+        MODELS = [m["name"] for m in resp.json().get("models", [])]
+except Exception:
+    pass
+
+# Fallback
+if not MODELS:
+    MODELS = [
+        "gemma4:26b",
+        "gpt-oss:20b",
+        "nemotron3:33b",
+        "qwen3.6:35b",
+        "gemma4:31b"
+    ]
 
 
 # Define Agent Layer Tools

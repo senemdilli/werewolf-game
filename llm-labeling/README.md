@@ -20,7 +20,7 @@ python .\src\wolf_llm_labeling\main.py <game_record.json> <game_record.csv> [opt
 
 | Option | Type | Description |
 |---|---|---|
-| `--primary-model` | `str` | **Required.** Model name for the main labeling agent (e.g. `gemma4:26b`). |
+| `--primary-model` | `str` | **Required.** Model name for the main labeling agent. Use `"any"` or `"default"` to auto-detect the first available model on the server. |
 | `--ollama-url` | `str` | **Required.** Base URL of the Ollama server (e.g. `https://gpu.snet.tu-berlin.de/echelon/ollama`). |
 | `--experiment` | `str` | **Required.** The experiment file/id to run: `a`, `b`, `c`, `d`, `e`, or `f` |
 | `--inner-voice-model` | `str` | Optional. Model name to use for the inner trust voice (defaults to the primary model) |
@@ -153,7 +153,7 @@ python .\src\wolf_llm_labeling\main.py `
 | :--- | :--- | :--- |
 | `game_record_json` | Positional | Path to the game record JSON file. |
 | `game_record_csv` | Positional | Path to the game record CSV file. |
-| `--primary-model` | String | Model ID for the primary labeling agent. |
+| `--primary-model` | String | Model ID for the primary labeling agent (use `"any"` or `"default"` to auto-detect). |
 | `--inner-voice-model` | String | Model ID for the inner voice agent (defaults to primary model). |
 | `--ollama-url` | String | URL of the Ollama server (or `http://localhost:1234/v1` for LM Studio). |
 | `--player-name` | String | Player name or index to label (runs for all players if omitted). |

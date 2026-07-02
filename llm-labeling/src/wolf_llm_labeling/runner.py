@@ -65,6 +65,16 @@ def run_labeling_experiment(
 
     iv_model = inner_voice_model if inner_voice_model else primary_model
 
+    # Auto-detect available models for Ollama if key words are used
+    if available_models:
+        first_model = available_models[0]
+        if primary_model in ("ollama-model", "any", "default"):
+            print(f"Auto-detected active Ollama primary model: {first_model}")
+            primary_model = first_model
+        if iv_model in ("ollama-model", "any", "default"):
+            print(f"Auto-detected active Ollama inner voice model: {first_model}")
+            iv_model = first_model
+
     if is_openai:
         try:
             import requests
