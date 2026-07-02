@@ -24,6 +24,8 @@ from wolf_llm_labeling.models import (
     WitchKilled,
     WitchSaved,
     FormatterType,
+    VoteReason,
+    PhaseType,
 )
 from wolf_llm_labeling.prompts import PromptSet
 
@@ -277,7 +279,7 @@ class GameNowContext:
             f"Current Day: {day_num}",
             f"Last Phase: {last_phase_type.value if last_phase_type else 'None'}",
             f"Current Phase: {phase_type.value}",
-            f"Players Alive: {len(alive_players)}",
+            f"Players Alive ({len(alive_players)}): " + ", ".join(sorted(alive_players)),
         ]
         
         if next_phase_type:
@@ -328,6 +330,51 @@ class PhaseGameContext:
     def __init__(self, offset: int = 0) -> None:
         self.offset = offset
 
+    def _is_item_visible(self, item: PhaseItem, observer: PlayerName | None, observer_role: Role | None) -> bool:
+        if isinstance(item, Message):
+            if item.forum == Forum.VILLAGE_CHAT:
+                return True
+            if item.forum == Forum.WEREWOLF_CHAT:
+                return observer_role == Role.WEREWOLF
+            return False
+            
+        if isinstance(item, SystemMessage):
+            return True
+            
+        if isinstance(item, Vote):
+            if item.reason == VoteReason.KILL:
+                return observer_role == Role.WEREWOLF
+            if item.reason == VoteReason.EXILE:
+                return True
+            if item.reason == VoteReason.MAYOR:
+                # Show the observer own mayor vote & hide other players votes
+                return observer is not None and item.player_name == observer
+            return False
+            
+        if isinstance(item, KillEvent | ExileEvent | MayorElected):
+            return True
+            
+        if isinstance(item, SeerRevealed):
+            return observer_role == Role.SEER
+            
+        if isinstance(item, WitchKilled | WitchSaved):
+            return observer_role == Role.WITCH
+            
+        return False
+
+    def _get_time_prefix(self, item: PhaseItem) -> str:
+        ts = getattr(item, "timestamp", None)
+        if ts:
+            # extract HH:MM:SS from ISO string (like 2026-06-28T19:25:57Z)
+            if "T" in ts:
+                time_part = ts.split("T")[1]
+                if "Z" in time_part:
+                    time_part = time_part.replace("Z", "")
+                if "." in time_part:
+                    time_part = time_part.split(".")[0]
+                return f"[{time_part}] "
+        return ""
+
     def get_context(
         self,
         game_record: GameRecord,
@@ -354,21 +401,27 @@ class PhaseGameContext:
         players = game_record.get_players()
         day_num = (target_phase_idx // 3) + 1
 
+        # Retrieve observer player details and chronology mode
+        from wolf_llm_labeling.models import active_player_name, chronology_type
+        observer = active_player_name.get()
+        observer_role = players.get(observer) if observer else None
+        chrono_mode = chronology_type.get()
+
         header = (
             "Current Phase" if self.offset == 0 else f"Phase {self.offset} ago"
         )
 
         content_lines = [
-            f"Day: {day_num}",
-            f"Phase: {phase_type.value}",
+            f"- Day: {day_num}",
+            f"- Phase: {phase_type.value}",
         ]
 
         if self.offset > 0:
             content_lines.append(
-                f"This phase occurred {self.offset} phase{'s' if self.offset != 1 else ''} before the current one."
+                f"- This phase occurred {self.offset} phase{'s' if self.offset != 1 else ''} before the current one."
             )
         else:
-            content_lines.append("This is the current phase.")
+            content_lines.append("- This is the current phase.")
 
         alive_players = []
         dead_players = []
@@ -382,32 +435,122 @@ class PhaseGameContext:
             elif status.value == "Exiled":
                 exiled_players.append(player_name)
 
-        content_lines.append(f"Players alive at end of phase: {len(alive_players)}")
+        content_lines.append(f"- Players alive at end of phase: {len(alive_players)}")
         if dead_players or exiled_players:
-            content_lines.append("Players no longer alive at end of phase:")
+            content_lines.append("- Players no longer alive at end of phase:")
             for player_name in dead_players:
                 content_lines.append(f"  - {player_name} (Dead)")
             for player_name in exiled_players:
                 content_lines.append(f"  - {player_name} (Exiled)")
 
-        if phase_data:
-            content_lines.append("Phase details:")
-            for item in phase_data:
-                content_lines.append(f"  - {self._describe_phase_item(item)}")
+        # Filter phase items
+        has_mayor_votes = any(isinstance(item, Vote) and item.reason == VoteReason.MAYOR for item in phase_data)
+        observer_voted_mayor = any(isinstance(item, Vote) and item.reason == VoteReason.MAYOR and item.player_name == observer for item in phase_data)
+        
+        visible_items = []
+        inserted_abstention = False
+        for item in phase_data:
+            if isinstance(item, MayorElected) and has_mayor_votes and not observer_voted_mayor and not inserted_abstention and observer:
+                visible_items.append(SystemMessage(
+                    message=f"[Private] {observer} did not vote in the mayor election.",
+                    timestamp=item.timestamp
+                ))
+                inserted_abstention = True
+                
+            if self._is_item_visible(item, observer, observer_role):
+                visible_items.append(item)
+
+        if visible_items:
+            # Group consecutive items of same category (messages or votes)
+            steps = []
+            i = 0
+            n = len(visible_items)
+            while i < n:
+                item = visible_items[i]
+                
+                if isinstance(item, Message):
+                    group_forum = item.forum
+                    group_items = []
+                    while i < n and isinstance(visible_items[i], Message) and visible_items[i].forum == group_forum:
+                        group_items.append(visible_items[i])
+                        i += 1
+                    
+                    if group_forum == Forum.WEREWOLF_CHAT:
+                        title = "Conversation among players with role Werewolf:"
+                    else:
+                        if phase_type == PhaseType.MORNING:
+                            title = "Conversation among all players for the election of a mayor:" if any("Mayor" in (msg.message or "") for msg in group_items) else "Conversation among all players:"
+                        else:
+                            title = "Conversation among all players:"
+                    
+                    formatted_items = []
+                    for msg in group_items:
+                        time_prefix = self._get_time_prefix(msg) if chrono_mode == "timestamp" else ""
+                        formatted_items.append(f"{time_prefix}[{msg.player_name}] {msg.message}")
+                        
+                    steps.append({
+                        "type": "group",
+                        "title": title,
+                        "items": formatted_items
+                    })
+                    
+                elif isinstance(item, Vote):
+                    group_reason = item.reason
+                    group_items = []
+                    while i < n and isinstance(visible_items[i], Vote) and visible_items[i].reason == group_reason:
+                        group_items.append(visible_items[i])
+                        i += 1
+                    
+                    if group_reason == VoteReason.KILL:
+                        title = "Players with role Werewolf vote whom to kill:"
+                    elif group_reason == VoteReason.EXILE:
+                        title = "All players vote whom to exile:"
+                    elif group_reason == VoteReason.MAYOR:
+                        title = "All players vote the mayor:"
+                    else:
+                        title = "Players vote:"
+                    
+                    formatted_items = []
+                    for vote in group_items:
+                        time_prefix = self._get_time_prefix(vote) if chrono_mode == "timestamp" else ""
+                        formatted_items.append(f"{time_prefix}{vote.player_name} voted for {vote.voted_for} ({vote.reason.value})")
+                        
+                    steps.append({
+                        "type": "group",
+                        "title": title,
+                        "items": formatted_items
+                    })
+                    
+                else:
+                    desc = self._describe_phase_item(item, observer, observer_role)
+                    time_prefix = self._get_time_prefix(item) if chrono_mode == "timestamp" else ""
+                    steps.append({
+                        "type": "single",
+                        "content": f"{time_prefix}{desc}"
+                    })
+                    i += 1
+            
+            content_lines.append("\n## Phase chronology")
+            for step_idx, step in enumerate(steps):
+                num = step_idx + 1
+                if step["type"] == "single":
+                    content_lines.append(f"{num}. {step['content']}")
+                elif step["type"] == "group":
+                    content_lines.append(f"{num}. {step['title']}")
+                    for sub_idx, sub_item in enumerate(step["items"]):
+                        content_lines.append(f"   {num}.{sub_idx + 1} {sub_item}")
         else:
-            content_lines.append("No phase details available.")
+            content_lines.append("\nNo phase details available.")
 
         return Ctx(header=header, content="\n".join(content_lines))
 
-    def _describe_phase_item(self, item: PhaseItem) -> str:
+    def _describe_phase_item(self, item: PhaseItem, observer: PlayerName | None = None, observer_role: Role | None = None) -> str:
         if isinstance(item, Message):
-            forum_prefix = {
-                Forum.VILLAGE_CHAT: "[VILLAGE]",
-                Forum.WEREWOLF_CHAT: "[WEREWOLF]",
-            }.get(item.forum, "[CHAT]")
-            return f"{forum_prefix} {item.player_name}: {item.message}"
+            return f"[{item.player_name}] {item.message}"
         if isinstance(item, SystemMessage):
-            return f"SYSTEM: {item.message}"
+            if item.message.startswith("[Private]"):
+                return item.message
+            return f"[Moderator] {item.message}"
         if isinstance(item, Vote):
             return f"{item.player_name} voted for {item.voted_for} ({item.reason.value})"
         if isinstance(item, KillEvent):

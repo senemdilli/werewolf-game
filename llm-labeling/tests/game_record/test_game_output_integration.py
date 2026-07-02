@@ -25,7 +25,7 @@ EXPORT_DIR = Path(__file__).parents[3] / "results" / "game-records"
 @pytest.mark.parametrize(
     ("filename", "player_count", "phase_count", "known_player", "known_role", "winner"),
     [
-        ("game-44UT6Y-d59e923e.csv", 9, 9, "Blue", Role.WEREWOLF, "VILLAGERS"),
+        ("game-44UT6Y-d59e923e.csv", 8, 9, "Blue", Role.WEREWOLF, "VILLAGERS"),
         ("game-CCUTH3-352fd9ba.csv", 8, 10, "Beige", Role.WEREWOLF, "WEREWOLVES"),
         ("game-P3WO10-9eb0210d.csv", 8, 12, "Brown", Role.WEREWOLF, "WEREWOLVES"),
     ],

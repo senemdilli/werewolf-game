@@ -205,6 +205,7 @@ import contextvars
 active_player_name = contextvars.ContextVar("active_player_name", default=None)
 active_llm_provider = contextvars.ContextVar("active_llm_provider", default=None)
 active_system_prompt = contextvars.ContextVar("active_system_prompt", default=None)
+chronology_type = contextvars.ContextVar("chronology_type", default="numeric")
 
 
 from typing import Literal
