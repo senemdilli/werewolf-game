@@ -276,7 +276,7 @@ Your role is: Werewolf
    6.7 [Blue] nice one
    6.8 [Orange] I will always maximize shareholder value
    6.9 [Orange] promise
-7. [Private] Blue did not vote in the mayor election.
+7. [Only visible to you] Blue did not vote in the mayor election.
 8. Blue was elected Mayor.
 ```
 
@@ -291,17 +291,17 @@ If `--formatter json` is passed, the same context is formatted as a recursive JS
       "subsections": [
         {
           "header": "Static Data",
-          "content": "Your name is: Blue\nYour role is: Werewolf"
+          "content": "- Your name is: Blue\n- Your role is: Werewolf"
         },
         {
           "header": "Current Game State",
-          "content": "Current Day: 1\nLast Phase: None\nCurrent Phase: Morning\nPlayers Alive (7): Blue, Brown, Gold, Gray, Lime, Orange, Red\nNext Phase: Day\nDead Players:\n  - Purple (Villager): killed"
+          "content": "- Current Day: 1\n- Last Phase: None\n- Current Phase: Morning\n- Players Alive (7): Blue, Brown, Gold, Gray, Lime, Orange, Red\n- Next Phase: Day\n- Dead Players:\n  - Purple (Villager): killed"
         }
       ]
     },
     {
       "header": "Current Phase",
-      "content": "- Day: 1\n- Phase: Morning\n- This is the current phase.\n- Players alive at end of phase: 7\n- Players no longer alive at end of phase:\n  - Purple (Dead)\n\n## Phase chronology\n1. [Moderator] Night 1 begins.\n2. Conversation among players with role Werewolf:\n   2.1 [Blue] who do you think we should kill?\n   2.2 [Gold] no idea\n   2.3 [Gold] random?\n   2.4 [Blue] ok I picked purple\n   2.5 [Gold] ok\n3. Players with role Werewolf vote whom to kill:\n   3.1 Blue voted for Purple (Kill)\n   3.2 Gold voted for Purple (Kill)\n4. Purple was found dead.\n5. [Moderator] The village must elect a Mayor.\n6. Conversation among all players:\n   6.1 [Orange] I can do it\n   6.2 [Lime] motivated ain ya\n   6.3 [Blue] hahaha\n   6.4 [Gold] everyone can but why you?\n   6.5 [Orange] born to lead\n   6.6 [Gold] ahhahhah Lime\n   6.7 [Blue] nice one\n   6.8 [Orange] I will always maximize shareholder value\n   6.9 [Orange] promise\n7. [Private] Blue did not vote in the mayor election.\n8. Blue was elected Mayor."
+      "content": "- Day: 1\n- Phase: Morning\n- This is the current phase.\n- Players alive at end of phase: 7\n- Players no longer alive at end of phase:\n  - Purple (Dead)\n\n## Phase chronology\n1. [Moderator] Night 1 begins.\n2. Conversation among players with role Werewolf:\n   2.1 [Blue] who do you think we should kill?\n   2.2 [Gold] no idea\n   2.3 [Gold] random?\n   2.4 [Blue] ok I picked purple\n   2.5 [Gold] ok\n3. Players with role Werewolf vote whom to kill:\n   3.1 Blue voted for Purple (Kill)\n   3.2 Gold voted for Purple (Kill)\n4. Purple was found dead.\n5. [Moderator] The village must elect a Mayor.\n6. Conversation among all players:\n   6.1 [Orange] I can do it\n   6.2 [Lime] motivated ain ya\n   6.3 [Blue] hahaha\n   6.4 [Gold] everyone can but why you?\n   6.5 [Orange] born to lead\n   6.6 [Gold] ahhahhah Lime\n   6.7 [Blue] nice one\n   6.8 [Orange] I will always maximize shareholder value\n   6.9 [Orange] promise\n7. [Only visible to you] Blue did not vote in the mayor election.\n8. Blue was elected Mayor."
     }
   ]
 }

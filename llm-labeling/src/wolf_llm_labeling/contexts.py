@@ -452,7 +452,7 @@ class PhaseGameContext:
         for item in phase_data:
             if isinstance(item, MayorElected) and has_mayor_votes and not observer_voted_mayor and not inserted_abstention and observer:
                 visible_items.append(SystemMessage(
-                    message=f"[Private] {observer} did not vote in the mayor election.",
+                    message=f"[Only visible to you] {observer} did not vote in the mayor election.",
                     timestamp=item.timestamp
                 ))
                 inserted_abstention = True
@@ -548,10 +548,12 @@ class PhaseGameContext:
         if isinstance(item, Message):
             return f"[{item.player_name}] {item.message}"
         if isinstance(item, SystemMessage):
-            if item.message.startswith("[Private]"):
+            if item.message.startswith("[Only visible to you]"):
                 return item.message
             return f"[Moderator] {item.message}"
         if isinstance(item, Vote):
+            if item.reason == VoteReason.MAYOR:
+                return f"[Only visible to you] {item.player_name} voted for {item.voted_for} ({item.reason.value})"
             return f"{item.player_name} voted for {item.voted_for} ({item.reason.value})"
         if isinstance(item, KillEvent):
             return f"{item.affected_player} was found dead."
