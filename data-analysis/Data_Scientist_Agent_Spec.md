@@ -46,8 +46,7 @@ Same as above but only where the "inner trust voice" prompt is "vague"/"precise"
 
 ## Input
 
-- CSV Game Data (probably not needed):
-    - Chat History
-    - Events
-
-- **Json Trust Annotations**
+- Json schemas form llm-labeling/schemas:
+    - game events
+    - human labels
+    - label output
