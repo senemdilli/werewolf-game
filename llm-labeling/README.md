@@ -176,12 +176,23 @@ python .\src\wolf_llm_labeling\main.py `
 | `--runs` | Integer | Number of independent repeated runs to execute (default: `1`). Useful for gathering averages. |
 | `--chronology` | String | Chronology formatting type: `numeric` (default) or `timestamp` (for time prefixes). |
 
-### System Prompt Files
+### System Prompt Files & Prompt Sets
 
-Depending on the scale and type chosen via the CLI, the engine automatically loads one of three static system prompt files from the `prompts/system_prompts/` directory:
+The engine supports multiple configuration "Prompt Sets" (JSON mapping files). You can choose which set of prompt text files to load using the `--prompt-set` parameter:
+
+#### 1. Default Prompt Set (`prompts/prompt_sets/simple.json` - Default)
+Depending on the chosen CLI scale and type, it loads:
 - **`agree-disagree` Likert scale** (Default): Loads [self_aware_and_simple_rules.txt](file:///prompts/system_prompts/self_aware_and_simple_rules.txt)
 - **`legacy` Likert scale** (via `--likert-type legacy`): Loads [self_aware_and_simple_rules_legacy.txt](file:///prompts/system_prompts/self_aware_and_simple_rules_legacy.txt)
 - **Numeric scale** (via `--use-numeric`): Loads [self_aware_and_simple_rules_numeric.txt](file:///prompts/system_prompts/self_aware_and_simple_rules_numeric.txt)
+
+#### 2. Pimped Prompt Set (`prompts/prompt_sets/pimped.json`)
+Enables Sandro's revised instructions designed to guide LLM behavior:
+- **`agree-disagree` Likert scale** (Default): Loads [pimped_system_prompt.md](file:///prompts/system_prompts/pimped_system_prompt.md)
+- **Numeric scale** (via `--use-numeric`): Loads [pimped_system_prompt_numeric.md](file:///prompts/system_prompts/pimped_system_prompt_numeric.md)
+
+#### Context Injection Placeholder
+If a system prompt file contains the substring `[PLACEHOLDER FOR GAME CONTEXT]`, the labeling engine will automatically replace it with the formatted game state and conversation history at runtime. Otherwise, the context is appended to the user instruction message.
 
 ## Multi-Model Setup (Primary vs. Inner Voice)
 
