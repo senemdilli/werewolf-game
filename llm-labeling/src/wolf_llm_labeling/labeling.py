@@ -145,6 +145,12 @@ def label_once(
         context_ctx = context.get_context(game_data, prompt_set, phase_idx)
         context_str = context_ctx.to_string(formatter_type=formatter_type) if context_ctx else "No context available."
 
+        context_injected_in_system = False
+        if "[PLACEHOLDER FOR GAME CONTEXT]" in system_prompt:
+            system_prompt = system_prompt.replace("[PLACEHOLDER FOR GAME CONTEXT]", context_str)
+            context_injected_in_system = True
+            active_system_prompt.set(system_prompt)
+
         reported_labels_dict: dict[PlayerName, Label] = {}
 
         # 1. Define report_labels tool callback and tool
@@ -386,6 +392,10 @@ def label_once(
                 "You do not have the game context pre-injected. "
                 "Use the 'get_game_context' tool to retrieve the werewolf game conversation and history context. "
                 "Then evaluate the trust scores for all other players and report them using the report_labels tool"
+            )
+        elif context_injected_in_system:
+            user_content = (
+                "Evaluate the trust scores for all other players and report them using the report_labels tool."
             )
         else:
             user_content = (
