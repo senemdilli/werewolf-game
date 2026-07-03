@@ -3,9 +3,16 @@ Basic tool for data analysis.
 All tools should inherit from this class and implement the `run` method.
 """
 
+import functools
+import inspect
+
 from abc import ABC, abstractmethod
 from multiprocessing import get_logger
-from typing import ClassVar
+from typing import Any, ClassVar
+
+from langchain.tools import StructuredTool
+
+from contracts.tool_output import ToolOutput
 
 class BaseTool(ABC):
     """
@@ -27,10 +34,37 @@ class BaseTool(ABC):
         
         self.logger = get_logger(f"tools.{self.name}")
 
+
     @abstractmethod
-    def run(self, *args, **kwargs):
+    def run(self, **kwargs: Any) -> ToolOutput:
         """
         Run the tool.
         This method should be implemented by all subclasses.
         """
-        pass
+        ...
+
+    def as_langchain_tool(self) -> StructuredTool:
+        """
+        Convert the tool to a LangChain tool.
+        Returns a StructuredTool that can be used in LangChain pipelines.
+        """
+
+        @functools.wraps(self.run)
+        def invoke(**call_kwargs: Any) -> ToolOutput:
+            result = self.run(**call_kwargs)
+            if not result.success:
+                self.logger.error(f"Tool {self.name} failed with error: {result.error}")
+            return result
+        
+        invoke.__signature__ = inspect.signature(self.run)
+        
+        kwargs: dict[str, Any] = {
+            "name": self.name,
+            "description": self.description,
+            "func": invoke,
+        }
+
+        return StructuredTool.from_function(**kwargs)
+
+def __repr__(self) -> str:
+    return f"<Tool name={self.name}>"    
