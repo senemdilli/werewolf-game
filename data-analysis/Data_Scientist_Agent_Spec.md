@@ -27,8 +27,6 @@ Same as above but only where the "inner trust voice" prompt is "vague"/"precise"
 
 - LLM (Ochestrator)
 
-- Tool Registry
-
 - Tool Template
 
 - Frontend (Not the priority atm)
