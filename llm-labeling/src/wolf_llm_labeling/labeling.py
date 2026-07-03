@@ -120,76 +120,17 @@ def label_once(
         else:
             player_name = "UnknownObserver"
 
-    # Set dynamic trust instructions based on mode
-    if use_likert:
-        if likert_type == "agree-disagree":
-            trust_instructions = (
-                "Possible values for trust are the following 7-point Likert scale string constants:\n"
-                "- \"STRONGLY_DISAGREE\"\n"
-                "- \"DISAGREE\"\n"
-                "- \"SLIGHTLY_DISAGREE\"\n"
-                "- \"NEUTRAL\"\n"
-                "- \"SLIGHTLY_AGREE\"\n"
-                "- \"AGREE\"\n"
-                "- \"STRONGLY_AGREE\"\n\n"
-                "Possible values for confidence are the following 3-point Likert scale string constants:\n"
-                "- \"LOW_CONFIDENCE\"\n"
-                "- \"MEDIUM_CONFIDENCE\"\n"
-                "- \"HIGH_CONFIDENCE\"\n\n"
-                "When reporting trust evaluations via the `report_labels` tool, you must output the exact following keys:\n"
-                "- `player_name`: The name of the player.\n"
-                "- `label`:\n"
-                "  - `reasoning`: Your reasoning.\n"
-                "  - `trust_scores`:\n"
-                "    - `alignment`: `{ \"trust\": \"<Likert string>\", \"confidence\": \"<Likert string>\" }` (or null)\n"
-                "    - `information`: `{ \"trust\": \"<Likert string>\", \"confidence\": \"<Likert string>\" }` (or null)\n"
-                "    - `consistency`: `{ \"trust\": \"<Likert string>\", \"confidence\": \"<Likert string>\" }` (or null)\n\n"
-                "IMPORTANT: You are using LIKERT SCALE. You MUST use string enum values for trust and confidence in the report_labels tool call. Do NOT use numbers!"
-            )
-        else:  # legacy
-            trust_instructions = (
-                "Possible values for trust are the following 7-point Likert scale string constants:\n"
-                "- \"VERY_LOW_TRUST\"\n"
-                "- \"LOW_TRUST\"\n"
-                "- \"SLIGHTLY_LOW_TRUST\"\n"
-                "- \"NEUTRAL_TRUST\"\n"
-                "- \"SLIGHTLY_HIGH_TRUST\"\n"
-                "- \"HIGH_TRUST\"\n"
-                "- \"VERY_HIGH_TRUST\"\n\n"
-                "Possible values for confidence are the following 3-point Likert scale string constants:\n"
-                "- \"LOW_CONFIDENCE\"\n"
-                "- \"MEDIUM_CONFIDENCE\"\n"
-                "- \"HIGH_CONFIDENCE\"\n\n"
-                "When reporting trust evaluations via the `report_labels` tool, you must output the exact following keys:\n"
-                "- `player_name`: The name of the player.\n"
-                "- `label`:\n"
-                "  - `reasoning`: Your reasoning.\n"
-                "  - `trust_scores`:\n"
-                "    - `alignment`: `{ \"trust\": \"<Likert string>\", \"confidence\": \"<Likert string>\" }` (or null)\n"
-                "    - `information`: `{ \"trust\": \"<Likert string>\", \"confidence\": \"<Likert string>\" }` (or null)\n"
-                "    - `consistency`: `{ \"trust\": \"<Likert string>\", \"confidence\": \"<Likert string>\" }` (or null)\n\n"
-                "IMPORTANT: You are using LIKERT SCALE. You MUST use string enum values for trust and confidence in the report_labels tool call. Do NOT use numbers!"
-            )
+    # Set dynamic system prompt from prompt_set depending on CLI configuration
+    if not use_likert:
+        prompt_key = "system_prompt_numeric"
+    elif likert_type == "legacy":
+        prompt_key = "system_prompt_legacy"
     else:
-        trust_instructions = (
-            "Possible values for trust are integers from 1 (lowest trust) to 7 (highest trust).\n\n"
-            "Possible values for confidence are integers from 1 (low confidence) to 3 (high confidence).\n\n"
-            "When reporting trust evaluations via the `report_labels` tool, you must output the exact following keys:\n"
-            "- `player_name`: The name of the player.\n"
-            "- `label`:\n"
-            "  - `reasoning`: Your reasoning.\n"
-            "  - `trust_scores`:\n"
-            "    - `alignment`: `{ \"trust\": <1-7>, \"confidence\": <1-3> }` (or null)\n"
-            "    - `information`: `{ \"trust\": <1-7>, \"confidence\": <1-3> }` (or null)\n"
-            "    - `consistency`: `{ \"trust\": <1-7>, \"confidence\": <1-3> }` (or null)\n\n"
-            "Important: You MUST use the key name \"trust\" for the trust value. Do NOT use the key name \"score\"."
-        )
+        prompt_key = "system_prompt"
 
-    # Set dynamic system prompt from prompt_set
-    prompt_key = "system_prompt_legacy" if (use_likert and likert_type == "legacy") else "system_prompt"
     system_prompt = prompt_set.get_prompt(
         f"labeling__{prompt_key}",
-        {"trust_instructions": trust_instructions},
+        {},  # No placeholders anymore
         "You are a helpful assistant playing Werewolf. Assess the trust level of other players."
     )
 

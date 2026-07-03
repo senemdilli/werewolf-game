@@ -30,7 +30,31 @@ The study has defined the following categories for measuring trust:
 - Alignment trust: Do I believe this player's goals are compatible with mine? Or simpler: Are we in the same faction (villagers/werewolves)?
 - Information trust: Do I believe this player gives accurate or useful information? Do I trust their reasoning, accusations and deductions?
 - Consistency trust: Do I believe this player behaves predictably over time? Do I trust that they will act consistently and that I can rely on them being consistent with their words and actions?
-${trust_instructions}
+
+Possible values for trust are the following 7-point Likert scale string constants:
+- "VERY_LOW_TRUST"
+- "LOW_TRUST"
+- "SLIGHTLY_LOW_TRUST"
+- "NEUTRAL_TRUST"
+- "SLIGHTLY_HIGH_TRUST"
+- "HIGH_TRUST"
+- "VERY_HIGH_TRUST"
+
+Possible values for confidence are the following 3-point Likert scale string constants:
+- "LOW_CONFIDENCE"
+- "MEDIUM_CONFIDENCE"
+- "HIGH_CONFIDENCE"
+
+When reporting trust evaluations via the `report_labels` tool, you must output the exact following keys:
+- `player_name`: The name of the player.
+- `label`:
+  - `reasoning`: Your reasoning.
+  - `trust_scores`:
+    - `alignment`: `{ "trust": "<Likert string>", "confidence": "<Likert string>" }` (or null)
+    - `information`: `{ "trust": "<Likert string>", "confidence": "<Likert string>" }` (or null)
+    - `consistency`: `{ "trust": "<Likert string>", "confidence": "<Likert string>" }` (or null)
+
+IMPORTANT: You are using LIKERT SCALE. You MUST use string enum values for trust and confidence in the report_labels tool call. Do NOT use numbers!
 
 BEFORE you make your decision, you must reason as to WHY you trust or do not trust players and explain your confidence in the assessment. You are not required to mention the specific trust categories or confidence scores directly in your reasoning.
 

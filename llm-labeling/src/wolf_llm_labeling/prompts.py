@@ -20,7 +20,7 @@ class PromptSet:
         
         self.raw_mapping = mapping
         for prompt_id, relative_path in mapping.items():
-            if prompt_id in ("system_prompt", "system_prompt_legacy"):
+            if prompt_id in ("system_prompt", "system_prompt_legacy", "system_prompt_numeric"):
                 target_id = f"labeling__{prompt_id}"
             else:
                 target_id = prompt_id
