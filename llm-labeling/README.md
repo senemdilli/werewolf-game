@@ -176,6 +176,13 @@ python .\src\wolf_llm_labeling\main.py `
 | `--runs` | Integer | Number of independent repeated runs to execute (default: `1`). Useful for gathering averages. |
 | `--chronology` | String | Chronology formatting type: `numeric` (default) or `timestamp` (for time prefixes). |
 
+### System Prompt Files
+
+Depending on the scale and type chosen via the CLI, the engine automatically loads one of three static system prompt files from the `prompts/system_prompts/` directory:
+- **`agree-disagree` Likert scale** (Default): Loads [self_aware_and_simple_rules.txt](file:///prompts/system_prompts/self_aware_and_simple_rules.txt)
+- **`legacy` Likert scale** (via `--likert-type legacy`): Loads [self_aware_and_simple_rules_legacy.txt](file:///prompts/system_prompts/self_aware_and_simple_rules_legacy.txt)
+- **Numeric scale** (via `--use-numeric`): Loads [self_aware_and_simple_rules_numeric.txt](file:///prompts/system_prompts/self_aware_and_simple_rules_numeric.txt)
+
 ## Multi-Model Setup (Primary vs. Inner Voice)
 
 The labeling engine is designed to support running two independent LLM models simultaneously to analyze decision-making dynamics:
