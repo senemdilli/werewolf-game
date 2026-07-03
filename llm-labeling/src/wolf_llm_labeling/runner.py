@@ -36,6 +36,7 @@ def run_labeling_experiment(
     context_as_tool: bool = False,
     temperature: float = 0.0,
     use_likert: bool = False,
+    likert_type: str = "agree-disagree",
     chronology: str = "numeric",
 ) -> list[str]:
     """Execute a labeling experiment for game records and save the results."""
@@ -64,6 +65,16 @@ def run_labeling_experiment(
             sys.exit(1)
 
     iv_model = inner_voice_model if inner_voice_model else primary_model
+
+    # Auto-detect available models for Ollama if key words are used
+    if available_models:
+        first_model = available_models[0]
+        if primary_model in ("ollama-model", "any", "default"):
+            print(f"Auto-detected active Ollama primary model: {first_model}")
+            primary_model = first_model
+        if iv_model in ("ollama-model", "any", "default"):
+            print(f"Auto-detected active Ollama inner voice model: {first_model}")
+            iv_model = first_model
 
     if is_openai:
         try:
@@ -245,6 +256,7 @@ def run_labeling_experiment(
                     phase_idx=phase_idx,
                     context_as_tool=context_as_tool,
                     use_likert=use_likert,
+                    likert_type=likert_type,
                 )
                 
                 inner_voice_calls = []
@@ -297,12 +309,12 @@ def run_labeling_experiment(
                             "confidence": ts.alignment.confidence,
                             "confidence_likert": ts.alignment.confidence_likert
                         } if ts.alignment else None,
-                        "strategic": {
-                            "trust": ts.strategic.trust,
-                            "trust_likert": ts.strategic.trust_likert,
-                            "confidence": ts.strategic.confidence,
-                            "confidence_likert": ts.strategic.confidence_likert
-                        } if ts.strategic else None,
+                        "information": {
+                            "trust": ts.information.trust,
+                            "trust_likert": ts.information.trust_likert,
+                            "confidence": ts.information.confidence,
+                            "confidence_likert": ts.information.confidence_likert
+                        } if ts.information else None,
                         "consistency": {
                             "trust": ts.consistency.trust,
                             "trust_likert": ts.consistency.trust_likert,
@@ -331,7 +343,7 @@ def run_labeling_experiment(
             "game_id": game_record.get_game_id() or "unknown_game",
             "game_file": game_file,
             "player_name": player,
-            "trust_scale_mode": "likert" if use_likert else "numeric",
+            "trust_scale_mode": f"likert-{likert_type}" if use_likert else "numeric",
             "models": {
                 "primary_model": primary_model,
                 "inner_voice_model": iv_model if iv_model != primary_model else None

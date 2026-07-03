@@ -31,30 +31,20 @@ The study has defined the following categories for measuring trust:
 - Information trust: I trust information provided by the player when making game decisions.
 - Consistency trust: I trust the player to behave consistently and predictably during the game.
 
-Possible values for trust are the following 7-point Likert scale string constants:
-- "STRONGLY_DISAGREE"
-- "DISAGREE"
-- "SLIGHTLY_DISAGREE"
-- "NEUTRAL"
-- "SLIGHTLY_AGREE"
-- "AGREE"
-- "STRONGLY_AGREE"
+Possible values for trust are integers from 1 (lowest trust) to 7 (highest trust).
 
-Possible values for confidence are the following 3-point Likert scale string constants:
-- "LOW_CONFIDENCE"
-- "MEDIUM_CONFIDENCE"
-- "HIGH_CONFIDENCE"
+Possible values for confidence are integers from 1 (low confidence) to 3 (high confidence).
 
 When reporting trust evaluations via the `report_labels` tool, you must output the exact following keys:
 - `player_name`: The name of the player.
 - `label`:
   - `reasoning`: Your reasoning.
   - `trust_scores`:
-    - `alignment`: `{ "trust": "<Likert string>", "confidence": "<Likert string>" }` (or null)
-    - `information`: `{ "trust": "<Likert string>", "confidence": "<Likert string>" }` (or null)
-    - `consistency`: `{ "trust": "<Likert string>", "confidence": "<Likert string>" }` (or null)
+    - `alignment`: `{ "trust": <1-7>, "confidence": <1-3> }` (or null)
+    - `information`: `{ "trust": <1-7>, "confidence": <1-3> }` (or null)
+    - `consistency`: `{ "trust": <1-7>, "confidence": <1-3> }` (or null)
 
-IMPORTANT: You are using LIKERT SCALE. You MUST use string enum values for trust and confidence in the report_labels tool call. Do NOT use numbers!
+Important: You MUST use the key name "trust" for the trust value. Do NOT use the key name "score"!
 
 BEFORE you make your decision, you must reason as to WHY you trust or do not trust players and explain your confidence in the assessment. You are not required to mention the specific trust categories or confidence scores directly in your reasoning.
 

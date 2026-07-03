@@ -212,7 +212,7 @@ class StaticContext:
         
         return Ctx(
             header="Static Data",
-            content=f"Your name is: {self.player_name}\nYour role is: {role.value}",
+            content=f"- Your name is: {self.player_name}\n- Your role is: {role.value}",
         )
 
     def get_topness(self) -> float:
@@ -276,17 +276,17 @@ class GameNowContext:
             next_phase_type = game_record.get_phase_type(next_phase_idx)
         
         content_lines = [
-            f"Current Day: {day_num}",
-            f"Last Phase: {last_phase_type.value if last_phase_type else 'None'}",
-            f"Current Phase: {phase_type.value}",
-            f"Players Alive ({len(alive_players)}): " + ", ".join(sorted(alive_players)),
+            f"- Current Day: {day_num}",
+            f"- Last Phase: {last_phase_type.value if last_phase_type else 'None'}",
+            f"- Current Phase: {phase_type.value}",
+            f"- Players Alive ({len(alive_players)}): " + ", ".join(sorted(alive_players)),
         ]
         
         if next_phase_type:
-            content_lines.append(f"Next Phase: {next_phase_type.value}")
+            content_lines.append(f"- Next Phase: {next_phase_type.value}")
         
         if dead_info:
-            content_lines.append("Dead Players:")
+            content_lines.append("- Dead Players:")
             content_lines.extend(dead_info)
         
         if player_role == Role.WITCH:
@@ -452,7 +452,7 @@ class PhaseGameContext:
         for item in phase_data:
             if isinstance(item, MayorElected) and has_mayor_votes and not observer_voted_mayor and not inserted_abstention and observer:
                 visible_items.append(SystemMessage(
-                    message=f"[Private] {observer} did not vote in the mayor election.",
+                    message=f"[Only visible to you] {observer} did not vote in the mayor election.",
                     timestamp=item.timestamp
                 ))
                 inserted_abstention = True
@@ -548,10 +548,12 @@ class PhaseGameContext:
         if isinstance(item, Message):
             return f"[{item.player_name}] {item.message}"
         if isinstance(item, SystemMessage):
-            if item.message.startswith("[Private]"):
+            if item.message.startswith("[Only visible to you]"):
                 return item.message
             return f"[Moderator] {item.message}"
         if isinstance(item, Vote):
+            if item.reason == VoteReason.MAYOR:
+                return f"[Only visible to you] {item.player_name} voted for {item.voted_for} ({item.reason.value})"
             return f"{item.player_name} voted for {item.voted_for} ({item.reason.value})"
         if isinstance(item, KillEvent):
             return f"{item.affected_player} was found dead."
@@ -653,7 +655,7 @@ def _render_label(label: Label) -> str | None:
         line
         for line in (
             _render_score("Alignment", label.trust_scores.alignment),
-            _render_score("Strategic", label.trust_scores.strategic),
+            _render_score("Information", label.trust_scores.information),
             _render_score("Consistency", label.trust_scores.consistency),
         )
         if line is not None
@@ -678,7 +680,7 @@ def _render_trust_scores_no_rationale(scores: TrustScores) -> str | None:
         line
         for line in (
             _render_score("Alignment", scores.alignment),
-            _render_score("Strategic", scores.strategic),
+            _render_score("Information", scores.information),
             _render_score("Consistency", scores.consistency),
         )
         if line is not None

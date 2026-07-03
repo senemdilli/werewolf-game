@@ -49,7 +49,7 @@ class Score:
 @dataclass(frozen=True, slots=True)
 class TrustScores:
     alignment: Score | None
-    strategic: Score | None
+    information: Score | None
     consistency: Score | None
 
 
@@ -136,9 +136,9 @@ class TrustConfidence(BaseModel):
 
 
 class TrustScoresSchema(BaseModel):
-    alignment: TrustConfidence | None = Field(default=None, description="Score on how aligned the player is with our goals/team")
-    strategic: TrustConfidence | None = Field(default=None, description="Score on how strategic and competent the player's play is")
-    consistency: TrustConfidence | None = Field(default=None, description="Score on how consistent the player's behavior is")
+    alignment: TrustConfidence | None = Field(default=None, description="Assessment on whether the player's goals are compatible with ours")
+    information: TrustConfidence | None = Field(default=None, description="Assessment on whether the player gives accurate or useful information")
+    consistency: TrustConfidence | None = Field(default=None, description="Assessment on whether the player behaves predictably over time")
 
 
 class LabelSchema(BaseModel):
@@ -158,6 +158,15 @@ class ReportLabelsArgs(BaseModel):
 from enum import Enum
 
 class TrustLikert(str, Enum):
+    STRONGLY_DISAGREE = "STRONGLY_DISAGREE"
+    DISAGREE = "DISAGREE"
+    SLIGHTLY_DISAGREE = "SLIGHTLY_DISAGREE"
+    NEUTRAL = "NEUTRAL"
+    SLIGHTLY_AGREE = "SLIGHTLY_AGREE"
+    AGREE = "AGREE"
+    STRONGLY_AGREE = "STRONGLY_AGREE"
+
+class TrustLikertLegacy(str, Enum):
     VERY_LOW = "VERY_LOW_TRUST"
     LOW = "LOW_TRUST"
     SLIGHTLY_LOW = "SLIGHTLY_LOW_TRUST"
@@ -172,13 +181,13 @@ class ConfidenceLikert(str, Enum):
     HIGH = "HIGH_CONFIDENCE"
 
 class TrustConfidenceLikert(BaseModel):
-    trust: str = Field(description="Trust assessment on a 7-point Likert scale (VERY_LOW_TRUST, LOW_TRUST, SLIGHTLY_LOW_TRUST, NEUTRAL_TRUST, SLIGHTLY_HIGH_TRUST, HIGH_TRUST, VERY_HIGH_TRUST)")
+    trust: str = Field(description="Trust assessment on a 7-point Likert scale (STRONGLY_DISAGREE, DISAGREE, SLIGHTLY_DISAGREE, NEUTRAL, SLIGHTLY_AGREE, AGREE, STRONGLY_AGREE)")
     confidence: str = Field(description="Confidence in this assessment on a 3-point Likert scale (LOW_CONFIDENCE, MEDIUM_CONFIDENCE, HIGH_CONFIDENCE)")
 
 class TrustScoresLikertSchema(BaseModel):
-    alignment: TrustConfidenceLikert | None = Field(default=None, description="Assessment on how aligned the player is with our goals/team")
-    strategic: TrustConfidenceLikert | None = Field(default=None, description="Assessment on how strategic and competent the player's play is")
-    consistency: TrustConfidenceLikert | None = Field(default=None, description="Assessment on how consistent the player's behavior is")
+    alignment: TrustConfidenceLikert | None = Field(default=None, description="I trust that the player is pursuing goals compatible with my own.")
+    information: TrustConfidenceLikert | None = Field(default=None, description="I trust information provided by the player when making game decisions.")
+    consistency: TrustConfidenceLikert | None = Field(default=None, description="I trust the player to behave consistently and predictably during the game.")
 
 class LabelLikertSchema(BaseModel):
     trust_scores: TrustScoresLikertSchema = Field(description="The trust scores dimensions")
@@ -190,6 +199,29 @@ class SinglePlayerLikertLabel(BaseModel):
 
 class ReportLabelsLikertArgs(BaseModel):
     labels: list[SinglePlayerLikertLabel] = Field(description="List of trust labels for other players in the game")
+
+
+# Legacy Likert models
+class TrustConfidenceLikertLegacy(BaseModel):
+    trust: str = Field(description="Trust assessment on a 7-point Likert scale (VERY_LOW_TRUST, LOW_TRUST, SLIGHTLY_LOW_TRUST, NEUTRAL_TRUST, SLIGHTLY_HIGH_TRUST, HIGH_TRUST, VERY_HIGH_TRUST)")
+    confidence: str = Field(description="Confidence in this assessment on a 3-point Likert scale (LOW_CONFIDENCE, MEDIUM_CONFIDENCE, HIGH_CONFIDENCE)")
+
+class TrustScoresLikertLegacySchema(BaseModel):
+    alignment: TrustConfidenceLikertLegacy | None = Field(default=None, description="Assessment on whether the player's goals are compatible with ours")
+    information: TrustConfidenceLikertLegacy | None = Field(default=None, description="Assessment on whether the player gives accurate or useful information")
+    consistency: TrustConfidenceLikertLegacy | None = Field(default=None, description="Assessment on whether the player behaves predictably over time")
+
+class LabelLikertLegacySchema(BaseModel):
+    trust_scores: TrustScoresLikertLegacySchema = Field(description="The trust scores dimensions")
+    reasoning: str = Field(description="A concise text explanation/rationale for these trust scores")
+
+class SinglePlayerLikertLegacyLabel(BaseModel):
+    player_name: str = Field(description="Name of the player being labeled")
+    label: LabelLikertLegacySchema = Field(description="Label containing trust scores and reasoning for this player")
+
+class ReportLabelsLikertLegacyArgs(BaseModel):
+    labels: list[SinglePlayerLikertLegacyLabel] = Field(description="List of trust labels for other players in the game")
+
 
 
 @dataclass

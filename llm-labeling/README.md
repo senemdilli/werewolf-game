@@ -20,17 +20,22 @@ python .\src\wolf_llm_labeling\main.py <game_record.json> <game_record.csv> [opt
 
 | Option | Type | Description |
 |---|---|---|
-| `--primary-model` | `str` | **Required.** Model name for the main labeling agent (e.g. `gemma4:26b`). |
+| `--primary-model` | `str` | **Required.** Model name for the main labeling agent. Use `"any"` or `"default"` to auto-detect the first available model on the server. |
 | `--ollama-url` | `str` | **Required.** Base URL of the Ollama server (e.g. `https://gpu.snet.tu-berlin.de/echelon/ollama`). |
 | `--experiment` | `str` | **Required.** The experiment file/id to run: `a`, `b`, `c`, `d`, `e`, or `f` |
 | `--inner-voice-model` | `str` | Optional. Model name to use for the inner trust voice (defaults to the primary model) |
 | `--player-name` | `str` | Optional. Specific player name or index (e.g. `Blue` or `0`) to run labeling for. Runs for **all players** if omitted |
 | `--max-phases` | `int` | Optional. Maximum number of phases to evaluate (default: 0 for all phases) |
-| `--experiment-args` | `str` | Optional. Arguments passed to the experiment. For A-C, it is `<cutoff>`. For D-F, it is `<cutoff> <variant>` (e.g. `"3 2"`) |
+| `--cutoff` | `int` | Optional. Number of historical phases to look back for context (used in experiments A-F) |
+| `--variant` | `int` | Optional. Inner trust voice variant for experiments D-F (`1` for pre-injected context, `2` for agentic tool loop) |
+| `--inner-voice-type` | `str` | Optional. Inner trust voice type for experiments D-F (`llm` (default), `human`, or `random`) |
+| `--experiment-args` | `str` | Legacy. Space-separated string argument containing `<cutoff> [variant] [inner_voice_type]` (e.g. `"3 2 human"`) |
 | `--formatter` | `str` | Optional. Context format type: `markdown` (default) or `json` |
 | `--context-as-tool` | `flag` | Optional. If set, the game context is retrieved dynamically by the LLM via tool call instead of pre-injected in the prompt |
 | `--prompt-set` | `str` | Optional. Path to a JSON file mapping custom prompts |
 | `--output-dir` | `str` | Optional. Base directory where JSON results are saved (default: `./results/llm-labeling`) |
+| `--use-numeric` | `flag` | Optional. If set, forces numeric integer scale (1-100) instead of the default Likert scale |
+| `--likert-type` | `str` | Optional. Likert scale format to use: `agree-disagree` (strongly disagree to strongly agree, default) or `legacy` (very low to very high trust) |
 
 ---
 
@@ -44,7 +49,7 @@ python .\src\wolf_llm_labeling\main.py `
   --primary-model "gemma4:26b" `
   --ollama-url "https://gpu.snet.tu-berlin.de/echelon/ollama" `
   --experiment "a" `
-  --experiment-args "3" `
+  --cutoff 3 `
   --player-name "Blue"
 ```
 
@@ -56,7 +61,8 @@ python .\src\wolf_llm_labeling\main.py `
   --primary-model "gemma4:26b" `
   --ollama-url "https://gpu.snet.tu-berlin.de/echelon/ollama" `
   --experiment "d" `
-  --experiment-args "3 2" `
+  --cutoff 3 `
+  --variant 2 `
   --formatter "json" `
   --player-name "Blue"
 ```
@@ -107,7 +113,7 @@ Example Schema:
             "confidence": 3,
             "confidence_likert": "HIGH_CONFIDENCE"
           },
-          "strategic": null,
+          "information": null,
           "consistency": null,
           "reasoning": "Orange has been supportive of the village goals."
         }
@@ -149,22 +155,61 @@ python .\src\wolf_llm_labeling\main.py `
 | :--- | :--- | :--- |
 | `game_record_json` | Positional | Path to the game record JSON file. |
 | `game_record_csv` | Positional | Path to the game record CSV file. |
-| `--primary-model` | String | Model ID for the primary labeling agent. |
+| `--primary-model` | String | Model ID for the primary labeling agent (use `"any"` or `"default"` to auto-detect). |
 | `--inner-voice-model` | String | Model ID for the inner voice agent (defaults to primary model). |
 | `--ollama-url` | String | URL of the Ollama server (or `http://localhost:1234/v1` for LM Studio). |
 | `--player-name` | String | Player name or index to label (runs for all players if omitted). |
 | `--output-dir` | String | Base output directory (default: `./results/llm-labeling`). |
 | `--experiment` | String | Experiment ID module to load (e.g. `a`, `b`, etc.). |
-| `--experiment-args` | String | Configuration arguments passed to the experiment (e.g. `"3 2"`). |
+| `--cutoff` | Integer | Historical context cutoff (number of phases to look back). |
+| `--variant` | Integer | Inner trust voice variant (1: pre-injected context, 2: agentic tool call). |
+| `--inner-voice-type` | String | Inner voice type: `llm` (default), `human`, or `random`. |
+| `--experiment-args` | String | Legacy configuration arguments passed to the experiment (e.g. `"3 2 human"`). |
 | `--max-phases` | Integer | Maximum number of phases to label (default: `0` for all alive phases). |
 | `--prompt-set` | String | Path to prompt-set JSON configuration file. |
 | `--prompt-dir` | String | Directory containing the prompts (default: `./prompts`). |
 | `--formatter` | String | Context format type: `markdown` or `json`. |
 | `--context-as-tool` | Flag | If set, retrieves the game context via tool call instead of pre-injecting it. |
 | `--temperature` | Float | Generation temperature for LLM calls (default: `0.0`, recommended: `0.2` for Gemma). |
-| `--use-likert` | Flag | If set, LLM evaluates trust via a 7-point Likert scale (translated to numbers in JSON). |
+| `--use-numeric` | Flag | If set, forces LLM to evaluate trust via integers (1-100) instead of the default 7-point Likert scale. |
+| `--likert-type` | String | Likert scale format to use: `agree-disagree` (default) or `legacy`. |
 | `--runs` | Integer | Number of independent repeated runs to execute (default: `1`). Useful for gathering averages. |
 | `--chronology` | String | Chronology formatting type: `numeric` (default) or `timestamp` (for time prefixes). |
+
+### System Prompt Files & Prompt Sets
+
+The engine supports multiple configuration "Prompt Sets" (JSON mapping files). You can choose which set of prompt text files to load using the `--prompt-set` parameter:
+
+#### 1. Default Prompt Set (`prompts/prompt_sets/simple.json` - Default)
+Depending on the chosen CLI scale and type, it loads:
+- **`agree-disagree` Likert scale** (Default): Loads [self_aware_and_simple_rules.txt](file:///prompts/system_prompts/self_aware_and_simple_rules.txt)
+- **`legacy` Likert scale** (via `--likert-type legacy`): Loads [self_aware_and_simple_rules_legacy.txt](file:///prompts/system_prompts/self_aware_and_simple_rules_legacy.txt)
+- **Numeric scale** (via `--use-numeric`): Loads [self_aware_and_simple_rules_numeric.txt](file:///prompts/system_prompts/self_aware_and_simple_rules_numeric.txt)
+
+#### 2. Pimped Prompt Set (`prompts/prompt_sets/pimped.json`)
+Enables Sandro's revised instructions designed to guide LLM behavior:
+- **`agree-disagree` Likert scale** (Default): Loads [pimped_system_prompt.md](file:///prompts/system_prompts/pimped_system_prompt.md)
+- **Numeric scale** (via `--use-numeric`): Loads [pimped_system_prompt_numeric.md](file:///prompts/system_prompts/pimped_system_prompt_numeric.md)
+
+#### Context Injection Placeholder
+If a system prompt file contains the substring `[PLACEHOLDER FOR GAME CONTEXT]`, the labeling engine will automatically replace it with the formatted game state and conversation history at runtime. Otherwise, the context is appended to the user instruction message.
+
+## Multi-Model Setup (Primary vs. Inner Voice)
+
+The labeling engine is designed to support running two independent LLM models simultaneously to analyze decision-making dynamics:
+1. **Primary Model (`--primary-model`)**: The main "deciding" agent that receives the game context, makes arguments, and reports the final trust labels.
+2. **Inner Voice Model (`--inner-voice-model`)**: The independent "gut-feeling" voice called inside Variant 2 tool loops.
+
+```text
+Main Labeling Agent / Decider (primary_model)
+└── [Exposed Tool] ask_inner_trust_voice
+    └── [Calls] Inner Voice Provider
+        ├── Option 1: llm      ──> Independent Inner Voice Model (inner_voice_model)
+        ├── Option 2: human    ──> Human Labels JSON Loader
+        └── Option 3: random   ──> Random Control Baseline
+```
+
+This separation allows you to study whether a primary agent (e.g., `gemma-2-9b`) "listens" to a different inner voice model (e.g., `mistral-7b`) when given the choice during tool calling.
 
 ---
 
@@ -276,7 +321,7 @@ Your role is: Werewolf
    6.7 [Blue] nice one
    6.8 [Orange] I will always maximize shareholder value
    6.9 [Orange] promise
-7. [Private] Blue did not vote in the mayor election.
+7. [Only visible to you] Blue did not vote in the mayor election.
 8. Blue was elected Mayor.
 ```
 
@@ -291,17 +336,17 @@ If `--formatter json` is passed, the same context is formatted as a recursive JS
       "subsections": [
         {
           "header": "Static Data",
-          "content": "Your name is: Blue\nYour role is: Werewolf"
+          "content": "- Your name is: Blue\n- Your role is: Werewolf"
         },
         {
           "header": "Current Game State",
-          "content": "Current Day: 1\nLast Phase: None\nCurrent Phase: Morning\nPlayers Alive (7): Blue, Brown, Gold, Gray, Lime, Orange, Red\nNext Phase: Day\nDead Players:\n  - Purple (Villager): killed"
+          "content": "- Current Day: 1\n- Last Phase: None\n- Current Phase: Morning\n- Players Alive (7): Blue, Brown, Gold, Gray, Lime, Orange, Red\n- Next Phase: Day\n- Dead Players:\n  - Purple (Villager): killed"
         }
       ]
     },
     {
       "header": "Current Phase",
-      "content": "- Day: 1\n- Phase: Morning\n- This is the current phase.\n- Players alive at end of phase: 7\n- Players no longer alive at end of phase:\n  - Purple (Dead)\n\n## Phase chronology\n1. [Moderator] Night 1 begins.\n2. Conversation among players with role Werewolf:\n   2.1 [Blue] who do you think we should kill?\n   2.2 [Gold] no idea\n   2.3 [Gold] random?\n   2.4 [Blue] ok I picked purple\n   2.5 [Gold] ok\n3. Players with role Werewolf vote whom to kill:\n   3.1 Blue voted for Purple (Kill)\n   3.2 Gold voted for Purple (Kill)\n4. Purple was found dead.\n5. [Moderator] The village must elect a Mayor.\n6. Conversation among all players:\n   6.1 [Orange] I can do it\n   6.2 [Lime] motivated ain ya\n   6.3 [Blue] hahaha\n   6.4 [Gold] everyone can but why you?\n   6.5 [Orange] born to lead\n   6.6 [Gold] ahhahhah Lime\n   6.7 [Blue] nice one\n   6.8 [Orange] I will always maximize shareholder value\n   6.9 [Orange] promise\n7. [Private] Blue did not vote in the mayor election.\n8. Blue was elected Mayor."
+      "content": "- Day: 1\n- Phase: Morning\n- This is the current phase.\n- Players alive at end of phase: 7\n- Players no longer alive at end of phase:\n  - Purple (Dead)\n\n## Phase chronology\n1. [Moderator] Night 1 begins.\n2. Conversation among players with role Werewolf:\n   2.1 [Blue] who do you think we should kill?\n   2.2 [Gold] no idea\n   2.3 [Gold] random?\n   2.4 [Blue] ok I picked purple\n   2.5 [Gold] ok\n3. Players with role Werewolf vote whom to kill:\n   3.1 Blue voted for Purple (Kill)\n   3.2 Gold voted for Purple (Kill)\n4. Purple was found dead.\n5. [Moderator] The village must elect a Mayor.\n6. Conversation among all players:\n   6.1 [Orange] I can do it\n   6.2 [Lime] motivated ain ya\n   6.3 [Blue] hahaha\n   6.4 [Gold] everyone can but why you?\n   6.5 [Orange] born to lead\n   6.6 [Gold] ahhahhah Lime\n   6.7 [Blue] nice one\n   6.8 [Orange] I will always maximize shareholder value\n   6.9 [Orange] promise\n7. [Only visible to you] Blue did not vote in the mayor election.\n8. Blue was elected Mayor."
     }
   ]
 }

@@ -20,8 +20,8 @@ def _make_score(trust: int, confidence: int) -> Score:
     return Score(trust=trust, confidence=confidence)
 
 
-def _make_trust_scores(alignment: Score, strategic: Score, consistency: Score) -> TrustScores:
-    return TrustScores(alignment=alignment, strategic=strategic, consistency=consistency)
+def _make_trust_scores(alignment: Score, information: Score, consistency: Score) -> TrustScores:
+    return TrustScores(alignment=alignment, information=information, consistency=consistency)
 
 
 def _neutral_trust_scores() -> TrustScores:
@@ -135,7 +135,7 @@ def _trust_scores_from_schema(result: object) -> TrustScores:
 
     return TrustScores(
         alignment=to_score(getattr(result, "alignment", None)),
-        strategic=to_score(getattr(result, "strategic", None)),
+        information=to_score(getattr(result, "information", None)),
         consistency=to_score(getattr(result, "consistency", None)),
     )
 

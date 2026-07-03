@@ -1,8 +1,11 @@
 """Core label_once interface implementation."""
 
+import sys
+import threading
+import time
 from typing import Any
 from pydantic import BaseModel, Field
-from langchain_core.messages import SystemMessage, HumanMessage, ToolMessage
+from langchain_core.messages import SystemMessage, HumanMessage, ToolMessage, AIMessage
 from langchain_core.tools import StructuredTool
 
 from wolf_llm_labeling.contexts import ContextProvider
@@ -24,6 +27,42 @@ from wolf_llm_labeling.models import (
 from wolf_llm_labeling.prompts import PromptSet
 
 
+class ConsoleSpinner:
+    def __init__(self, message="Thinking"):
+        self.message = message
+        self.spinner_cycle = ["|", "/", "-", "\\"] # New spinner for showing loading
+        self.running = False
+        self._thread = None
+
+    def _spin(self):
+        idx = 0
+        while self.running:
+            sys.stdout.write(f"\r    {self.message} {self.spinner_cycle[idx]}")
+            sys.stdout.flush()
+            idx = (idx + 1) % len(self.spinner_cycle)
+            time.sleep(0.15)
+        sys.stdout.write("\r" + " " * (len(self.message) + 10) + "\r")
+        sys.stdout.flush()
+
+    def start(self):
+        self.running = True
+        self._thread = threading.Thread(target=self._spin)
+        self._thread.daemon = True
+        self._thread.start()
+        return self
+
+    def stop(self):
+        self.running = False
+        if self._thread:
+            self._thread.join()
+
+    def __enter__(self):
+        return self.start()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.stop()
+
+
 def formatted_trust_scores(scores: TrustScores, formatter_type: FormatterType) -> str:
     """Format trust scores based on formatter type (json or markdown)."""
     if formatter_type == "json":
@@ -31,8 +70,8 @@ def formatted_trust_scores(scores: TrustScores, formatter_type: FormatterType) -
         res = {}
         if scores.alignment:
             res["alignment"] = {"trust": scores.alignment.trust, "confidence": scores.alignment.confidence}
-        if scores.strategic:
-            res["strategic"] = {"trust": scores.strategic.trust, "confidence": scores.strategic.confidence}
+        if scores.information:
+            res["information"] = {"trust": scores.information.trust, "confidence": scores.information.confidence}
         if scores.consistency:
             res["consistency"] = {"trust": scores.consistency.trust, "confidence": scores.consistency.confidence}
         return json.dumps(res)
@@ -40,8 +79,8 @@ def formatted_trust_scores(scores: TrustScores, formatter_type: FormatterType) -
         lines = []
         if scores.alignment:
             lines.append(f"Alignment Trust: {scores.alignment.trust}/7 (Confidence: {scores.alignment.confidence})")
-        if scores.strategic:
-            lines.append(f"Strategic Trust: {scores.strategic.trust}/7 (Confidence: {scores.strategic.confidence})")
+        if scores.information:
+            lines.append(f"Information Trust: {scores.information.trust}/7 (Confidence: {scores.information.confidence})")
         if scores.consistency:
             lines.append(f"Consistency Trust: {scores.consistency.trust}/7 (Confidence: {scores.consistency.confidence})")
         return "\n".join(lines)
@@ -57,6 +96,7 @@ def label_once(
     phase_idx: int,
     context_as_tool: bool = False,
     use_likert: bool = False,
+    likert_type: str = "agree-disagree",
 ) -> tuple[dict[PlayerName, Label], LLMCallInfo]:
     # Find player_name from the context if possible (e.g. from StaticContext or GameNowContext)
     player_name = getattr(context, "player_name", None)
@@ -80,50 +120,17 @@ def label_once(
         else:
             player_name = "UnknownObserver"
 
-    # Set dynamic trust instructions based on mode
-    if use_likert:
-        trust_instructions = (
-            "Possible values for trust are the following 7-point Likert scale string constants:\n"
-            "- \"VERY_LOW_TRUST\"\n"
-            "- \"LOW_TRUST\"\n"
-            "- \"SLIGHTLY_LOW_TRUST\"\n"
-            "- \"NEUTRAL_TRUST\"\n"
-            "- \"SLIGHTLY_HIGH_TRUST\"\n"
-            "- \"HIGH_TRUST\"\n"
-            "- \"VERY_HIGH_TRUST\"\n\n"
-            "Possible values for confidence are the following 3-point Likert scale string constants:\n"
-            "- \"LOW_CONFIDENCE\"\n"
-            "- \"MEDIUM_CONFIDENCE\"\n"
-            "- \"HIGH_CONFIDENCE\"\n\n"
-            "When reporting trust evaluations via the `report_labels` tool, you must output the exact following keys:\n"
-            "- `player_name`: The name of the player.\n"
-            "- `label`:\n"
-            "  - `reasoning`: Your reasoning.\n"
-            "  - `trust_scores`:\n"
-            "    - `alignment`: `{ \"trust\": \"<Likert string>\", \"confidence\": \"<Likert string>\" }` (or null)\n"
-            "    - `strategic`: `{ \"trust\": \"<Likert string>\", \"confidence\": \"<Likert string>\" }` (or null)\n"
-            "    - `consistency`: `{ \"trust\": \"<Likert string>\", \"confidence\": \"<Likert string>\" }` (or null)\n\n"
-            "CRITICAL: You are running in LIKERT SCALE mode. You MUST use string enum values for trust and confidence in the report_labels tool call. Do NOT use numbers."
-        )
+    # Set dynamic system prompt from prompt_set depending on CLI configuration
+    if not use_likert:
+        prompt_key = "system_prompt_numeric"
+    elif likert_type == "legacy":
+        prompt_key = "system_prompt_legacy"
     else:
-        trust_instructions = (
-            "Possible values for trust are integers from 1 (lowest trust) to 7 (highest trust).\n\n"
-            "Possible values for confidence are integers from 1 (low confidence) to 3 (high confidence).\n\n"
-            "When reporting trust evaluations via the `report_labels` tool, you must output the exact following keys:\n"
-            "- `player_name`: The name of the player.\n"
-            "- `label`:\n"
-            "  - `reasoning`: Your reasoning.\n"
-            "  - `trust_scores`:\n"
-            "    - `alignment`: `{ \"trust\": <1-7>, \"confidence\": <1-3> }` (or null)\n"
-            "    - `strategic`: `{ \"trust\": <1-7>, \"confidence\": <1-3> }` (or null)\n"
-            "    - `consistency`: `{ \"trust\": <1-7>, \"confidence\": <1-3> }` (or null)\n\n"
-            "CRITICAL: You must use the key name \"trust\" for the trust value. Do NOT use the key name \"score\"."
-        )
+        prompt_key = "system_prompt"
 
-    # Set dynamic system prompt from prompt_set
     system_prompt = prompt_set.get_prompt(
-        "labeling__system_prompt",
-        {"trust_instructions": trust_instructions},
+        f"labeling__{prompt_key}",
+        {},  # No placeholders anymore
         "You are a helpful assistant playing Werewolf. Assess the trust level of other players."
     )
 
@@ -138,10 +145,17 @@ def label_once(
         context_ctx = context.get_context(game_data, prompt_set, phase_idx)
         context_str = context_ctx.to_string(formatter_type=formatter_type) if context_ctx else "No context available."
 
+        context_injected_in_system = False
+        if "[PLACEHOLDER FOR GAME CONTEXT]" in system_prompt:
+            system_prompt = system_prompt.replace("[PLACEHOLDER FOR GAME CONTEXT]", context_str)
+            context_injected_in_system = True
+            active_system_prompt.set(system_prompt)
+
         reported_labels_dict: dict[PlayerName, Label] = {}
 
         # 1. Define report_labels tool callback and tool
         def report_labels_fn(labels: list[Any]) -> str:
+            print("      [Tool Call] Agent reported final trust labels.")
             for item in labels:
                 pname = getattr(item, "player_name", None) or (item.get("player_name") if isinstance(item, dict) else None)
                 lbl = getattr(item, "label", None) or (item.get("label") if isinstance(item, dict) else None)
@@ -164,7 +178,30 @@ def label_once(
 
                     if isinstance(t_val, str):
                         t_val_clean = t_val.upper().replace("_", " ").replace("-", " ").strip()
-                        if "VERY LOW" in t_val_clean:
+                        # Agree/disagree scale matching:
+                        if "STRONGLY DISAGREE" in t_val_clean:
+                            t_val = 1
+                            t_likert = "STRONGLY_DISAGREE"
+                        elif "SLIGHTLY DISAGREE" in t_val_clean:
+                            t_val = 3
+                            t_likert = "SLIGHTLY_DISAGREE"
+                        elif "DISAGREE" in t_val_clean:
+                            t_val = 2
+                            t_likert = "DISAGREE"
+                        elif "STRONGLY AGREE" in t_val_clean:
+                            t_val = 7
+                            t_likert = "STRONGLY_AGREE"
+                        elif "SLIGHTLY AGREE" in t_val_clean:
+                            t_val = 5
+                            t_likert = "SLIGHTLY_AGREE"
+                        elif "AGREE" in t_val_clean:
+                            t_val = 6
+                            t_likert = "AGREE"
+                        elif "NEUTRAL" in t_val_clean and "TRUST" not in t_val_clean:
+                            t_val = 4
+                            t_likert = "NEUTRAL"
+                        # Legacy scale matching:
+                        elif "VERY LOW" in t_val_clean:
                             t_val = 1
                             t_likert = "VERY_LOW_TRUST"
                         elif "SLIGHTLY LOW" in t_val_clean:
@@ -182,20 +219,35 @@ def label_once(
                         elif "HIGH" in t_val_clean:
                             t_val = 6
                             t_likert = "HIGH_TRUST"
-                        else:
+                        elif "NEUTRAL TRUST" in t_val_clean:
                             t_val = 4
                             t_likert = "NEUTRAL_TRUST"
+                        else:
+                            t_val = 4
+                            t_likert = "NEUTRAL" if likert_type == "agree-disagree" else "NEUTRAL_TRUST"
                     elif isinstance(t_val, int):
-                        reverse_trust = {
-                            1: "VERY_LOW_TRUST",
-                            2: "LOW_TRUST",
-                            3: "SLIGHTLY_LOW_TRUST",
-                            4: "NEUTRAL_TRUST",
-                            5: "SLIGHTLY_HIGH_TRUST",
-                            6: "HIGH_TRUST",
-                            7: "VERY_HIGH_TRUST"
-                        }
-                        t_likert = reverse_trust.get(t_val, "NEUTRAL_TRUST")
+                        if likert_type == "agree-disagree":
+                            reverse_trust = {
+                                1: "STRONGLY_DISAGREE",
+                                2: "DISAGREE",
+                                3: "SLIGHTLY_DISAGREE",
+                                4: "NEUTRAL",
+                                5: "SLIGHTLY_AGREE",
+                                6: "AGREE",
+                                7: "STRONGLY_AGREE"
+                            }
+                            t_likert = reverse_trust.get(t_val, "NEUTRAL")
+                        else:
+                            reverse_trust = {
+                                1: "VERY_LOW_TRUST",
+                                2: "LOW_TRUST",
+                                3: "SLIGHTLY_LOW_TRUST",
+                                4: "NEUTRAL_TRUST",
+                                5: "SLIGHTLY_HIGH_TRUST",
+                                6: "HIGH_TRUST",
+                                7: "VERY_HIGH_TRUST"
+                            }
+                            t_likert = reverse_trust.get(t_val, "NEUTRAL_TRUST")
 
                     if isinstance(c_val, str):
                         c_val_clean = c_val.upper().replace("_", " ").replace("-", " ").strip()
@@ -224,13 +276,13 @@ def label_once(
                     )
 
                 alignment_val = parse_score(getattr(ts, "alignment", None) or (ts.get("alignment") if isinstance(ts, dict) else None))
-                strategic_val = parse_score(getattr(ts, "strategic", None) or (ts.get("strategic") if isinstance(ts, dict) else None))
+                information_val = parse_score(getattr(ts, "information", None) or (ts.get("information") if isinstance(ts, dict) else None))
                 consistency_val = parse_score(getattr(ts, "consistency", None) or (ts.get("consistency") if isinstance(ts, dict) else None))
 
                 reported_labels_dict[pname] = Label(
                     trust_scores=TrustScores(
                         alignment=alignment_val,
-                        strategic=strategic_val,
+                        information=information_val,
                         consistency=consistency_val,
                     ),
                     reasoning=reasoning,
@@ -242,9 +294,28 @@ def label_once(
             {},
             "Report the final trust labels and reasoning for all other players."
         )
+        if use_likert:
+            if likert_type == "agree-disagree":
+                report_desc += (
+                    "IMPORTANT: Each active trust score dimension (alignment, information, consistency) MUST be a nested object containing 'trust' (e.g., 'STRONGLY_DISAGREE', 'AGREE') and "
+                    "'confidence' (e.g. 'MEDIUM_CONFIDENCE'). Never pass simple strings or numbers directly to the alignment/information/consistency fields."
+                )
+            else:
+                report_desc += (
+                    "IMPORTANT: Each active trust score dimension (alignment, information, consistency) MUST be a nested object containing 'trust' (e.g., 'HIGH_TRUST', 'LOW_TRUST') and "
+                    "'confidence' (e.g. 'MEDIUM_CONFIDENCE'). Never pass simple strings or numbers directly to the alignment/information/consistency fields."
+                )
+        else:
+            report_desc += (
+                "IMPORTANT: Each active trust score dimension (alignment, information, consistency) MUST be a nested object containing 'trust' (integer 1-10) and 'confidence' (integer 1-5). "
+                "Never pass simple numbers directly to the alignment/information/consistency fields!"
+            )
 
-        from wolf_llm_labeling.models import ReportLabelsArgs, ReportLabelsLikertArgs
-        schema_class = ReportLabelsLikertArgs if use_likert else ReportLabelsArgs
+        from wolf_llm_labeling.models import ReportLabelsArgs, ReportLabelsLikertArgs, ReportLabelsLikertLegacyArgs
+        if use_likert:
+            schema_class = ReportLabelsLikertArgs if likert_type == "agree-disagree" else ReportLabelsLikertLegacyArgs
+        else:
+            schema_class = ReportLabelsArgs
 
         report_tool = StructuredTool.from_function(
             func=report_labels_fn,
@@ -259,6 +330,7 @@ def label_once(
 
         if has_inner_voice and inner_voice is not None:
             def ask_inner_voice_fn(player_name: str) -> str:
+                print(f"      [Tool Call] Agent requested inner trust voice advice for '{player_name}'.")
                 if inner_voice is None:
                     return "No inner voice advice is available."
                 try:
@@ -285,6 +357,7 @@ def label_once(
 
         # Define get_game_context tool
         def get_game_context_fn() -> str:
+            print("      [Tool Call] Agent requested game context.")
             return context_str
 
         get_context_desc = prompt_set.get_prompt(
@@ -320,6 +393,10 @@ def label_once(
                 "Use the 'get_game_context' tool to retrieve the werewolf game conversation and history context. "
                 "Then evaluate the trust scores for all other players and report them using the report_labels tool"
             )
+        elif context_injected_in_system:
+            user_content = (
+                "Evaluate the trust scores for all other players and report them using the report_labels tool."
+            )
         else:
             user_content = (
                 f"Here is the game context:\n{context_str}\n\n"
@@ -330,8 +407,40 @@ def label_once(
             HumanMessage(content=user_content),
         ]
 
-        result = agent.invoke({"messages": messages})
-        current_messages = result.get("messages", [])
+        current_messages = list(messages)
+        tool_calls_detected = 0
+        step_count = 0
+        
+        print("Running agentic loop:")
+        try:
+            for event in agent.stream({"messages": messages}):
+                for node_name, node_state in event.items():
+                    node_msgs = node_state.get("messages", [])
+                    for msg in node_msgs:
+                        current_messages.append(msg)
+                        if isinstance(msg, AIMessage):
+                            if hasattr(msg, "tool_calls") and msg.tool_calls:
+                                for tc in msg.tool_calls:
+                                    tool_calls_detected += 1
+                                    print(f"      -> [Step {step_count+1}] Calling tool '{tc['name']}' with args: {tc['args']}...")
+                            elif msg.content:
+                                # Show snippet of thinking content if any
+                                snippet = msg.content.strip().replace("\n", " ")
+                                if len(snippet) > 80:
+                                    snippet = snippet[:80] + "..."
+                                print(f"      [Thinking] {snippet}")
+                        elif isinstance(msg, ToolMessage):
+                            content_summary = msg.content.strip().replace("\n", " ")
+                            if len(content_summary) > 80:
+                                content_summary = content_summary[:80] + "..."
+                            print(f"      <- [Step {step_count+1}] Tool returned: {content_summary}")
+                            step_count += 1
+        except Exception as e:
+            print(f"    Warning: Agent stream encountered exception: {e}. Falling back to normal invoke...")
+            with ConsoleSpinner("Running agentic loop (fallback)..."):
+                result = agent.invoke({"messages": messages})
+            current_messages = result.get("messages", [])
+            
         last_response = current_messages[-1] if current_messages else None
 
         # 4. Fallback if the LLM did not call report_labels
@@ -341,12 +450,14 @@ def label_once(
                 final_messages = current_messages + [
                     HumanMessage(content="Please provide the final trust scores and reasoning for all other players as structured output now.")
                 ]
-                final_res = structured_llm.invoke(final_messages)
+                with ConsoleSpinner("Running structured output fallback..."):
+                    final_res = structured_llm.invoke(final_messages)
                 if final_res and hasattr(final_res, "labels") and final_res.labels:
                     report_labels_fn(final_res.labels)
             except Exception:
                 try:
-                    final_res = structured_llm.invoke(messages)
+                    with ConsoleSpinner("Running structured fallback..."):
+                        final_res = structured_llm.invoke(messages)
                     if final_res and hasattr(final_res, "labels") and final_res.labels:
                         report_labels_fn(final_res.labels)
                 except Exception:

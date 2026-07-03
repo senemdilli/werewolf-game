@@ -1,5 +1,7 @@
 import os
 import sys
+import threading
+import time
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -28,14 +30,28 @@ from pydantic import BaseModel, Field
 from langchain_core.tools import StructuredTool
 from langchain_core.messages import SystemMessage, HumanMessage, ToolMessage, AIMessage
 
-# List of installed models on the server
-MODELS = [
-    "gemma4:26b",
-    "gpt-oss:20b",
-    "nemotron3:33b",
-    "qwen3.6:35b",
-    "gemma4:31b"
-]
+import requests
+
+# Query installed models on the server dynamically
+MODELS = []
+url = "https://gpu.snet.tu-berlin.de/echelon/ollama"
+headers = {"Authorization": f"Bearer {token}"} if token else {}
+try:
+    resp = requests.get(f"{url.rstrip('/')}/api/tags", headers=headers, timeout=5)
+    if resp.status_code == 200:
+        MODELS = [m["name"] for m in resp.json().get("models", [])]
+except Exception:
+    pass
+
+# Fallback
+if not MODELS:
+    MODELS = [
+        "gemma4:26b",
+        "gpt-oss:20b",
+        "nemotron3:33b",
+        "qwen3.6:35b",
+        "gemma4:31b"
+    ]
 
 
 # Define Agent Layer Tools
@@ -75,7 +91,47 @@ trust_factor_tool = StructuredTool.from_function(
 )
 
 
+class ConsoleSpinner:
+    def __init__(self, message="Thinking"):
+        self.message = message
+        self.spinner_cycle = ["|", "/", "-", "\\"] # New spinner for showing loading
+        self.running = False
+        self._thread = None
+
+    def _spin(self):
+        idx = 0
+        while self.running:
+            sys.stdout.write(f"\r{self.message} {self.spinner_cycle[idx]}")
+            sys.stdout.flush()
+            idx = (idx + 1) % len(self.spinner_cycle)
+            time.sleep(0.15)
+        sys.stdout.write("\r" + " " * (len(self.message) + 10) + "\r")
+        sys.stdout.flush()
+
+    def start(self):
+        self.running = True
+        self._thread = threading.Thread(target=self._spin)
+        self._thread.daemon = True
+        self._thread.start()
+        return self
+
+    def stop(self):
+        self.running = False
+        if self._thread:
+            self._thread.join()
+
+    def __enter__(self):
+        return self.start()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.stop()
+
+
 def main():
+    try:
+        sys.stdout.reconfigure(encoding='utf-8')
+    except AttributeError:
+        pass
     print("=== Echelon Ollama Chat CLI Helper ===")
     print("Select a model to communicate with:")
     for idx, model in enumerate(MODELS, start=1):
@@ -152,30 +208,82 @@ def main():
                 print("Goodbye!")
                 break
                 
-            print(f"Ollama ({model_name}) is thinking...")
-            
             # Append user's new message to the running history
             chat_history.append(HumanMessage(content=user_input))
             
             if not is_agent_layer:
-                # 1. Model Layer Mode (Keep running history)
-                response = llm.invoke(chat_history)
+                # 1. Model Layer Mode (Streaming chat with thinking text transition)
+                print(f"\nOllama ({model_name}) is thinking...", end="", flush=True)
+                full_content = []
+                first_token = True
+                try:
+                    for chunk in llm.stream(chat_history):
+                        content = chunk.content
+                        if not content:
+                            continue
+                        if first_token:
+                            # Clear
+                            sys.stdout.write("\r" + " " * (len(model_name) + 30) + "\r")
+                            sys.stdout.write("Ollama: ")
+                            sys.stdout.flush()
+                            first_token = False
+                        print(content, end="", flush=True)
+                        full_content.append(content)
+                    print()
+                    response = AIMessage(content="".join(full_content))
+                except Exception:
+                    # Fallback to invoke if streaming fails
+                    sys.stdout.write("\n")
+                    response = llm.invoke(chat_history)
+                    print(response.content)
                 chat_history.append(response)
-                print(f"\nOllama:\n{response.content}")
             else:
-                # 2. Agent Layer Mode (Using custom create_agent framework)
-                result = agent.invoke({"messages": chat_history})
-                new_messages = result.get("messages", [])[len(chat_history):]
+                # 2. Agent Layer Mode
+                tool_calls_detected = 0
+                step_count = 0
+                streamed_messages = []
                 
-                # Update running history with all new messages (incl. tool calls & results)
-                chat_history = result.get("messages", [])
+                # initial thinking/loading of model
+                spinner = ConsoleSpinner(f"Ollama ({model_name}) is thinking")
+                spinner.start()
                 
-                # Print any tool calls or content from the new messages
-                for msg in new_messages:
-                    if hasattr(msg, "tool_calls") and msg.tool_calls:
-                        print(f"[Agentic Loop] Ollama is calling {len(msg.tool_calls)} tool(s)...")
-                    elif isinstance(msg, AIMessage) and msg.content:
-                        print(f"\nOllama:\n{msg.content}")
+                try:
+                    for event in agent.stream({"messages": chat_history}):
+                        spinner.stop()
+                        
+                        for node_name, node_state in event.items():
+                            messages = node_state.get("messages", [])
+                            for msg in messages:
+                                streamed_messages.append(msg)
+                                if isinstance(msg, AIMessage):
+                                    if hasattr(msg, "tool_calls") and msg.tool_calls:
+                                        for tc in msg.tool_calls:
+                                            tool_calls_detected += 1
+                                            print(f"  -> [Step {step_count+1}] Calling tool '{tc['name']}' with args: {tc['args']}...")
+                                    elif msg.content:
+                                        print(f"\nOllama:\n{msg.content}")
+                                elif isinstance(msg, ToolMessage):
+                                    print(f"  <- [Step {step_count+1}] Tool returned: {msg.content}")
+                                    step_count += 1
+                        
+                        # Restart spinner for next step
+                        spinner = ConsoleSpinner(f"Ollama ({model_name}) is thinking (Step {step_count+1})")
+                        spinner.start()
+                except Exception as e:
+                    spinner.stop()
+                    print(f"\nError during streaming: {e}")
+                    # Fallback (if fails)
+                    with ConsoleSpinner(f"Ollama ({model_name}) is thinking (fallback)"):
+                        result = agent.invoke({"messages": chat_history})
+                    streamed_messages = result.get("messages", [])[len(chat_history):]
+                    for msg in streamed_messages:
+                        if isinstance(msg, AIMessage) and msg.content:
+                            print(f"\nOllama:\n{msg.content}")
+                finally:
+                    spinner.stop()
+                            
+                # Update running history 
+                chat_history.extend(streamed_messages)
                         
         except KeyboardInterrupt:
             print("\nGoodbye!")

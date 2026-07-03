@@ -325,7 +325,7 @@ def _parse_checkpoint_labels(
                 Label(
                     trust_scores=TrustScores(
                         alignment=_parse_score(path, target_doc, "alignment", f"{target_path}.alignment"),
-                        strategic=_parse_score(path, target_doc, "information", f"{target_path}.information"),
+                        information=_parse_score(path, target_doc, "information", f"{target_path}.information"),
                         consistency=_parse_score(path, target_doc, "consistency", f"{target_path}.consistency"),
                     ),
                     reasoning=reasoning,

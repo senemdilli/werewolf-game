@@ -57,35 +57,60 @@ def run_example(llm_provider: Any, system_prompt: str, game_path: str, player_na
         ts = label.trust_scores
         if ts.alignment:
             print(f"  - Alignment Trust: {ts.alignment.trust} (Confidence: {ts.alignment.confidence})")
-        if ts.strategic:
-            print(f"  - Strategic Trust: {ts.strategic.trust} (Confidence: {ts.strategic.confidence})")
+        if ts.information:
+            print(f"  - Information Trust: {ts.information.trust} (Confidence: {ts.information.confidence})")
         if ts.consistency:
             print(f"  - Consistency Trust: {ts.consistency.trust} (Confidence: {ts.consistency.confidence})")
 
 
 def main():
+    import sys
+    try:
+        sys.stdout.reconfigure(encoding='utf-8')
+    except AttributeError:
+        pass
     parser = argparse.ArgumentParser(description="LLM Werewolf Labeling Engine Runner")
     parser.add_argument("game_record_json", type=str, help="Path to game record JSON file")
     parser.add_argument("game_record_csv", type=str, help="Path to game record CSV file")
     
-    parser.add_argument("--primary-model", required=True, type=str, help="Model for primary labeling agent")
+    parser.add_argument("--primary-model", required=True, type=str, help="Model for primary labeling agent (use 'any' or 'default' to auto-detect first model)")
     parser.add_argument("--inner-voice-model", type=str, help="Model for the inner voice (default: same as primary)")
     parser.add_argument("--ollama-url", required=True, type=str, help="URL of the Ollama server")
     parser.add_argument("--player-name", type=str, help="Player name or index to run labeling for (runs for all players if not specified)")
     parser.add_argument("--output-dir", type=str, default="./results/llm-labeling", help="Base output directory")
     parser.add_argument("--experiment", required=True, type=str, help="Experiment id e.g. a.py or b.py")
     parser.add_argument("--max-phases", type=int, default=0, help="Limit maximum number of phases to label (0 for infinite)")
-    parser.add_argument("--experiment-args", type=str, default="", help="Config args for the experiment")
+    parser.add_argument("--experiment-args", type=str, default="", help="Config args for the experiment (legacy space-separated string)")
+    parser.add_argument("--cutoff", type=int, help="Historical context cutoff (number of phases to look back)")
+    parser.add_argument("--variant", type=int, choices=[1, 2], help="Inner trust voice variant (1: pre-injected context, 2: agentic tool call)")
+    parser.add_argument("--inner-voice-type", type=str, choices=["llm", "human", "random"], help="Implementation type of the inner trust voice")
     parser.add_argument("--prompt-set", type=str, help="Path to prompt-set JSON configuration file")
     parser.add_argument("--prompt-dir", type=str, default="./prompts", help="Directory containing prompt files")
     parser.add_argument("--formatter", type=str, default="markdown", choices=["markdown", "json"], help="Context formatting type")
     parser.add_argument("--context-as-tool", action="store_true", help="Retrieve game context via tool call instead of pre-injecting it in prompt")
     parser.add_argument("--temperature", type=float, default=0.0, help="LLM generation temperature (default: 0.0)")
-    parser.add_argument("--use-likert", action="store_true", help="Output trust evaluations on a Likert scale instead of integers")
+    parser.add_argument("--use-numeric", action="store_true", help="Output trust evaluations as integers (1-100) instead of the default Likert scale")
+    parser.add_argument("--likert-type", type=str, default="agree-disagree", choices=["agree-disagree", "legacy"], help="Likert scale type: 'agree-disagree' (strongly disagree to strongly agree, default) or 'legacy' (very low to very high trust)")
     parser.add_argument("--runs", type=int, default=1, help="Number of times to run the labeling experiment (default: 1)")
     parser.add_argument("--chronology", type=str, default="numeric", choices=["numeric", "timestamp"], help="Chronology formatting type (default: numeric)")
     
     args = parser.parse_args()
+
+    # Compile separate parameters into experiment_args if provided
+    if args.cutoff is not None or args.variant is not None or args.inner_voice_type is not None:
+        compiled_parts = []
+        cutoff_val = args.cutoff if args.cutoff is not None else 0
+        compiled_parts.append(str(cutoff_val))
+        
+        if args.variant is not None or args.inner_voice_type is not None:
+            variant_val = args.variant if args.variant is not None else 2
+            compiled_parts.append(str(variant_val))
+            
+            if args.inner_voice_type is not None:
+                compiled_parts.append(args.inner_voice_type)
+        
+        if not args.experiment_args:
+            args.experiment_args = " ".join(compiled_parts)
 
     for run_idx in range(args.runs):
         if args.runs > 1:
@@ -107,7 +132,8 @@ def main():
             formatter=args.formatter,
             context_as_tool=args.context_as_tool,
             temperature=args.temperature,
-            use_likert=args.use_likert,
+            use_likert=not args.use_numeric,
+            likert_type=args.likert_type,
             chronology=args.chronology,
         )
 
