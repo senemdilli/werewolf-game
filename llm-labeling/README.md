@@ -34,6 +34,8 @@ python .\src\wolf_llm_labeling\main.py <game_record.json> <game_record.csv> [opt
 | `--context-as-tool` | `flag` | Optional. If set, the game context is retrieved dynamically by the LLM via tool call instead of pre-injected in the prompt |
 | `--prompt-set` | `str` | Optional. Path to a JSON file mapping custom prompts |
 | `--output-dir` | `str` | Optional. Base directory where JSON results are saved (default: `./results/llm-labeling`) |
+| `--use-numeric` | `flag` | Optional. If set, forces numeric integer scale (1-100) instead of the default Likert scale |
+| `--likert-type` | `str` | Optional. Likert scale format to use: `agree-disagree` (strongly disagree to strongly agree, default) or `legacy` (very low to very high trust) |
 
 ---
 
@@ -169,7 +171,8 @@ python .\src\wolf_llm_labeling\main.py `
 | `--formatter` | String | Context format type: `markdown` or `json`. |
 | `--context-as-tool` | Flag | If set, retrieves the game context via tool call instead of pre-injecting it. |
 | `--temperature` | Float | Generation temperature for LLM calls (default: `0.0`, recommended: `0.2` for Gemma). |
-| `--use-likert` | Flag | If set, LLM evaluates trust via a 7-point Likert scale (translated to numbers in JSON). |
+| `--use-numeric` | Flag | If set, forces LLM to evaluate trust via integers (1-100) instead of the default 7-point Likert scale. |
+| `--likert-type` | String | Likert scale format to use: `agree-disagree` (default) or `legacy`. |
 | `--runs` | Integer | Number of independent repeated runs to execute (default: `1`). Useful for gathering averages. |
 | `--chronology` | String | Chronology formatting type: `numeric` (default) or `timestamp` (for time prefixes). |
 

@@ -64,6 +64,11 @@ def run_example(llm_provider: Any, system_prompt: str, game_path: str, player_na
 
 
 def main():
+    import sys
+    try:
+        sys.stdout.reconfigure(encoding='utf-8')
+    except AttributeError:
+        pass
     parser = argparse.ArgumentParser(description="LLM Werewolf Labeling Engine Runner")
     parser.add_argument("game_record_json", type=str, help="Path to game record JSON file")
     parser.add_argument("game_record_csv", type=str, help="Path to game record CSV file")
@@ -84,7 +89,8 @@ def main():
     parser.add_argument("--formatter", type=str, default="markdown", choices=["markdown", "json"], help="Context formatting type")
     parser.add_argument("--context-as-tool", action="store_true", help="Retrieve game context via tool call instead of pre-injecting it in prompt")
     parser.add_argument("--temperature", type=float, default=0.0, help="LLM generation temperature (default: 0.0)")
-    parser.add_argument("--use-likert", action="store_true", help="Output trust evaluations on a Likert scale instead of integers")
+    parser.add_argument("--use-numeric", action="store_true", help="Output trust evaluations as integers (1-100) instead of the default Likert scale")
+    parser.add_argument("--likert-type", type=str, default="agree-disagree", choices=["agree-disagree", "legacy"], help="Likert scale type: 'agree-disagree' (strongly disagree to strongly agree, default) or 'legacy' (very low to very high trust)")
     parser.add_argument("--runs", type=int, default=1, help="Number of times to run the labeling experiment (default: 1)")
     parser.add_argument("--chronology", type=str, default="numeric", choices=["numeric", "timestamp"], help="Chronology formatting type (default: numeric)")
     
@@ -126,7 +132,8 @@ def main():
             formatter=args.formatter,
             context_as_tool=args.context_as_tool,
             temperature=args.temperature,
-            use_likert=args.use_likert,
+            use_likert=not args.use_numeric,
+            likert_type=args.likert_type,
             chronology=args.chronology,
         )
 

@@ -36,6 +36,7 @@ def run_labeling_experiment(
     context_as_tool: bool = False,
     temperature: float = 0.0,
     use_likert: bool = False,
+    likert_type: str = "agree-disagree",
     chronology: str = "numeric",
 ) -> list[str]:
     """Execute a labeling experiment for game records and save the results."""
@@ -255,6 +256,7 @@ def run_labeling_experiment(
                     phase_idx=phase_idx,
                     context_as_tool=context_as_tool,
                     use_likert=use_likert,
+                    likert_type=likert_type,
                 )
                 
                 inner_voice_calls = []
@@ -341,7 +343,7 @@ def run_labeling_experiment(
             "game_id": game_record.get_game_id() or "unknown_game",
             "game_file": game_file,
             "player_name": player,
-            "trust_scale_mode": "likert" if use_likert else "numeric",
+            "trust_scale_mode": f"likert-{likert_type}" if use_likert else "numeric",
             "models": {
                 "primary_model": primary_model,
                 "inner_voice_model": iv_model if iv_model != primary_model else None
