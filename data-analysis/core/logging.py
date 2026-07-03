@@ -1,7 +1,7 @@
 import logging
 import sys
 
-from data_analysis.core.settings import get_settings
+from core.settings import get_settings
 
 configured = False
 
