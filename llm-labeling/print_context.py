@@ -15,6 +15,7 @@ def main():
     parser.add_argument("--player", type=str, default="Blue", help="Player name (default: Blue)")
     parser.add_argument("--game", type=str, default="game-44UT6Y-d59e923e.csv", help="Game record file name")
     parser.add_argument("--chronology", type=str, default="numeric", choices=["numeric", "timestamp"], help="Chronology formatting type")
+    parser.add_argument("--list-style", type=str, default="plain", choices=["plain", "dash"], help="Enumeration style for Static Data / Current Game State lines")
     parser.add_argument("--experiment", type=str, default="a", help="Experiment module to load (default: a)")
     parser.add_argument("--experiment-args", type=str, default="", help="Config args for the experiment")
     parser.add_argument("--cutoff", type=int, help="Historical context cutoff")
@@ -55,9 +56,10 @@ def main():
     exp_module = importlib.import_module(f"experiments.{args.experiment}")
     context_provider, _ = exp_module.experiment(args.player, args.experiment_args, models)
     
-    from wolf_llm_labeling.models import active_player_name, chronology_type
+    from wolf_llm_labeling.models import active_player_name, chronology_type, list_style
     active_player_name.set(args.player)
     chronology_type.set(args.chronology)
+    list_style.set(args.list_style)
     
     ctx_obj = context_provider.get_context(record, phase_idx=args.phase)
     

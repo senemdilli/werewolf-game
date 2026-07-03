@@ -38,10 +38,12 @@ def run_labeling_experiment(
     use_likert: bool = False,
     likert_type: str = "agree-disagree",
     chronology: str = "numeric",
+    list_style_mode: str = "plain",
 ) -> list[str]:
     """Execute a labeling experiment for game records and save the results."""
-    from wolf_llm_labeling.models import chronology_type
+    from wolf_llm_labeling.models import chronology_type, list_style
     chronology_type.set(chronology)
+    list_style.set(list_style_mode)
     
     token = os.getenv("OLLAMA_API_KEY")
 

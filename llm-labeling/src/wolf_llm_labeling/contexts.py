@@ -111,6 +111,19 @@ def _visible_text(value: str | None) -> str | None:
     return text or None
 
 
+def _bullet_lines(lines: list[str]) -> list[str]:
+    """Prefix each top-level line with "- " when dash list style is active.
+
+    Already-indented sub-lines (e.g. "  - Purple (Villager): killed") are left
+    untouched so nested bullets keep their existing indentation.
+    """
+    from wolf_llm_labeling.models import list_style
+
+    if list_style.get() != "dash":
+        return lines
+    return [line if line.startswith(" ") else f"- {line}" for line in lines]
+
+
 class ContextProvider(Protocol):
     def get_context(self, game_record: GameRecord, prompt_set: PromptSet, phase_idx: int) -> "Ctx | None": ...
 
@@ -209,10 +222,14 @@ class StaticContext:
             return None
         
         role = players[self.player_name]
-        
+
+        static_lines = [
+            f"Your name is: {self.player_name}",
+            f"Your role is: {role.value}",
+        ]
         return Ctx(
             header="Static Data",
-            content=f"- Your name is: {self.player_name}\n- Your role is: {role.value}",
+            content="\n".join(_bullet_lines(static_lines)),
         )
 
     def get_topness(self) -> float:
@@ -276,17 +293,17 @@ class GameNowContext:
             next_phase_type = game_record.get_phase_type(next_phase_idx)
         
         content_lines = [
-            f"- Current Day: {day_num}",
-            f"- Last Phase: {last_phase_type.value if last_phase_type else 'None'}",
-            f"- Current Phase: {phase_type.value}",
-            f"- Players Alive ({len(alive_players)}): " + ", ".join(sorted(alive_players)),
+            f"Current Day: {day_num}",
+            f"Last Phase: {last_phase_type.value if last_phase_type else 'None'}",
+            f"Current Phase: {phase_type.value}",
+            f"Players Alive ({len(alive_players)}): " + ", ".join(sorted(alive_players)),
         ]
         
         if next_phase_type:
-            content_lines.append(f"- Next Phase: {next_phase_type.value}")
+            content_lines.append(f"Next Phase: {next_phase_type.value}")
         
         if dead_info:
-            content_lines.append("- Dead Players:")
+            content_lines.append("Dead Players:")
             content_lines.extend(dead_info)
         
         if player_role == Role.WITCH:
@@ -313,7 +330,7 @@ class GameNowContext:
                     role_str = investigated_role.value if investigated_role else "Unknown"
                     content_lines.append(f"  - Investigated: {investigated_player} -> {role_str}")
         
-        content = "\n".join(content_lines)
+        content = "\n".join(_bullet_lines(content_lines))
         
         return Ctx(
             header="Current Game State",

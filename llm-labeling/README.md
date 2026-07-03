@@ -175,6 +175,7 @@ python .\src\wolf_llm_labeling\main.py `
 | `--likert-type` | String | Likert scale format to use: `agree-disagree` (default) or `legacy`. |
 | `--runs` | Integer | Number of independent repeated runs to execute (default: `1`). Useful for gathering averages. |
 | `--chronology` | String | Chronology formatting type: `numeric` (default) or `timestamp` (for time prefixes). |
+| `--list-style` | String | Enumeration style for the `Static Data` / `Current Game State` lines: `plain` (default, one fact per line) or `dash` (each line prefixed with `- `). |
 
 ### System Prompt Files & Prompt Sets
 
@@ -362,3 +363,73 @@ python print_context.py --player "Blue" --phase 0
 # Print the JSON context of Day 1 Morning for "Blue":
 python print_context.py --player "Blue" --phase 0 --json
 ```
+
+---
+
+## Game-Comprehension Quiz (`wolf_llm_labeling.quiz`)
+
+A separate benchmark that measures whether an LLM actually **understands** a game
+situation when given the rules and the context — a prerequisite sanity check for
+the trust-labeling engine. It is an objectively gradable quiz: fixed questions
+with known answers, generated deterministically from the game record.
+
+The pipeline has two stages:
+
+- **Generate** (no LLM): turn a game record into a quiz of question/answer pairs.
+  Questions come from the rendered phase chronology ("what comes after step N?")
+  and from structured events (votes, deaths, roles, alive counts), including
+  deliberate *trap* questions (e.g. "did you vote in the mayor election?" when the
+  player did not).
+- **Run** (needs an LLM server): show the candidate model the rules + context +
+  each question, collect its answer, then grade it. Grading tries a deterministic
+  string match first and falls back to an **LLM-as-judge** for paraphrased or
+  open-ended answers.
+
+### Generate a quiz
+
+```bash
+python src/wolf_llm_labeling/quiz/cli.py generate \
+    --game game-44UT6Y-d59e923e.csv --player Blue --phase 0 \
+    --out quizzes/blue-p0.json
+
+# Or every alive phase for every player:
+python src/wolf_llm_labeling/quiz/cli.py generate \
+    --game game-44UT6Y-d59e923e.csv --all-players --all-phases \
+    --out quizzes/full.json
+```
+
+The context format is a variable you can benchmark. Use `--chronology numeric|timestamp`
+and `--list-style plain|dash` when generating to produce quizzes over different
+context presentations, then compare the run accuracy to see which the model
+comprehends best (e.g. whether timestamps or `- ` bullets actually help):
+
+```bash
+python src/wolf_llm_labeling/quiz/cli.py generate --game <file>.csv --player Blue --phase 0 \
+    --chronology timestamp --list-style dash --out quizzes/blue-p0-ts-dash.json
+```
+
+### Run and grade a quiz
+
+```bash
+python src/wolf_llm_labeling/quiz/cli.py run quizzes/blue-p0.json \
+    --primary-model "gemma4:26b" \
+    --ollama-url "https://gpu.snet.tu-berlin.de/echelon/ollama" \
+    --judge-model "gemma4:26b"
+```
+
+Results (per-question verdicts + overall/per-type accuracy) are written to
+`results/quiz/<game_file>/quiz-<uuid>.json`. Prompts are swappable via
+`--rules-file`, `--answerer-prompt`, and `--judge-prompt` (defaults live in
+`prompts/quiz/`).
+
+### Question types
+
+| Type | Source | Example |
+|---|---|---|
+| `sequence_next` / `sequence_first` | rendered chronology | "What comes after step 1?" |
+| `sequence_last` | rendered chronology (trap) | "What comes after the last step?" → nothing |
+| `self_role` | Static Data block | "What is your own role?" |
+| `alive_count` | phase statuses | "How many players are alive?" |
+| `who_died` / `mayor_elected` | public events | "Who was found dead?" |
+| `own_exile_vote` / `own_mayor_vote` | observer's own visible vote | "Whom did you vote to exile?" |
+| `mayor_vote_trap` | absence of a secret vote | "Did you vote in the mayor election?" → did not vote |

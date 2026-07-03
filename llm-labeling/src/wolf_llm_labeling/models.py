@@ -238,6 +238,12 @@ active_player_name = contextvars.ContextVar("active_player_name", default=None)
 active_llm_provider = contextvars.ContextVar("active_llm_provider", default=None)
 active_system_prompt = contextvars.ContextVar("active_system_prompt", default=None)
 chronology_type = contextvars.ContextVar("chronology_type", default="numeric")
+# Controls how the flat "Static Data" / "Current Game State" lines are enumerated:
+#   "plain" -> one fact per line (default, unchanged behavior)
+#   "dash"  -> each top-level line prefixed with "- " (markdown bullet list)
+# A leading "- " is a stronger list signal to an LLM than a bare newline; whether
+# it actually improves comprehension is a benchmark question.
+list_style = contextvars.ContextVar("list_style", default="plain")
 
 
 from typing import Literal

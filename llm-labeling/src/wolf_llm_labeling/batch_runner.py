@@ -23,6 +23,7 @@ def main():
     parser.add_argument("--context-as-tool", action="store_true")
     parser.add_argument("--runs", type=int, default=1, help="Number of times to repeat each run (default: 1)")
     parser.add_argument("--chronology", type=str, default="numeric", choices=["numeric", "timestamp"], help="Chronology formatting type")
+    parser.add_argument("--list-style", type=str, default="plain", choices=["plain", "dash"], help="Enumeration style for Static Data / Current Game State lines")
     
     args = parser.parse_args()
     
@@ -38,6 +39,7 @@ def main():
         ctx_tool = config.get("context_as_tool", args.context_as_tool)
         default_runs_count = config.get("runs_count", config.get("repeat", args.runs))
         chrono = config.get("chronology", args.chronology)
+        style = config.get("list_style", args.list_style)
         
         for run in config.get("runs", []):
             game_pattern = run.get("game_pattern", "game-*.csv")
@@ -45,6 +47,7 @@ def main():
             csv_files = glob.glob(str(game_dir_path / game_pattern))
             run_runs_count = run.get("runs_count", run.get("repeat", default_runs_count))
             run_chrono = run.get("chronology", chrono)
+            run_style = run.get("list_style", style)
             
             for csv_path in csv_files:
                 json_path = csv_path.replace(".csv", "-labels.json")
@@ -67,6 +70,7 @@ def main():
                             formatter=run.get("formatter", fmt),
                             context_as_tool=run.get("context_as_tool", ctx_tool),
                             chronology=run_chrono,
+                            list_style_mode=run_style,
                         )
                     except Exception as e:
                         print(f"Error in batch run for {csv_path} (iteration {r_idx + 1}): {e}", file=sys.stderr)
@@ -101,6 +105,7 @@ def main():
                             formatter=args.formatter,
                             context_as_tool=args.context_as_tool,
                             chronology=args.chronology,
+                            list_style_mode=args.list_style,
                         )
                     except Exception as e:
                         print(f"Error in default batch run for {csv_path}: {e}", file=sys.stderr)
