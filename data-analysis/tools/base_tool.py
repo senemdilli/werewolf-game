@@ -7,10 +7,11 @@ import functools
 import inspect
 
 from abc import ABC, abstractmethod
-from multiprocessing import get_logger
 from typing import Any, ClassVar
 
-from langchain.tools import StructuredTool
+from core.logging import get_logger
+
+from langchain_core.tools import StructuredTool
 
 from contracts.tool_output import ToolOutput
 
@@ -66,5 +67,5 @@ class BaseTool(ABC):
 
         return StructuredTool.from_function(**kwargs)
 
-def __repr__(self) -> str:
-    return f"<Tool name={self.name}>"    
+    def __repr__(self) -> str:
+        return f"<Tool name={self.name}>"

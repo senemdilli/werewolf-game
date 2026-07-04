@@ -1,0 +1,53 @@
+{
+  "game_id": "test-game-01",
+  "game_file": "game-TEST01",
+  "player_name": "Alpha",
+  "trust_scale_mode": "likert",
+  "models": {"primary_model": "test-model:1b"},
+  "prompts": {},
+  "time": "2026-06-02T12:00:00.000Z",
+  "experiment": "a",
+  "formatter": "markdown",
+  "experiment_args": "",
+  "temperature": 0.4,
+  "max_phases": 2,
+  "context_as_tool": false,
+  "total_phases": 7,
+  "alive_phases": 6,
+  "phases": [
+    {
+      "phase_idx": 1,
+      "context": "test context",
+      "inner_voice": [],
+      "labels": {
+        "Bravo": {
+          "alignment": {"trust": 4, "trust_likert": "NEUTRAL_TRUST", "confidence": 2, "confidence_likert": "MEDIUM_CONFIDENCE"},
+          "strategic": {"trust": 6, "trust_likert": "HIGH_TRUST", "confidence": 3, "confidence_likert": "HIGH_CONFIDENCE"},
+          "consistency": {"trust": 1, "trust_likert": "VERY_LOW_TRUST", "confidence": 1, "confidence_likert": "LOW_CONFIDENCE"},
+          "reasoning": "Bravo talks a lot"
+        },
+        "Carol": {
+          "alignment": {"trust": 7, "trust_likert": "VERY_HIGH_TRUST", "confidence": 3, "confidence_likert": "HIGH_CONFIDENCE"},
+          "strategic": null,
+          "consistency": {"trust": 4, "trust_likert": "NEUTRAL_TRUST", "confidence": 2, "confidence_likert": "MEDIUM_CONFIDENCE"},
+          "reasoning": "Carol is quiet"
+        }
+      },
+      "reasoning": "phase one reasoning"
+    },
+    {
+      "phase_idx": 3,
+      "context": "test context two",
+      "inner_voice": [{"request": {"prompt": "what do you think"}, "response": "be careful"}],
+      "labels": {
+        "Carol": {
+          "alignment": {"trust": 2, "trust_likert": "LOW_TRUST", "confidence": 2, "confidence_likert": "MEDIUM_CONFIDENCE"},
+          "strategic": {"trust": 3, "trust_likert": "SLIGHTLY_LOW_TRUST", "confidence": 1, "confidence_likert": "LOW_CONFIDENCE"},
+          "consistency": {"trust": 5, "trust_likert": "SLIGHTLY_HIGH_TRUST", "confidence": 3, "confidence_likert": "HIGH_CONFIDENCE"},
+          "reasoning": "Carol suspects me"
+        }
+      },
+      "reasoning": "phase two reasoning"
+    }
+  ]
+}
