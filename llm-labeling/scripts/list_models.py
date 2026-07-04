@@ -1,9 +1,11 @@
 import os
 import requests
+from pathlib import Path
 from dotenv import load_dotenv
 
 # Load environment variables
-load_dotenv("llm-labeling/.env")
+dotenv_path = Path(__file__).parent.parent / ".env"
+load_dotenv(dotenv_path)
 token = os.getenv("OLLAMA_API_KEY")
 url = "https://gpu.snet.tu-berlin.de/echelon/ollama"
 

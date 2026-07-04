@@ -287,9 +287,20 @@ def run_labeling_experiment(
                 thinking_steps = []
                 for msg in messages:
                     if type(msg).__name__ == "AIMessage":
+                        # Try multiple keys where different providers and wrapper classes store reasoning
                         rc = msg.additional_kwargs.get("reasoning_content")
                         if not rc and msg.response_metadata:
                             rc = msg.response_metadata.get("reasoning_content")
+                        if not rc and msg.additional_kwargs:
+                            rc = msg.additional_kwargs.get("reasoning")
+                        if not rc and msg.response_metadata:
+                            rc = msg.response_metadata.get("reasoning")
+                        
+                        # Check inside message chunk metadata if streaming chunks were captured
+                        if not rc and hasattr(msg, "message_chunk") and getattr(msg, "message_chunk", None):
+                            chunk = msg.message_chunk
+                            if chunk and hasattr(chunk, "additional_kwargs"):
+                                rc = chunk.additional_kwargs.get("reasoning_content") or chunk.additional_kwargs.get("reasoning")
                         
                         if rc:
                             thinking_steps.append(rc.strip())
@@ -298,6 +309,11 @@ def run_labeling_experiment(
                             think_match = re.search(r"<think>(.*?)</think>", msg.content, re.DOTALL)
                             if think_match:
                                 thinking_steps.append(think_match.group(1).strip())
+                            else:
+                                # Fallback
+                                content_clean = msg.content.strip()
+                                if content_clean and len(content_clean) > 10:
+                                    thinking_steps.append(content_clean)
 
                 labels_out = {}
                 for target_player, lbl in labels.items():
