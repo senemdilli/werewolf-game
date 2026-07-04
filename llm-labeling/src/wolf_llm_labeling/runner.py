@@ -155,6 +155,9 @@ def run_labeling_experiment(
     chronology: str = "numeric",
 ) -> list[str]:
     """Execute a labeling experiment for game records and save the results."""
+    import time
+    overall_start_time = time.time()
+    
     from wolf_llm_labeling.models import chronology_type
     chronology_type.set(chronology)
     
@@ -328,6 +331,7 @@ def run_labeling_experiment(
     written_files = []
 
     for player in target_players:
+        player_start_time = time.time()
         total_phases = game_record.get_phase_count()
         alive_phases = 0
         phases_to_label = []
@@ -469,6 +473,9 @@ def run_labeling_experiment(
         if run_data["models"]["inner_voice_model"] is None:
             del run_data["models"]["inner_voice_model"]
 
+        player_elapsed = time.time() - player_start_time
+        run_data["elapsed_seconds"] = round(player_elapsed, 2)
+
         # Generate date and time string (Berlin timezone)
         from zoneinfo import ZoneInfo
         berlin_tz = ZoneInfo("Europe/Berlin")
@@ -478,8 +485,18 @@ def run_labeling_experiment(
         with open(out_file, "w", encoding="utf-8") as out_f:
             json.dump(run_data, out_f, indent=2)
             
+        p_hours = int(player_elapsed // 3600)
+        p_minutes = int((player_elapsed % 3600) // 60)
+        p_seconds = int(player_elapsed % 60)
+        
+        p_time_str = f"{p_seconds}s"
+        if p_minutes > 0 or p_hours > 0:
+            p_time_str = f"{p_minutes}m {p_time_str}"
+        if p_hours > 0:
+            p_time_str = f"{p_hours}h {p_time_str}"
+
         written_files.append(str(out_file))
-        print(f"Saved labeling results for player '{player}' to {out_file}")
+        print(f"Saved labeling results for player '{player}' to {out_file} (took {player_elapsed:.1f}s / {p_time_str})")
 
         # Trace log file (comprehensive debug/trace output)
         trace_file = out_file.with_name(f"{player}-{date_str}-{run_id}-trace.md")
@@ -504,6 +521,7 @@ def run_labeling_experiment(
             tf.write(f"| Max Phases | `{max_phases}` |\n")
             tf.write(f"| Total Phases | `{total_phases}` |\n")
             tf.write(f"| Alive Phases | `{alive_phases}` |\n")
+            tf.write(f"| Elapsed Time | `{player_elapsed:.1f}s` |\n")
             tf.write(f"| Date | `{run_data.get('time')}` |\n\n")
             tf.write("---\n\n")
 
@@ -563,7 +581,19 @@ def run_labeling_experiment(
                 
         written_files.append(str(trace_file))
 
+    overall_elapsed = time.time() - overall_start_time
+    hours = int(overall_elapsed // 3600)
+    minutes = int((overall_elapsed % 3600) // 60)
+    seconds = int(overall_elapsed % 60)
+    
+    time_str = f"{seconds}s"
+    if minutes > 0 or hours > 0:
+        time_str = f"{minutes}m {time_str}"
+    if hours > 0:
+        time_str = f"{hours}h {time_str}"
+
     print("\nLabeling run complete.")
+    print(f"Total time elapsed: {overall_elapsed:.1f}s ({time_str})")
     print(f"Total files written: {len(written_files)}")
     for f in written_files:
         print(f"  - {f}")
