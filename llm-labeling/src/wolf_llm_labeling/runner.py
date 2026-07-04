@@ -476,10 +476,14 @@ def run_labeling_experiment(
         player_elapsed = time.time() - player_start_time
         run_data["elapsed_seconds"] = round(player_elapsed, 2)
 
-        # Generate date and time string (Berlin timezone)
-        from zoneinfo import ZoneInfo
-        berlin_tz = ZoneInfo("Europe/Berlin")
-        date_str = datetime.now(berlin_tz).strftime("%Y-%m-%d-%H-%M")
+        # Generate date and time string (Berlin, fallback to system local time if tzdata is missing)
+        try:
+            from zoneinfo import ZoneInfo
+            berlin_tz = ZoneInfo("Europe/Berlin")
+            dt_now = datetime.now(berlin_tz)
+        except Exception:
+            dt_now = datetime.now()
+        date_str = dt_now.strftime("%Y-%m-%d-%H-%M")
         run_id = uuid.uuid4().hex[:8]
         out_file = base_out_path / f"{player}-{date_str}-{run_id}.json"
         with open(out_file, "w", encoding="utf-8") as out_f:
