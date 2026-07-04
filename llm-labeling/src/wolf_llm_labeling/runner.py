@@ -12,11 +12,126 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# Apply monkeypatch to langchain_openai
+try:
+    import langchain_openai.chat_models.base as base
+    original_convert = base._convert_dict_to_message
+
+    def patched_convert(_dict: Any) -> Any:
+        msg = original_convert(_dict)
+        if _dict.get("role") == "assistant" and "reasoning_content" in _dict:
+            if not msg.additional_kwargs:
+                msg.additional_kwargs = {}
+            msg.additional_kwargs["reasoning_content"] = _dict["reasoning_content"]
+        return msg
+
+    base._convert_dict_to_message = patched_convert
+except ImportError:
+    pass
+
 from wolf_llm_labeling.game_records import GameRecord
 from wolf_llm_labeling.inner_voice import InnerVoice
 from wolf_llm_labeling.labeling import label_once
 from wolf_llm_labeling.models import LLMModelProviders, FormatterType, Label
 from wolf_llm_labeling.prompts import PromptSet
+
+
+def _extract_reasoning_content(msg: Any) -> str | None:
+    """Extract dedicated reasoning/thinking content from an AIMessage.
+
+    Checks all known locations where LangChain wrappers (ChatOllama, ChatOpenAI)
+    store reasoning content from various open-source models:
+      - additional_kwargs["reasoning_content"]  (DeepSeek-R1, Gemma 4 via LM Studio)
+      - response_metadata["reasoning_content"]
+      - additional_kwargs["reasoning"]
+      - response_metadata["reasoning"]
+      - message_chunk.additional_kwargs (streaming)
+    """
+    rc = None
+    ak = getattr(msg, "additional_kwargs", {}) or {}
+    rm = getattr(msg, "response_metadata", {}) or {}
+
+    rc = ak.get("reasoning_content")
+    if not rc:
+        rc = rm.get("reasoning_content")
+    if not rc:
+        rc = ak.get("reasoning")
+    if not rc:
+        rc = rm.get("reasoning")
+
+    # Check inside streaming message chunks
+    if not rc and hasattr(msg, "message_chunk") and getattr(msg, "message_chunk", None):
+        chunk = msg.message_chunk
+        if chunk and hasattr(chunk, "additional_kwargs"):
+            cak = chunk.additional_kwargs or {}
+            rc = cak.get("reasoning_content") or cak.get("reasoning")
+
+    return rc.strip() if rc else None
+
+
+def _extract_trace_events(messages: list[Any]) -> list[dict[str, Any]]:
+    """Walk through all LangChain messages in chronological order and produce
+    a flat list of trace events.
+
+    Event types:
+      - "thinking"    : LLM's internal reasoning (from dedicated field, <think> tags, or content)
+      - "tool_call"   : LLM requested a tool call
+      - "tool_result" : Tool returned a result
+      - "user_message" : A human/system message
+    """
+    import re
+    events: list[dict[str, Any]] = []
+
+    for msg in messages:
+        msg_type = type(msg).__name__
+
+        if msg_type == "HumanMessage":
+            content = getattr(msg, "content", "") or ""
+            if content.strip():
+                events.append({"type": "user_message", "content": content.strip()})
+
+        elif msg_type == "AIMessage":
+            # 1. Extract dedicated reasoning content
+            rc = _extract_reasoning_content(msg)
+            if rc:
+                events.append({"type": "thinking", "content": rc, "source": "reasoning_content"})
+
+            # 2. Extract content: check for <think> tags or use as thinking fallback
+            content = getattr(msg, "content", "") or ""
+            if content.strip():
+                think_match = re.search(r"<think>(.*?)</think>", content, re.DOTALL)
+                if think_match:
+                    events.append({"type": "thinking", "content": think_match.group(1).strip(), "source": "think_tags"})
+                    # Also capture any content outside <think> tags
+                    outside = re.sub(r"<think>.*?</think>", "", content, flags=re.DOTALL).strip()
+                    if outside and len(outside) > 10:
+                        events.append({"type": "thinking", "content": outside, "source": "content"})
+                elif not rc:
+                    # No dedicated reasoning and no think tags -> use raw content as thinking
+                    if len(content.strip()) > 10:
+                        events.append({"type": "thinking", "content": content.strip(), "source": "content"})
+
+            # 3. Extract tool calls
+            if hasattr(msg, "tool_calls") and msg.tool_calls:
+                for tc in msg.tool_calls:
+                    events.append({
+                        "type": "tool_call",
+                        "tool_name": tc.get("name", "unknown"),
+                        "tool_args": tc.get("args", {}),
+                        "tool_id": tc.get("id"),
+                    })
+
+        elif msg_type == "ToolMessage":
+            content = getattr(msg, "content", "") or ""
+            tool_name = getattr(msg, "name", None) or "unknown"
+            events.append({
+                "type": "tool_result",
+                "tool_name": tool_name,
+                "content": content.strip(),
+                "tool_id": getattr(msg, "tool_call_id", None),
+            })
+
+    return events
 
 
 def run_labeling_experiment(
@@ -259,8 +374,10 @@ def run_labeling_experiment(
                     likert_type=likert_type,
                 )
                 
-                inner_voice_calls = []
                 messages = call_info.raw_response or []
+
+                # Extract inner voice calls for JSON output
+                inner_voice_calls = []
                 for m_idx, msg in enumerate(messages):
                     if hasattr(msg, "tool_calls") and msg.tool_calls:
                         for tc in msg.tool_calls:
@@ -277,43 +394,15 @@ def run_labeling_experiment(
                                     "response": t_resp
                                 })
 
+                # Extract final reasoning text for JSON output
                 reasoning = None
                 for msg in reversed(messages):
                     if type(msg).__name__ == "AIMessage" and msg.content:
                         reasoning = msg.content
                         break
 
-                # Extract thinking trace steps
-                thinking_steps = []
-                for msg in messages:
-                    if type(msg).__name__ == "AIMessage":
-                        # Try multiple keys where different providers and wrapper classes store reasoning
-                        rc = msg.additional_kwargs.get("reasoning_content")
-                        if not rc and msg.response_metadata:
-                            rc = msg.response_metadata.get("reasoning_content")
-                        if not rc and msg.additional_kwargs:
-                            rc = msg.additional_kwargs.get("reasoning")
-                        if not rc and msg.response_metadata:
-                            rc = msg.response_metadata.get("reasoning")
-                        
-                        # Check inside message chunk metadata if streaming chunks were captured
-                        if not rc and hasattr(msg, "message_chunk") and getattr(msg, "message_chunk", None):
-                            chunk = msg.message_chunk
-                            if chunk and hasattr(chunk, "additional_kwargs"):
-                                rc = chunk.additional_kwargs.get("reasoning_content") or chunk.additional_kwargs.get("reasoning")
-                        
-                        if rc:
-                            thinking_steps.append(rc.strip())
-                        elif msg.content:
-                            import re
-                            think_match = re.search(r"<think>(.*?)</think>", msg.content, re.DOTALL)
-                            if think_match:
-                                thinking_steps.append(think_match.group(1).strip())
-                            else:
-                                # Fallback
-                                content_clean = msg.content.strip()
-                                if content_clean and len(content_clean) > 10:
-                                    thinking_steps.append(content_clean)
+                # Extract full chronological trace events (for trace file)
+                trace_events = _extract_trace_events(messages)
 
                 labels_out = {}
                 for target_player, lbl in labels.items():
@@ -346,7 +435,7 @@ def run_labeling_experiment(
                     "inner_voice": inner_voice_calls,
                     "labels": labels_out,
                     "reasoning": reasoning,
-                    "thinking_process": thinking_steps
+                    "trace_events": trace_events
                 })
             except Exception as e:
                 print(f"    Error in phase {phase_idx}: {e}", file=sys.stderr)
@@ -380,35 +469,99 @@ def run_labeling_experiment(
         if run_data["models"]["inner_voice_model"] is None:
             del run_data["models"]["inner_voice_model"]
 
-        out_file = base_out_path / f"{player}-{uuid.uuid4().hex[:8]}.json"
+        # Generate date and time string (Berlin timezone)
+        from zoneinfo import ZoneInfo
+        berlin_tz = ZoneInfo("Europe/Berlin")
+        date_str = datetime.now(berlin_tz).strftime("%Y-%m-%d-%H-%M")
+        run_id = uuid.uuid4().hex[:8]
+        out_file = base_out_path / f"{player}-{date_str}-{run_id}.json"
         with open(out_file, "w", encoding="utf-8") as out_f:
             json.dump(run_data, out_f, indent=2)
             
         written_files.append(str(out_file))
         print(f"Saved labeling results for player '{player}' to {out_file}")
 
-        # thinking process in markdown file (extra)
-        thinking_file = out_file.with_name(out_file.stem + "-thinking.md")
-        with open(thinking_file, "w", encoding="utf-8") as think_f:
-            think_f.write(f"# Thinking Process / Chain of Thought for {player}\n\n")
-            think_f.write(f"- **Game File**: {game_file}\n")
-            think_f.write(f"- **Game ID**: {run_data.get('game_id')}\n")
-            think_f.write(f"- **Experiment**: {experiment_name}\n")
-            think_f.write(f"- **Date**: {run_data.get('time')}\n\n")
-            
+        # Trace log file (comprehensive debug/trace output)
+        trace_file = out_file.with_name(f"{player}-{date_str}-{run_id}-trace.md")
+        with open(trace_file, "w", encoding="utf-8") as tf:
+            tf.write(f"# Trace Log for {player}\n\n")
+
+            # Run Configuration table
+            tf.write("## Run Configuration\n\n")
+            tf.write("| Parameter | Value |\n")
+            tf.write("|:---|:---|\n")
+            tf.write(f"| Game File | `{game_file}` |\n")
+            tf.write(f"| Game ID | `{run_data.get('game_id')}` |\n")
+            tf.write(f"| Experiment | `{experiment_name}` |\n")
+            tf.write(f"| Primary Model | `{primary_model}` |\n")
+            tf.write(f"| Inner Voice Model | `{iv_model if iv_model != primary_model else '—'}` |\n")
+            tf.write(f"| Prompt Set | `{prompt_set_path or 'default (simple.json)'}` |\n")
+            tf.write(f"| Trust Scale | `{'likert-' + likert_type if use_likert else 'numeric'}` |\n")
+            tf.write(f"| Formatter | `{formatter}` |\n")
+            tf.write(f"| Temperature | `{temperature}` |\n")
+            tf.write(f"| Chronology | `{chronology}` |\n")
+            tf.write(f"| Context as Tool | `{context_as_tool}` |\n")
+            tf.write(f"| Max Phases | `{max_phases}` |\n")
+            tf.write(f"| Total Phases | `{total_phases}` |\n")
+            tf.write(f"| Alive Phases | `{alive_phases}` |\n")
+            tf.write(f"| Date | `{run_data.get('time')}` |\n\n")
+            tf.write("---\n\n")
+
+            # Chronological trace events per phase
             for p_res in phase_results:
-                think_f.write(f"## Phase {p_res['phase_idx']} ({game_record.get_phase_type(p_res['phase_idx']).value})\n\n")
-                t_steps = p_res.get("thinking_process", [])
-                if t_steps:
-                    for s_idx, step in enumerate(t_steps):
-                        think_f.write(f"### Step {s_idx + 1} Thinking\n")
-                        formatted_step = "\n".join(f"> {line}" for line in step.splitlines())
-                        think_f.write(formatted_step + "\n\n")
+                phase_idx = p_res['phase_idx']
+                phase_type = game_record.get_phase_type(phase_idx).value
+                tf.write(f"## Phase {phase_idx} ({phase_type})\n\n")
+
+                events = p_res.get("trace_events", [])
+                if not events:
+                    tf.write("*No trace events captured for this phase*\n\n")
                 else:
-                    think_f.write("*No thinking trace captured for this phase*\n\n")
-                think_f.write("---\n\n")
+                    for e_idx, event in enumerate(events, start=1):
+                        etype = event["type"]
+
+                        if etype == "thinking":
+                            source = event.get("source", "unknown")
+                            tf.write(f"### Event {e_idx} — Thinking (source: `{source}`)\n\n")
+                            for line in event["content"].splitlines():
+                                tf.write(f"> {line}\n")
+                            tf.write("\n")
+
+                        elif etype == "tool_call":
+                            tool_name = event.get("tool_name", "unknown")
+                            tf.write(f"### Event {e_idx} — Tool Call: `{tool_name}`\n\n")
+                            tf.write("**Arguments:**\n")
+                            tf.write("```json\n")
+                            try:
+                                tf.write(json.dumps(event.get("tool_args", {}), indent=2))
+                            except (TypeError, ValueError):
+                                tf.write(str(event.get("tool_args", {})))
+                            tf.write("\n```\n\n")
+
+                        elif etype == "tool_result":
+                            tool_name = event.get("tool_name", "unknown")
+                            tf.write(f"### Event {e_idx} — Tool Result: `{tool_name}`\n\n")
+                            content = event.get("content", "")
+                            if len(content) > 500:
+                                tf.write(f"> {content[:500]}...\n\n")
+                            else:
+                                for line in content.splitlines():
+                                    tf.write(f"> {line}\n")
+                                tf.write("\n")
+
+                        elif etype == "user_message":
+                            tf.write(f"### Event {e_idx} — User Message\n\n")
+                            content = event.get("content", "")
+                            if len(content) > 500:
+                                tf.write(f"> {content[:500]}...\n\n")
+                            else:
+                                for line in content.splitlines():
+                                    tf.write(f"> {line}\n")
+                                tf.write("\n")
+
+                tf.write("---\n\n")
                 
-        written_files.append(str(thinking_file))
+        written_files.append(str(trace_file))
 
     print("\nLabeling run complete.")
     print(f"Total files written: {len(written_files)}")

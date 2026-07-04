@@ -445,6 +445,40 @@ def label_once(
 
         # 4. Fallback if the LLM did not call report_labels
         if not reported_labels_dict:
+            # First try to extract JSON directly from any AIMessage content
+            import re
+            import json
+            for msg in reversed(current_messages):
+                if type(msg).__name__ == "AIMessage" and msg.content:
+                    # Look for markdown JSON code blocks or generic JSON array structures
+                    json_blocks = re.findall(r"```json\s*(.*?)\s*```", msg.content, re.DOTALL)
+                    if not json_blocks:
+                        # Fallback
+                        json_blocks = re.findall(r"(\[.*?\])", msg.content, re.DOTALL)
+                    
+                    for block in json_blocks:
+                        try:
+                            # Clean up block in case of trailing commas or comments
+                            cleaned_block = block.strip()
+                            # Basic cleanup
+                            if cleaned_block.endswith(","):
+                                cleaned_block = cleaned_block[:-1]
+                            data = json.loads(cleaned_block)
+                            if isinstance(data, list):
+                                mock_labels = []
+                                for item in data:
+                                    if isinstance(item, dict) and "player_name" in item and "label" in item:
+                                        mock_labels.append(item)
+                                if mock_labels:
+                                    print("      [Fallback] Successfully extracted labels directly from AIMessage content JSON.")
+                                    report_labels_fn(mock_labels)
+                                    break
+                        except Exception:
+                            pass
+                if reported_labels_dict:
+                    break
+
+        if not reported_labels_dict:
             structured_llm = models.primary.with_structured_output(schema_class)
             try:
                 final_messages = current_messages + [
