@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import random
-from typing import TYPE_CHECKING, Protocol
+from typing import TYPE_CHECKING, Any, Protocol
 
 from wolf_llm_labeling.game_records import GameRecord
 from wolf_llm_labeling.models import PlayerName, Score, TrustScores
@@ -127,6 +127,37 @@ class RandomInnerVoice:
         pass
 
 
+class ConstantInnerVoice:
+    def __init__(self, trust_score: Score | TrustScores) -> None:
+        self.trust_scores = (
+            trust_score
+            if isinstance(trust_score, TrustScores)
+            else _make_trust_scores(trust_score, trust_score, trust_score)
+        )
+
+    def ask(
+        self,
+        player_name: PlayerName,
+        context: Ctx | None,
+        game_records: GameRecord,
+        prompt_set_or_phase_idx: Any = None,
+        phase_idx: int | None = None,
+    ) -> TrustScores:
+        return self.trust_scores
+
+    def tool_description(self, prompt_set: PromptSet | None = None) -> str:
+        if prompt_set is None:
+            prompt_set = PromptSet()
+        return prompt_set.get_prompt(
+            "inner_voice__constant_voice",
+            {},
+            "Always returns the same configured trust assessment for every player."
+        )
+
+    def feed_context(self, game_records: GameRecord, phase_idx: int) -> None:
+        pass
+
+
 def _trust_scores_from_schema(result: object) -> TrustScores:
     def to_score(s: object) -> Score | None:
         if s is None:
@@ -239,4 +270,3 @@ class OtherContextInnerVoice:
 
     def feed_context(self, game_records: GameRecord, phase_idx: int) -> None:
         pass
-

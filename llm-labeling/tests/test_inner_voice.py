@@ -9,9 +9,11 @@ from wolf_llm_labeling.inner_voice import (
     CONFIDENCE_MIN,
     TRUST_MAX,
     TRUST_MIN,
+    ConstantInnerVoice,
     HistoricInnerVoice,
     RandomInnerVoice,
 )
+from wolf_llm_labeling.models import Score, TrustScores
 
 
 class FakeGameRecord:
@@ -43,6 +45,30 @@ class TestRandomInnerVoice:
 
     def test_tool_description_is_nonempty(self):
         assert RandomInnerVoice().tool_description().strip()
+
+
+class TestConstantInnerVoice:
+    def test_returns_configured_trust_scores_for_every_player(self):
+        scores = TrustScores(
+            alignment=Score(2, 1),
+            information=Score(3, 2),
+            consistency=Score(4, 3),
+        )
+        voice = ConstantInnerVoice(scores)
+
+        assert voice.ask("alice", None, None, 0) == scores
+        assert voice.ask("bob", None, None, 0) == scores
+
+    def test_single_score_is_used_for_all_dimensions(self):
+        score = Score(5, 2)
+        scores = ConstantInnerVoice(score).ask("alice", None, None, 0)
+
+        assert scores.alignment == score
+        assert scores.information == score
+        assert scores.consistency == score
+
+    def test_tool_description_is_nonempty(self):
+        assert ConstantInnerVoice(Score(4, 1)).tool_description().strip()
 
 
 class TestHistoricInnerVoice:
