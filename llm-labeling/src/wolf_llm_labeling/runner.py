@@ -336,7 +336,8 @@ def run_labeling_experiment(
 
     output_path = Path(output_dir)
     game_file = Path(game_record_csv).stem
-    base_out_path = output_path / experiment_name / game_file
+    sanitized_model = primary_model.replace(":", "-").replace("/", "-")
+    base_out_path = output_path / experiment_name / game_file / sanitized_model
     base_out_path.mkdir(parents=True, exist_ok=True)
 
     written_files = []
