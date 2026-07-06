@@ -12,6 +12,15 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+_original_print = print
+def print(*args, **kwargs):
+    from wolf_llm_labeling.models import parallel_mode, active_player_name
+    p_name = active_player_name.get()
+    if parallel_mode.get() and p_name:
+        if args and isinstance(args[0], str):
+            args = (f"[{p_name}] {args[0]}",) + args[1:]
+    _original_print(*args, **kwargs)
+
 # Apply monkeypatch to langchain_openai
 try:
     import langchain_openai.chat_models.base as base
@@ -164,6 +173,7 @@ def run_labeling_experiment(
     use_likert: bool = False,
     likert_type: str = "agree-disagree",
     chronology: str = "numeric",
+    parallel: bool = False,
 ) -> list[str]:
     """Execute a labeling experiment for game records and save the results."""
     import time
@@ -245,12 +255,14 @@ def run_labeling_experiment(
             temperature=temperature,
             base_url=ollama_url,
             api_key=token or "lm-studio",
+            timeout=300.0,
         )
         inner_voice_llm = ChatOpenAI(
             model=iv_model,
             temperature=temperature,
             base_url=ollama_url,
             api_key=token or "lm-studio",
+            timeout=300.0,
         )
     else:
         try:
@@ -266,6 +278,7 @@ def run_labeling_experiment(
             model=primary_model,
             temperature=temperature,
             base_url=ollama_url,
+            timeout=300.0,
             client_kwargs={
                 "headers": {
                     "Authorization": f"Bearer {token}"
@@ -276,6 +289,7 @@ def run_labeling_experiment(
             model=iv_model,
             temperature=temperature,
             base_url=ollama_url,
+            timeout=300.0,
             client_kwargs={
                 "headers": {
                     "Authorization": f"Bearer {token}"
@@ -340,9 +354,15 @@ def run_labeling_experiment(
     base_out_path = output_path / experiment_name / game_file / sanitized_model
     base_out_path.mkdir(parents=True, exist_ok=True)
 
+    import concurrent.futures
     written_files = []
 
-    for player in target_players:
+    def _process_player(player):
+        from wolf_llm_labeling.models import active_player_name, parallel_mode, chronology_type
+        active_player_name.set(player)
+        chronology_type.set(chronology)
+        parallel_mode.set(parallel)
+
         player_start_time = time.time()
         total_phases = game_record.get_phase_count()
         alive_phases = 0
@@ -361,9 +381,10 @@ def run_labeling_experiment(
             context_provider, inner_voice = exp_module.experiment(player, experiment_args, models)
         except Exception as e:
             print(f"Error setting up experiment '{experiment_name}' for player '{player}': {e}", file=sys.stderr)
-            continue
+            return []
 
         phase_results = []
+        player_files = []
         
         print(f"Labeling {len(phases_to_label)} phases for player '{player}'...")
         
@@ -377,18 +398,30 @@ def run_labeling_experiment(
                     print(f"    Warning: Failed to feed context to inner voice: {e}", file=sys.stderr)
             
             try:
-                labels, call_info = label_once(
-                    models=models,
-                    prompt_set=prompt_set,
-                    context=context_provider,
-                    inner_voice=inner_voice,
-                    formatter_type=formatter,
-                    game_data=game_record,
-                    phase_idx=phase_idx,
-                    context_as_tool=context_as_tool,
-                    use_likert=use_likert,
-                    likert_type=likert_type,
-                )
+                max_retries = 3
+                for attempt in range(1, max_retries + 1):
+                    try:
+                        labels, call_info = label_once(
+                            models=models,
+                            prompt_set=prompt_set,
+                            context=context_provider,
+                            inner_voice=inner_voice,
+                            formatter_type=formatter,
+                            game_data=game_record,
+                            phase_idx=phase_idx,
+                            context_as_tool=context_as_tool,
+                            use_likert=use_likert,
+                            likert_type=likert_type,
+                        )
+                        break
+                    except Exception as e:
+                        err_str = str(e).lower()
+                        is_conn_error = "connection" in err_str or "timeout" in err_str or "unreachable" in err_str or "host" in err_str or "connect" in err_str
+                        if is_conn_error and attempt < max_retries:
+                            print(f"    [Retry] Connection/Timeout error: {e}. Retrying in 10 seconds (Attempt {attempt}/{max_retries})...", file=sys.stderr)
+                            time.sleep(10)
+                        else:
+                            raise e
                 
                 messages = call_info.raw_response or []
 
@@ -458,7 +491,7 @@ def run_labeling_experiment(
                 err_str = str(e).lower()
                 if "connection" in err_str or "timeout" in err_str or "unreachable" in err_str or "host" in err_str or "connect" in err_str:
                     print("Connection/Timeout error detected. Aborting experiment execution.", file=sys.stderr)
-                    sys.exit(1)
+                    return []
 
         run_data = {
             "game_id": game_record.get_game_id() or "unknown_game",
@@ -511,7 +544,7 @@ def run_labeling_experiment(
         if p_hours > 0:
             p_time_str = f"{p_hours}h {p_time_str}"
 
-        written_files.append(str(out_file))
+        player_files.append(str(out_file))
         print(f"Saved labeling results for player '{player}' to {out_file} (took {player_elapsed:.1f}s / {p_time_str})")
 
         # Trace log file (comprehensive debug/trace output)
@@ -599,7 +632,28 @@ def run_labeling_experiment(
 
                 tf.write("---\n\n")
                 
-        written_files.append(str(trace_file))
+        player_files.append(str(trace_file))
+        return player_files
+
+    if parallel:
+        num_workers = parallel if isinstance(parallel, int) and not isinstance(parallel, bool) else 2
+        max_workers = min(len(target_players), num_workers)
+        print(f"Executing labeling for {len(target_players)} players in parallel (max_workers={max_workers})...")
+        with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+            from wolf_llm_labeling.models import parallel_mode
+            parallel_mode.set(True)
+            futures = {executor.submit(_process_player, p): p for p in target_players}
+            for future in concurrent.futures.as_completed(futures):
+                p = futures[future]
+                try:
+                    res = future.result()
+                    written_files.extend(res)
+                except Exception as e:
+                    print(f"Error executing labeling for player '{p}': {e}", file=sys.stderr)
+    else:
+        for player in target_players:
+            res = _process_player(player)
+            written_files.extend(res)
 
     overall_elapsed = time.time() - overall_start_time
     hours = int(overall_elapsed // 3600)

@@ -36,6 +36,7 @@ python .\src\wolf_llm_labeling\main.py <game_record.json> <game_record.csv> [opt
 | `--output-dir` | `str` | Optional. Base directory where JSON results are saved (default: `./results/llm-labeling`) |
 | `--use-numeric` | `flag` | Optional. If set, forces numeric integer scale (1-100) instead of the default Likert scale |
 | `--likert-type` | `str` | Optional. Likert scale format to use: `agree-disagree` (strongly disagree to strongly agree, default) or `legacy` (very low to very high trust) |
+| `--parallel` | `int` | Optional. If set, runs the labeling tasks for different players concurrently (specify number of threads, e.g. `--parallel 4`. Default: `2` if flag is present but value omitted). |
 
 ---
 
@@ -72,8 +73,8 @@ python .\src\wolf_llm_labeling\main.py `
 ## Output Location & Schema
 
 Results are written automatically to:
-*   `results/<experiment>/<game_id>/<player_name>-<uuid>.json` (Structured JSON results)
-*   `results/<experiment>/<game_id>/<player_name>-<uuid>-thinking.md` (Readable markdown companion file containing the complete thinking traces / chains of thought of the LLM for each phase and step)
+*   `results/<experiment>/<game_id>/<sanitized_model_name>/<player_name>-<timestamp>-<uuid>.json` (Structured JSON results)
+*   `results/<experiment>/<game_id>/<sanitized_model_name>/<player_name>-<timestamp>-<uuid>-trace.md` (Readable markdown trace file containing the run configuration, chronologically reconstructed thinking events, tool calls, tool results, and system fallbacks)
 
 Example Schema:
 ```json

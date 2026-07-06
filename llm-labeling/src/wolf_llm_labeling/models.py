@@ -127,7 +127,7 @@ class WitchSaved:
 Event: TypeAlias = "KillEvent | ExileEvent | MayorElected | SeerRevealed | WitchKilled | WitchSaved"
 PhaseItem: TypeAlias = "Message | SystemMessage | Vote | Event"
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class TrustConfidence(BaseModel):
@@ -153,6 +153,17 @@ class SinglePlayerLabel(BaseModel):
 
 class ReportLabelsArgs(BaseModel):
     labels: list[SinglePlayerLabel] = Field(description="List of trust labels for other players in the game")
+
+    @field_validator('labels', mode='before')
+    @classmethod
+    def parse_labels_string(cls, v: Any) -> Any:
+        if isinstance(v, str):
+            import json
+            try:
+                return json.loads(v)
+            except Exception:
+                pass
+        return v
 
 
 from enum import Enum
@@ -200,6 +211,17 @@ class SinglePlayerLikertLabel(BaseModel):
 class ReportLabelsLikertArgs(BaseModel):
     labels: list[SinglePlayerLikertLabel] = Field(description="List of trust labels for other players in the game")
 
+    @field_validator('labels', mode='before')
+    @classmethod
+    def parse_labels_string(cls, v: Any) -> Any:
+        if isinstance(v, str):
+            import json
+            try:
+                return json.loads(v)
+            except Exception:
+                pass
+        return v
+
 
 # Legacy Likert models
 class TrustConfidenceLikertLegacy(BaseModel):
@@ -222,6 +244,17 @@ class SinglePlayerLikertLegacyLabel(BaseModel):
 class ReportLabelsLikertLegacyArgs(BaseModel):
     labels: list[SinglePlayerLikertLegacyLabel] = Field(description="List of trust labels for other players in the game")
 
+    @field_validator('labels', mode='before')
+    @classmethod
+    def parse_labels_string(cls, v: Any) -> Any:
+        if isinstance(v, str):
+            import json
+            try:
+                return json.loads(v)
+            except Exception:
+                pass
+        return v
+
 
 
 @dataclass
@@ -238,6 +271,7 @@ active_player_name = contextvars.ContextVar("active_player_name", default=None)
 active_llm_provider = contextvars.ContextVar("active_llm_provider", default=None)
 active_system_prompt = contextvars.ContextVar("active_system_prompt", default=None)
 chronology_type = contextvars.ContextVar("chronology_type", default="numeric")
+parallel_mode = contextvars.ContextVar("parallel_mode", default=False)
 
 
 from typing import Literal

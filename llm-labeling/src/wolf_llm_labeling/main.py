@@ -93,6 +93,7 @@ def main():
     parser.add_argument("--likert-type", type=str, default="agree-disagree", choices=["agree-disagree", "legacy"], help="Likert scale type: 'agree-disagree' (strongly disagree to strongly agree, default) or 'legacy' (very low to very high trust)")
     parser.add_argument("--runs", type=int, default=1, help="Number of times to run the labeling experiment (default: 1)")
     parser.add_argument("--chronology", type=str, default="numeric", choices=["numeric", "timestamp"], help="Chronology formatting type (default: numeric)")
+    parser.add_argument("--parallel", type=int, nargs="?", const=2, default=0, help="Run labeling for different players in parallel (optional number of threads, default: 2)")
     
     args = parser.parse_args()
 
@@ -135,6 +136,7 @@ def main():
             use_likert=not args.use_numeric,
             likert_type=args.likert_type,
             chronology=args.chronology,
+            parallel=args.parallel,
         )
 
 

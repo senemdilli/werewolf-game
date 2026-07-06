@@ -8,6 +8,15 @@ from pydantic import BaseModel, Field
 from langchain_core.messages import SystemMessage, HumanMessage, ToolMessage, AIMessage
 from langchain_core.tools import StructuredTool
 
+_original_print = print
+def print(*args, **kwargs):
+    from wolf_llm_labeling.models import parallel_mode, active_player_name
+    p_name = active_player_name.get()
+    if parallel_mode.get() and p_name:
+        if args and isinstance(args[0], str):
+            args = (f"[{p_name}] {args[0]}",) + args[1:]
+    _original_print(*args, **kwargs)
+
 from wolf_llm_labeling.contexts import ContextProvider
 from wolf_llm_labeling.game_records import GameRecord
 from wolf_llm_labeling.inner_voice import InnerVoice
@@ -45,6 +54,15 @@ class ConsoleSpinner:
         sys.stdout.flush()
 
     def start(self):
+        from wolf_llm_labeling.models import parallel_mode, active_player_name
+        p_name = active_player_name.get()
+        prefix = f"[{p_name}] " if parallel_mode.get() and p_name else ""
+
+        if parallel_mode.get():
+            sys.stdout.write(f"    {prefix}{self.message}...\n")
+            sys.stdout.flush()
+            return self
+
         self.running = True
         self._thread = threading.Thread(target=self._spin)
         self._thread.daemon = True
@@ -411,24 +429,36 @@ def label_once(
         tool_calls_detected = 0
         step_count = 0
         
+        stop_stream = False
         print("Running agentic loop:")
         try:
             for event in agent.stream({"messages": messages}):
+                if stop_stream:
+                    break
                 for node_name, node_state in event.items():
+                    if stop_stream:
+                        break
                     node_msgs = node_state.get("messages", [])
                     for msg in node_msgs:
                         current_messages.append(msg)
                         if isinstance(msg, AIMessage):
                             if hasattr(msg, "tool_calls") and msg.tool_calls:
+                                if reported_labels_dict:
+                                    # If they already reported once, ignore subsequent tool calls and stop
+                                    stop_stream = True
+                                    break
                                 for tc in msg.tool_calls:
                                     tool_calls_detected += 1
                                     print(f"      -> [Step {step_count+1}] Calling tool '{tc['name']}' with args: {tc['args']}...")
                             elif msg.content:
-                                # Show snippet of thinking content if any
                                 snippet = msg.content.strip().replace("\n", " ")
                                 if len(snippet) > 80:
                                     snippet = snippet[:80] + "..."
                                 print(f"      [Thinking] {snippet}")
+                                if reported_labels_dict:
+                                    # Stop right after logging the concluding thought
+                                    stop_stream = True
+                                    break
                         elif isinstance(msg, ToolMessage):
                             content_summary = msg.content.strip().replace("\n", " ")
                             if len(content_summary) > 80:
