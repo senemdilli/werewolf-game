@@ -18,6 +18,7 @@ class LLMTrustScore(BaseModel):
 
 class LLMTargetLabel(BaseModel):
     alignment: LLMTrustScore | None = None
-    strategic: LLMTrustScore | None = None
+    strategic: LLMTrustScore | None = None  # old engine name for the information dimension
+    information: LLMTrustScore | None = None  # new engine name (since 2026-07 schema update)
     consistency: LLMTrustScore | None = None
     reasoning: str | None = None

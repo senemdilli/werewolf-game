@@ -2,7 +2,7 @@
 
 The two sources name their dimensions differently:
 - human export:  alignment / information / consistency
-- LLM labeling:  alignment / strategic  / consistency
+- LLM labeling:  alignment / strategic (renamed to information in 2026-07) / consistency
 
 `strategic` is treated as the same dimension as `information` (canonical name:
 INFORMATION).
@@ -26,7 +26,9 @@ CANONICAL_TRUST_TYPE: dict[str, TrustType] = {
 }
 
 HUMAN_TRUST_KEYS = ("alignment", "information", "consistency")
-LLM_TRUST_KEYS = ("alignment", "strategic", "consistency")
+# Old engine outputs use "strategic", newer ones "information"; a single file
+# only ever has one of the two.
+LLM_TRUST_KEYS = ("alignment", "strategic", "information", "consistency")
 
 
 class TrustScale(str, Enum):
