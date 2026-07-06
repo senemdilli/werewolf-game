@@ -6,8 +6,8 @@ the [labeling engine](../llm-labeling/) produces LLM annotations of the same gam
 This package loads both into one unified table and (in later phases) exposes
 analysis tools to an LLM orchestrator you can query in natural language.
 
-**Status:** Phase 1 (data foundation) is implemented — loaders, normalization,
-phase alignment, filtering, caching. Analysis tools and the orchestrator are next.
+**Status:** Phase 1 (data foundation) and Phase 2 (analysis tools:
+`compare_data`, `plot`) are implemented. The orchestrator (phase 3) is next.
 See `Data_Scientist_Agent_Spec.md` for the research questions driving this.
 
 ---
@@ -188,11 +188,51 @@ data-analysis/
 │   ├── phase_alignment.py  # checkpoint <-> phase_idx + death tracking
 │   ├── filters.py          # FilterSpec + apply_filters
 │   └── dataset.py          # build_dataset / load_dataset (parquet cache)
-├── tools/base_tool.py      # BaseTool: run(**kwargs) -> ToolOutput, as_langchain_tool()
+├── tools/
+│   ├── base_tool.py        # BaseTool: run(**kwargs) -> ToolOutput, as_langchain_tool()
+│   ├── slicing.py          # shared slice/describe/match helpers
+│   ├── compare_tool.py     # compare_data: slice comparison / evaluation
+│   └── plot_tool.py        # plot: PNG + caption + underlying numbers
 └── tests/                  # unit tests on fixtures + integration on real exports
 ```
 
-## Adding an analysis tool (phase 2)
+## Analysis tools
+
+Both tools operate on the unified table and accept `FilterSpec`s; run them from
+the CLI with JSON params (same interface the phase-3 orchestrator will use):
+
+```bash
+# compare two slices: human vs LLM on one game, broken down by trust dimension
+uv run python main.py tool compare_data --params '{
+  "filters_a": {"sources": ["human"], "room_codes": ["5NOHGS"]},
+  "filters_b": {"sources": ["llm"],   "room_codes": ["5NOHGS"]},
+  "group_by": ["trust_type"], "correlate": true}'
+
+# plot human vs LLM alignment trust across the phases of one game
+uv run python main.py tool plot --params '{
+  "filters": {"room_codes": ["5NOHGS"], "trust_types": ["alignment"]},
+  "kind": "line_per_phase"}'
+```
+
+**`compare_data`** — one slice (`filters_a` only) → descriptive stats: n, mean,
+raw histogram, extremeness index (0 = all midpoint, 1 = all endpoints). Two
+slices → delta of means plus, in *matched* mode (cells identical in
+game/observer/target/phase/dimension), signed delta, MAE, Spearman,
+quadratic-weighted kappa, and a Wilcoxon test; in *independent* mode
+Mann-Whitney U and KS tests. `mode="auto"` picks matched when the specs differ
+only on source-like fields. `group_by` yields a per-value breakdown;
+`correlate=true` adds the score-extremity ↔ confidence Spearman per slice.
+Empty slices and n below 5 come back as errors/warnings, never silent numbers.
+
+**`plot`** — renders the slice to `analysis/plots/*.png` and returns the
+aggregated values behind the figure (the orchestrator can't see images).
+Kinds: `line_per_phase` (one game), `line_per_game` (chronological),
+`histogram` (raw scores per hue — the extremeness picture), `box`, `scatter`
+(extremity vs confidence), `heatmap` (observer×target matrix, one game).
+`hue` defaults to `"source"` so human vs LLM overlay; `use_raw=true` is
+rejected when the slice mixes scales.
+
+## Adding an analysis tool
 
 Subclass `BaseTool`; the langchain conversion is derived from your `run`
 signature:
