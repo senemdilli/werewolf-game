@@ -131,6 +131,17 @@ def _extract_trace_events(messages: list[Any]) -> list[dict[str, Any]]:
                 "tool_id": getattr(msg, "tool_call_id", None),
             })
 
+        elif msg_type == "SystemMessage":
+            content = getattr(msg, "content", "") or ""
+            if content.strip():
+                if content.startswith("[SYSTEM_FALLBACK]"):
+                    events.append({
+                        "type": "system_fallback",
+                        "content": content.replace("[SYSTEM_FALLBACK]", "").strip()
+                    })
+                else:
+                    events.append({"type": "user_message", "content": f"System: {content.strip()}"})
+
     return events
 
 
@@ -570,6 +581,10 @@ def run_labeling_experiment(
                                 for line in content.splitlines():
                                     tf.write(f"> {line}\n")
                                 tf.write("\n")
+
+                        elif etype == "system_fallback":
+                            tf.write(f"### Event {e_idx} — System Fallback\n\n")
+                            tf.write(f"> **Warning**: {event.get('content', '')}\n\n")
 
                         elif etype == "user_message":
                             tf.write(f"### Event {e_idx} — User Message\n\n")

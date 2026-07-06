@@ -472,6 +472,9 @@ def label_once(
                                 if mock_labels:
                                     print("      [Fallback] Successfully extracted labels directly from AIMessage content JSON.")
                                     report_labels_fn(mock_labels)
+                                    current_messages.append(SystemMessage(
+                                        content="[SYSTEM_FALLBACK] The model failed to call the 'report_labels' tool directly. However, the trust scores were successfully parsed and extracted from the raw response content."
+                                    ))
                                     break
                         except Exception:
                             pass
@@ -488,12 +491,18 @@ def label_once(
                     final_res = structured_llm.invoke(final_messages)
                 if final_res and hasattr(final_res, "labels") and final_res.labels:
                     report_labels_fn(final_res.labels)
+                    current_messages.append(SystemMessage(
+                        content="[SYSTEM_FALLBACK] The model failed to call the 'report_labels' tool directly. A structured fallback request was executed to retrieve the final labels."
+                    ))
             except Exception:
                 try:
                     with ConsoleSpinner("Running structured fallback..."):
                         final_res = structured_llm.invoke(messages)
                     if final_res and hasattr(final_res, "labels") and final_res.labels:
                         report_labels_fn(final_res.labels)
+                        current_messages.append(SystemMessage(
+                            content="[SYSTEM_FALLBACK] The model failed to call the 'report_labels' tool directly. A structured fallback request was executed to retrieve the final labels."
+                        ))
                 except Exception:
                     pass
 
