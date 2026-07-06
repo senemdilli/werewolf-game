@@ -34,6 +34,7 @@ def main():
         model = config.get("primary_model", args.primary_model)
         iv_model = config.get("inner_voice_model", args.inner_voice_model)
         out_dir = config.get("output_dir", args.output_dir)
+        game_dir = config.get("game_dir", args.game_dir)
         fmt = config.get("formatter", args.formatter)
         ctx_tool = config.get("context_as_tool", args.context_as_tool)
         default_runs_count = config.get("runs_count", config.get("repeat", args.runs))
@@ -41,7 +42,7 @@ def main():
         
         for run in config.get("runs", []):
             game_pattern = run.get("game_pattern", "game-*.csv")
-            game_dir_path = Path(args.game_dir)
+            game_dir_path = Path(run.get("game_dir", game_dir))
             csv_files = glob.glob(str(game_dir_path / game_pattern))
             run_runs_count = run.get("runs_count", run.get("repeat", default_runs_count))
             run_chrono = run.get("chronology", chrono)

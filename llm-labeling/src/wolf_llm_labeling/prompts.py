@@ -37,7 +37,7 @@ class PromptSet:
                     full_path = alt_path
             
             with open(full_path, "r", encoding="utf-8") as pf:
-                self.prompts[target_id] = pf.read()
+                self.prompts[target_id] = _strip_prompt_comments(pf.read())
 
     def get_prompt(self, prompt_id: str, args: dict[str, str], default_prompt: str | None = None) -> str:
         """
@@ -58,3 +58,13 @@ class PromptSet:
         for pid, template in self.prompts.items():
             lines.append(f"=== {pid} ===\n{template}\n")
         return "\n".join(lines)
+
+
+def _strip_prompt_comments(text: str) -> str:
+    lines = []
+    for line in text.splitlines(keepends=True):
+        if line.startswith("\\—"):
+            lines.append(line[1:])
+        elif not line.startswith("— "):
+            lines.append(line)
+    return "".join(lines)
