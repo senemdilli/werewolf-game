@@ -26,7 +26,7 @@ def _make_trust_scores(alignment: Score, information: Score, consistency: Score)
 
 def _neutral_trust_scores() -> TrustScores:
     midpoint = (TRUST_MIN + TRUST_MAX) // 2
-    medium_confidence = (CONFIDENCE_MIN + CONFIDENCE_MAX) // 2 
+    medium_confidence = (CONFIDENCE_MIN + CONFIDENCE_MAX) // 2
     return _make_trust_scores(
         _make_score(midpoint, medium_confidence),
         _make_score(midpoint, medium_confidence),
