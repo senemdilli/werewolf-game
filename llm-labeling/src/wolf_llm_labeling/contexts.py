@@ -575,6 +575,66 @@ class PhaseGameContext:
         return 10.0
 
 
+def _get_effective_labels(
+    game_record: GameRecord,
+    observer: PlayerName,
+    target_phase_idx: int,
+) -> dict[PlayerName, tuple[Label, ...]]:
+    if hasattr(game_record, "get_players"):
+        players = game_record.get_players()
+        targets = [p for p in players if p != observer]
+    else:
+        # Fallback for FakeGameRecord in tests
+        targets_set = set()
+        try:
+            phase_count = game_record.get_phase_count() if hasattr(game_record, "get_phase_count") else 1
+            for p_idx in range(phase_count):
+                labels = game_record.get_labels(p_idx)
+                if labels:
+                    observer_labels = labels.get(observer, {})
+                    targets_set.update(observer_labels.keys())
+        except Exception:
+            try:
+                labels = game_record.get_labels(target_phase_idx)
+                if labels:
+                    observer_labels = labels.get(observer, {})
+                    targets_set.update(observer_labels.keys())
+            except Exception:
+                pass
+        targets = sorted(list(targets_set))
+
+    effective_labels = {}
+    for target in targets:
+        found_labels = None
+        # Search backwards from target_phase_idx to 0
+        for p_idx in range(target_phase_idx, -1, -1):
+            try:
+                phase_labels = game_record.get_labels(p_idx).get(observer, {})
+                target_labels = phase_labels.get(target, [])
+                if target_labels:
+                    found_labels = target_labels
+                    break
+            except Exception:
+                pass
+        
+        if found_labels is not None:
+            effective_labels[target] = tuple(found_labels)
+        else:
+            # Fallback to Neutral (4/7) and Medium Confidence (2/3)
+            neutral_scores = TrustScores(
+                alignment=Score(trust=4, confidence=2),
+                information=Score(trust=4, confidence=2),
+                consistency=Score(trust=4, confidence=2)
+            )
+            effective_labels[target] = (
+                Label(
+                    trust_scores=neutral_scores,
+                    reasoning="No trust labels were recorded for this player in or before this phase."
+                ),
+            )
+    return effective_labels
+
+
 class PhaseTrustContext:
     offset: int
     injected_trust: tuple[dict[PlayerName, Label], ...] | None
@@ -623,7 +683,7 @@ class PhaseTrustContext:
         else:
             if self.player_name is None:
                 return None
-            labels = _normalize_game_labels(game_record.get_labels(target_phase_idx).get(self.player_name, {}))
+            labels = _get_effective_labels(game_record, self.player_name, target_phase_idx)
 
         target_contexts = []
         for target, target_labels in labels.items():

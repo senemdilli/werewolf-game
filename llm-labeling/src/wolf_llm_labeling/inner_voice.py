@@ -26,10 +26,11 @@ def _make_trust_scores(alignment: Score, information: Score, consistency: Score)
 
 def _neutral_trust_scores() -> TrustScores:
     midpoint = (TRUST_MIN + TRUST_MAX) // 2
+    medium_confidence = (CONFIDENCE_MIN + CONFIDENCE_MAX) // 2 
     return _make_trust_scores(
-        _make_score(midpoint, CONFIDENCE_MIN),
-        _make_score(midpoint, CONFIDENCE_MIN),
-        _make_score(midpoint, CONFIDENCE_MIN),
+        _make_score(midpoint, medium_confidence),
+        _make_score(midpoint, medium_confidence),
+        _make_score(midpoint, medium_confidence),
     )
 
 
@@ -68,9 +69,9 @@ class HistoricInnerVoice:
             target_phase_idx = phase_idx
             prompt_set = prompt_set_or_phase_idx if isinstance(prompt_set_or_phase_idx, PromptSet) else PromptSet()
 
-        labels_by_observer = game_records.get_labels(target_phase_idx) or {}
-        labels_by_target = labels_by_observer.get(self.observer, {})
-        labels = labels_by_target.get(player_name, [])
+        from wolf_llm_labeling.contexts import _get_effective_labels
+        effective_labels = _get_effective_labels(game_records, self.observer, target_phase_idx)
+        labels = effective_labels.get(player_name, ())
         if not labels:
             return _neutral_trust_scores()
         return labels[-1].trust_scores

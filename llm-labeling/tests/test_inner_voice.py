@@ -107,4 +107,4 @@ class TestHistoricInnerVoice:
         midpoint = (TRUST_MIN + TRUST_MAX) // 2
         for category in _categories(scores):
             assert category.trust == midpoint
-            assert category.confidence == CONFIDENCE_MIN
+            assert category.confidence == 2
