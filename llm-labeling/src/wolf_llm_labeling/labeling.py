@@ -394,6 +394,26 @@ def label_once(
         tools = [report_tool]
         if ask_tool is not None:
             tools.append(ask_tool)
+            
+            # Load configurable tool instruction
+            tool_instr = prompt_set.get_prompt(
+                "inner_voice_tool_instruction",
+                {},
+                default_prompt=(
+                    "\n\n# Advisor Tool\n\n"
+                    "You have access to a tool called 'ask_inner_trust_voice'. This tool provides you with advice from "
+                    "your \"Inner Trust Voice\" (representing your historical trust assessments and intuitions about other players). "
+                    "Before reporting your final trust labels, you can call this tool to consult your "
+                    "Inner Trust Voice about any player you are uncertain of."
+                )
+            )
+            if tool_instr:
+                if "[PLACEHOLDER FOR INNER VOICE TOOL]" in system_prompt:
+                    system_prompt = system_prompt.replace("[PLACEHOLDER FOR INNER VOICE TOOL]", tool_instr)
+                else:
+                    system_prompt += tool_instr
+                active_system_prompt.set(system_prompt)
+
         if context_as_tool:
             tools.append(get_context_tool)
 

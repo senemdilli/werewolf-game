@@ -195,6 +195,22 @@ Enables Sandro's revised instructions designed to guide LLM behavior:
 #### Context Injection Placeholder
 If a system prompt file contains the substring `[PLACEHOLDER FOR GAME CONTEXT]`, the labeling engine will automatically replace it with the formatted game state and conversation history at runtime. Otherwise, the context is appended to the user instruction message.
 
+#### 3. Configurable Tool Instructions for Variant 2
+In **Variant 2 (Agentic Tool Calling)**, you can configure the instruction that is appended to the system prompt to introduce the `ask_inner_trust_voice` tool to the LLM. 
+
+To do this, add the `"inner_voice_tool_instruction"` key to your prompt set JSON file (pointing to the text instruction file, relative to your prompt directory):
+
+```json
+{
+  "system_prompt": "system_prompts/pimped_system_prompt.md",
+  "inner_voice_tool_instruction": "inner_voices/tool_instructions/my_nudge_text.txt"
+}
+```
+
+*   **Replacing a Placeholder:** If your system prompt contains the substring `[PLACEHOLDER FOR INNER VOICE TOOL]`, the engine will replace it with the loaded instruction.
+*   **Appended by Default:** If the placeholder is missing from the system prompt, the instruction will be automatically appended to the end of the system prompt.
+*   **Fallback Default:** If `"inner_voice_tool_instruction"` is omitted from the prompt set JSON, the engine automatically injects a fallback instruction that informs the model about the availability and function of the tool.
+
 ## Multi-Model Setup (Primary vs. Inner Voice)
 
 The labeling engine is designed to support running two independent LLM models simultaneously to analyze decision-making dynamics:
