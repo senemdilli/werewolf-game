@@ -98,13 +98,23 @@ def matched_cells(
     rows_b: pd.DataFrame,
     keys: list[str] | None = None,
     value: str = "score_norm",
+    extra_columns: list[str] | None = None,
 ) -> pd.DataFrame:
     """Inner-join the two slices on cell keys, averaging duplicates per cell.
 
     Averaging first means repeated LLM runs of the same cell count once.
     Returns columns: *keys, "a", "b".
+
+    `extra_columns` (read from `rows_a`, first value per cell) are carried
+    through unaggregated, for callers that need to group or display the
+    matched result by columns outside the match key itself (round,
+    checkpoint, team/role, room_code, ...).
     """
     keys = keys or MATCH_KEYS
     a = rows_a.groupby(keys)[value].mean().rename("a")
     b = rows_b.groupby(keys)[value].mean().rename("b")
-    return pd.concat([a, b], axis=1, join="inner").reset_index()
+    matched = pd.concat([a, b], axis=1, join="inner").reset_index()
+    if extra_columns:
+        extra = rows_a.groupby(keys)[extra_columns].first().reset_index()
+        matched = matched.merge(extra, on=keys, how="left")
+    return matched

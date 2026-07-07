@@ -2,6 +2,8 @@
 
     uv run python main.py tool compare_data --params '{"filters_a": {"sources": ["human"]}}'
     uv run python main.py tool plot --params '{"filters": {"room_codes": ["5NOHGS"]}, "kind": "histogram"}'
+    uv run python main.py tool delta_tool --params '{"filters": {}, "compare": "trust_type", "value_a": "alignment", "value_b": "information"}'
+    uv run python main.py tool correlation_tool --params '{"filters_a": {"sources": ["human"]}, "filters_b": {"sources": ["llm"]}}'
 
 The orchestrator (phase 3) will call the same tools programmatically.
 """
@@ -14,10 +16,13 @@ from data.dataset import load_dataset
 
 def build_tools(game_records: str, llm_results: str) -> dict:
     from tools.compare_tool import CompareDataTool
+    from tools.correlation_tool import CorrelationTool
+    from tools.delta_tool import DeltaTool
     from tools.plot_tool import PlotTool
 
     df = load_dataset(game_records, llm_results, cache_dir="analysis/cache")
-    return {tool.name: tool for tool in (CompareDataTool(df), PlotTool(df))}
+    tools = (CompareDataTool(df), PlotTool(df), DeltaTool(df), CorrelationTool(df))
+    return {tool.name: tool for tool in tools}
 
 
 def main() -> None:

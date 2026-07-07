@@ -7,7 +7,8 @@ This package loads both into one unified table and (in later phases) exposes
 analysis tools to an LLM orchestrator you can query in natural language.
 
 **Status:** Phase 1 (data foundation) and Phase 2 (analysis tools:
-`compare_data`, `plot`) are implemented. The orchestrator (phase 3) is next.
+`compare_data`, `plot`, `delta_tool`, `correlation_tool`) are implemented. The
+orchestrator (phase 3) is next.
 See `Data_Scientist_Agent_Spec.md` for the research questions driving this.
 
 ---
@@ -190,16 +191,18 @@ data-analysis/
 │   └── dataset.py          # build_dataset / load_dataset (parquet cache)
 ├── tools/
 │   ├── base_tool.py        # BaseTool: run(**kwargs) -> ToolOutput, as_langchain_tool()
-│   ├── slicing.py          # shared slice/describe/match helpers
+│   ├── slicing.py          # shared slice/describe/match helpers (MATCH_KEYS, matched_cells, ...)
 │   ├── compare_tool.py     # compare_data: slice comparison / evaluation
-│   └── plot_tool.py        # plot: PNG + caption + underlying numbers
+│   ├── plot_tool.py        # plot: PNG + caption + underlying numbers
+│   ├── delta_tool.py       # delta_tool: matched-cell delta between 2 sources or 2 trust types
+│   └── correlation_tool.py # correlation_tool: extremity comparison + extremity/confidence correlation
 └── tests/                  # unit tests on fixtures + integration on real exports
 ```
 
 ## Analysis tools
 
-Both tools operate on the unified table and accept `FilterSpec`s; run them from
-the CLI with JSON params (same interface the phase-3 orchestrator will use):
+All four tools operate on the unified table and accept `FilterSpec`s; run them
+from the CLI with JSON params (same interface the phase-3 orchestrator will use):
 
 ```bash
 # compare two slices: human vs LLM on one game, broken down by trust dimension
@@ -212,6 +215,16 @@ uv run python main.py tool compare_data --params '{
 uv run python main.py tool plot --params '{
   "filters": {"room_codes": ["5NOHGS"], "trust_types": ["alignment"]},
   "kind": "line_per_phase"}'
+
+# delta between alignment and information trust, by round
+uv run python main.py tool delta_tool --params '{
+  "filters": {"sources": ["human"]},
+  "compare": "trust_type", "value_a": "alignment", "value_b": "information",
+  "group_by": ["round"]}'
+
+# how extreme is LLM labelling vs human, and does confidence track extremity?
+uv run python main.py tool correlation_tool --params '{
+  "filters_a": {"sources": ["human"]}, "filters_b": {"sources": ["llm"]}}'
 ```
 
 **`compare_data`** — one slice (`filters_a` only) → descriptive stats: n, mean,
@@ -231,6 +244,29 @@ Kinds: `line_per_phase` (one game), `line_per_game` (chronological),
 (extremity vs confidence), `heatmap` (observer×target matrix, one game).
 `hue` defaults to `"source"` so human vs LLM overlay; `use_raw=true` is
 rejected when the slice mixes scales.
+
+**`delta_tool`** — `score_a - score_b` between two values of `compare`:
+`compare="source"` (`value_a`/`value_b` in `{"human","llm"}`) or
+`compare="trust_type"` (`value_a`/`value_b` in
+`{"alignment","information","consistency"}`), matched on
+game/room_code/observer/target/phase (and whichever of source/trust_type
+isn't the axis being compared). `group_by` breaks the delta down by round,
+phase_idx, checkpoint, team/role columns, or `room_code` (carrying
+`exported_at` along, so per-game deltas can be sorted chronologically).
+Built on `tools/slicing.py`'s `matched_cells`, same identity keys as
+`compare_data`.
+
+**`correlation_tool`** — compares labelling *extremity* between two slices
+(`filters_a` vs `filters_b`) and correlates extremity with confidence within
+each slice. `extremity = |score_norm - 0.5| * 2` (0 = midpoint, 1 = either
+endpoint) — the fold-to-endpoint distance that makes "1/7 and 7/7 are both
+extreme" one comparable number, and the correlation captures "humans are
+only confident at the extremes, LLMs may not be." Reports per-slice
+`mean_extremity`, `frac_at_extreme`, and `extremity_confidence_spearman`; the
+delta in extremity between slices (independent Mann-Whitney U, and on
+matched cells a paired Wilcoxon); and an optional `group_by` breakdown. Also
+built on `tools/slicing.py`'s `matched_cells`, matching on `extremity`
+instead of raw `score_norm`.
 
 ## Adding an analysis tool
 
@@ -254,4 +290,10 @@ class MyTool(BaseTool):
 
 Conventions: tools are pure functions over the unified table (no LLM calls
 inside), always return `ToolOutput`, and report row counts in `metadata` so
-the orchestrator notices empty filter results.
+the orchestrator notices empty filter results. If your tool needs to compare
+two slices or join on "same cell" (as `compare_data`, `delta_tool`, and
+`correlation_tool` all do), build on `tools/slicing.py`'s `slice_df`,
+`matched_cells`, `matchable`/`differing_fields` rather than re-deriving cell
+identity by hand — that's the one place `MATCH_KEYS` (including `room_code`)
+is defined, so tools don't drift out of sync on what counts as "the same
+annotation" measured twice.
