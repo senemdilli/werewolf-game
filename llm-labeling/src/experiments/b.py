@@ -21,7 +21,7 @@ def experiment(
     
     # Historical phases: game data and trust scores
     game_history = [PhaseGameContext(i) for i in range(1, cutoff)]
-    trust_history = [PhaseTrustContext(i) for i in range(1, cutoff)]
+    trust_history = [PhaseTrustContext(i, player_name=player_name) for i in range(1, cutoff)]
     
     history_elements = game_history + trust_history
     

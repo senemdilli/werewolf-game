@@ -32,7 +32,7 @@ def experiment(
     base_ctx = JoinedContext('Game Information', None, 1000, StaticContext(player_name), GameNowContext(player_name))
     
     # Historical phases: trust scores only (no conversations)
-    trust_history = [PhaseTrustContext(i) for i in range(1, cutoff)]
+    trust_history = [PhaseTrustContext(i, player_name=player_name) for i in range(1, cutoff)]
     
     if trust_history:
         history_ctx = JoinedContext('Historical Game History', None, 0, *trust_history)
