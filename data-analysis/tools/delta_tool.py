@@ -50,6 +50,14 @@ class DeltaTool(BaseTool):
         value_b: str,
         group_by: list[str] | None = None,
     ) -> ToolOutput:
+        self.logger.debug("Running DeltaTool with filters=%s, compare=%s, value_a=%s, value_b=%s, group_by=%s",
+            filters,
+            compare,
+            value_a,
+            value_b,
+            group_by,
+        )
+
         df = slice_df(self._df, filters)
         if df.empty:
             return ToolOutput(success=False, source=self.name, error="no rows match the filters")

@@ -27,16 +27,16 @@ PlotKind = Literal["line_per_phase", "line_per_game", "histogram", "box", "scatt
 class PlotTool(BaseTool):
     name: ClassVar[str] = "plot"
     description: ClassVar[str] = (
-        "Render a filtered slice of the trust table as a PNG chart and return "
-        "the file path plus the aggregated values shown. Kinds: "
-        "line_per_phase (trust across the phases of one game, one line per "
-        "hue value), line_per_game (trust across games in chronological "
-        "order), histogram (raw 1-7 score distribution per hue — the "
-        "extremeness picture), box (score spread per hue), scatter (score "
-        "extremity vs confidence), heatmap (observer x target trust matrix "
-        "for one game). hue defaults to 'source' so human vs LLM are "
-        "overlaid; pass another column like 'trust_type' to split "
-        "differently."
+        "Generate a PNG visualization from a filtered subset of the trust table and return the file path and the aggregated data values used in the chart. "
+        "Supported chart types:"
+        "- line_per_phase: trust development across phases of a single game, with separate lines for each hue category."
+        "- line_per_game: trust development across games in chronological order."
+        "- histogram: distribution of raw trust scores (1-7) per hue category to show score extremity."
+        "- box: trust score distribution and spread per hue category."
+        "- scatter: relationship between trust score extremity and confidence."
+        "- heatmap: observer-to-target trust matrix for a single game."
+        ""
+        "The hue dimension controls how values are grouped. It defaults to \"source\" (e.g., human vs LLM comparison). Use another table column (such as \"trust_type\") to define a different grouping."
     )
 
     def __init__(self, df: pd.DataFrame, plots_dir: str | Path = "analysis/plots") -> None:
@@ -54,6 +54,16 @@ class PlotTool(BaseTool):
         title: str | None = None,
         filename: str | None = None,
     ) -> ToolOutput:
+        self.logger.debug("Running PlotTool with filters=%s, kind=%s, hue=%s, agg=%s, use_raw=%s, title=%s, filename=%s",
+            filters,
+            kind,
+            hue,
+            agg,
+            use_raw,
+            title,
+            filename,
+        )
+
         rows = slice_df(self._df, filters)
         if rows.empty:
             return self._fail("filters match no rows")

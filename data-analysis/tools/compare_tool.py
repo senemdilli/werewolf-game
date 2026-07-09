@@ -52,6 +52,16 @@ class CompareDataTool(BaseTool):
         metric: Literal["score", "confidence"] = "score",
         correlate: bool = False,
     ) -> ToolOutput:
+        
+        self.logger.debug("Running CompareDataTool with filters_a=%s, filters_b=%s, mode=%s, group_by=%s, metric=%s, correlate=%s",
+            filters_a,
+            filters_b,
+            mode,
+            group_by,
+            metric,
+            correlate,
+        )
+
         value = "score_norm" if metric == "score" else "confidence_norm"
 
         rows_a = slice_df(self._df, filters_a)

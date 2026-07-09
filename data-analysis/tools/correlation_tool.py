@@ -56,6 +56,12 @@ class CorrelationTool(BaseTool):
         filters_b: FilterSpec,
         group_by: list[str] | None = None,
     ) -> ToolOutput:
+        self.logger.debug("Running CorrelationTool with filters_a=%s, filters_b=%s, group_by=%s",
+            filters_a,
+            filters_b,
+            group_by,
+        )
+
         a = slice_df(self._df, filters_a)
         if a.empty:
             return self._fail("filters_a matches no rows")

@@ -34,6 +34,7 @@ class BaseTool(ABC):
             raise ValueError("Tool description must be defined.")
         
         self.logger = get_logger(f"tools.{self.name}")
+        self.logger.debug("Initialized tool: %s", self.name)
 
 
     @abstractmethod
