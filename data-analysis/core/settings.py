@@ -21,6 +21,9 @@ class Settings(BaseSettings):
 
     # Ollama (only required once the orchestrator is used)
     ollama_api_key: str = Field("")
+    ollama_api_url: str = Field("https://gpu.snet.tu-berlin.de/echelon/ollama")
+    agent_model: str = Field("gemma4:26b")
+    agent_temperature: float = Field(0.0)
 
 settings: Settings | None = None
 
