@@ -15,6 +15,7 @@ import argparse
 import json
 from pathlib import Path
 
+from core.logging import get_logger
 from data.dataset import load_dataset
 from agent.orchestrator import OrchestratorConfig, ask
 
@@ -31,6 +32,9 @@ def build_tools(game_records: str, llm_results: str) -> dict:
 
 
 def main() -> None:
+    logger = get_logger("main")
+    logger.info("Starting analysis tool")
+    
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
 
