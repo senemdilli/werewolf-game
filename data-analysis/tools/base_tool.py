@@ -71,6 +71,11 @@ class BaseTool(ABC):
             "func": invoke,
         }
 
+        if self.input_schema:
+            kwargs["args_schema"] = self.input_schema
+        if self.output_schema:
+            kwargs["return_schema"] = self.output_schema
+
         return StructuredTool.from_function(**kwargs)
 
     def __repr__(self) -> str:
