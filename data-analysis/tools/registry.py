@@ -1,6 +1,6 @@
 """Central registry for all tools."""
 
-from base_tool import BaseTool
+from .base_tool import BaseTool
 
 class ToolRegistry:
     """
