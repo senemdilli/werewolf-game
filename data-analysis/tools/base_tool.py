@@ -8,6 +8,7 @@ import inspect
 
 from abc import ABC, abstractmethod
 from typing import Any, ClassVar
+from pydantic import BaseModel
 
 from core.logging import get_logger
 
@@ -23,6 +24,10 @@ class BaseTool(ABC):
     # Mandatory class variables that must be defined by subclasses
     name: ClassVar[str] = ""
     description: ClassVar[str] = ""
+
+    # Optional class variables for input/output schemas
+    input_schema: ClassVar[type[BaseModel] | None] = None
+    output_schema: ClassVar[type[BaseModel] | None] = None
 
     def __init__(self) -> None:
         """
