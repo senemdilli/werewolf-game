@@ -27,9 +27,9 @@ python .\src\wolf_llm_labeling\main.py <game_record.json> <game_record.csv> [opt
 | `--player-name` | `str` | Optional. Specific player name or index (e.g. `Blue` or `0`) to run labeling for. Runs for **all players** if omitted |
 | `--max-phases` | `int` | Optional. Maximum number of phases to evaluate (default: 0 for all phases) |
 | `--cutoff` | `int` | Optional. Number of historical phases to look back for context (used in experiments A-F) |
-| `--variant` | `int` | Optional. Inner trust voice variant for experiments D-F (`1` for pre-injected context, `2` for agentic tool loop) |
+| `--variant` | `int` | Optional. Inner trust voice variant for experiments D-F (`1` for pre-injected context, `2` for agentic tool loop, default: `2`) |
 | `--inner-voice-type` | `str` | Optional. Inner trust voice type for experiments D-F (`llm` (default), `human`, or `random`) |
-| `--experiment-args` | `str` | Legacy. Space-separated string argument containing `<cutoff> [variant] [inner_voice_type]` (e.g. `"3 2 human"`) |
+| `--experiment-args` | `str` | Legacy (now splitted). Optional. Space-separated string argument containing `<cutoff> [variant] [inner_voice_type]` (e.g. `"3 2 human"`) |
 | `--formatter` | `str` | Optional. Context format type: `markdown` (default) or `json` |
 | `--context-as-tool` | `flag` | Optional. If set, the game context is retrieved dynamically by the LLM via tool call instead of pre-injected in the prompt |
 | `--prompt-set` | `str` | Optional. Path to a JSON file mapping custom prompts |
@@ -37,35 +37,40 @@ python .\src\wolf_llm_labeling\main.py <game_record.json> <game_record.csv> [opt
 | `--use-numeric` | `flag` | Optional. If set, forces numeric integer scale (1-100) instead of the default Likert scale |
 | `--likert-type` | `str` | Optional. Likert scale format to use: `agree-disagree` (strongly disagree to strongly agree, default) or `legacy` (very low to very high trust) |
 | `--parallel` | `int` | Optional. If set, runs the labeling tasks for different players concurrently (specify number of threads, e.g. `--parallel 4`. Default: `2` if flag is present but value omitted). |
+| `--temperature` | `float` | Optional. LLM generation temperature (default: `0.0`) |
+
 
 ---
 
 ## Example Execution Commands
 
-### 1. Run Experiment A (No Inner Voice, Cutoff 3 phases back)
+### 1. Run Experiment A (No Inner Voice, Cutoff default 0 phases back, Temperatur 0.5, 4 Threads)
 ```powershell
 python .\src\wolf_llm_labeling\main.py `
-  "..\results\game-records\game-44UT6Y-d59e923e-labels.json" `
-  "..\results\game-records\game-44UT6Y-d59e923e.csv" `
-  --primary-model "gemma4:26b" `
+  "..\results\game-records\game-5NOHGS-b57eee98-labels.json" `
+  "..\results\game-records\game-5NOHGS-b57eee98.csv" `
+  --primary-model "qwen3.6:35b" `
   --ollama-url "https://gpu.snet.tu-berlin.de/echelon/ollama" `
   --experiment "a" `
-  --cutoff 3 `
-  --player-name "Blue"
+  --prompt-set "prompts/prompt_sets/pimped.json" `
+  --temperature 0.5 `
+  --parallel 4
 ```
 
-### 2. Run Experiment D (Variant 2: Agentic Tool Loop, Cutoff 3, JSON Formatter)
+### 2. Run Experiment D (Variant 2: Agentic Tool Loop, Cutoff 3, 4 Threads)
 ```powershell
 python .\src\wolf_llm_labeling\main.py `
-  "..\results\game-records\game-44UT6Y-d59e923e-labels.json" `
-  "..\results\game-records\game-44UT6Y-d59e923e.csv" `
-  --primary-model "gemma4:26b" `
+  "..\results\game-records\game-5NOHGS-b57eee98-labels.json" `
+  "..\results\game-records\game-5NOHGS-b57eee98.csv" `
+  --primary-model "gemma4:31b" `
   --ollama-url "https://gpu.snet.tu-berlin.de/echelon/ollama" `
   --experiment "d" `
   --cutoff 3 `
   --variant 2 `
-  --formatter "json" `
-  --player-name "Blue"
+  --inner-voice-type "human" `
+  --prompt-set "prompts/prompt_sets/pimped.json" `
+  --temperature 0.5 `
+  --parallel 4
 ```
 
 ---
@@ -163,13 +168,13 @@ python .\src\wolf_llm_labeling\main.py `
 | `--output-dir` | String | Base output directory (default: `./results/llm-labeling`). |
 | `--experiment` | String | Experiment ID module to load (e.g. `a`, `b`, etc.). |
 | `--cutoff` | Integer | Historical context cutoff (number of phases to look back). |
-| `--variant` | Integer | Inner trust voice variant (1: pre-injected context, 2: agentic tool call). |
+| `--variant` | Integer | Inner trust voice variant (1: pre-injected context, 2: agentic tool call, default: `2`). |
 | `--inner-voice-type` | String | Inner voice type: `llm` (default), `human`, or `random`. |
 | `--experiment-args` | String | Legacy configuration arguments passed to the experiment (e.g. `"3 2 human"`). |
 | `--max-phases` | Integer | Maximum number of phases to label (default: `0` for all alive phases). |
 | `--prompt-set` | String | Path to prompt-set JSON configuration file. |
 | `--prompt-dir` | String | Directory containing the prompts (default: `./prompts`). |
-| `--formatter` | String | Context format type: `markdown` or `json`. |
+| `--formatter` | String | Context format type: `markdown` (default) or `json`. |
 | `--context-as-tool` | Flag | If set, retrieves the game context via tool call instead of pre-injecting it. |
 | `--temperature` | Float | Generation temperature for LLM calls (default: `0.0`, recommended: `0.2` for Gemma). |
 | `--use-numeric` | Flag | If set, forces LLM to evaluate trust via integers (1-100) instead of the default 7-point Likert scale. |
