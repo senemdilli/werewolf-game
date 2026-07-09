@@ -30,12 +30,14 @@ class DeltaTool(BaseTool):
 
     name = "delta_tool"
     description = (
-        "Compute score_a - score_b between two values of `compare` "
-        "(compare='source' with value_a/value_b in {'human','llm'}, or "
-        "compare='trust_type' with value_a/value_b in "
-        "{'alignment','information','consistency'}), matched on the same "
-        "game/observer/target/phase (and the other axis). Optionally group "
-        "the result by round, phase_idx, checkpoint, or team/role columns."
+        "Calculate the difference between two trust scores (score_a - score_b) "
+        "for matched observations in the trust table. Compare values along one "
+        "dimension: use compare='source' with value_a/value_b as 'human' and "
+        "'llm', or compare='trust_type' with value_a/value_b as "
+        "'alignment', 'information', or 'consistency'. "
+        "Scores are matched on the same game, observer, target, phase, and the "
+        "remaining relevant axis. Optionally aggregate results by round, "
+        "phase_idx, checkpoint, or team/role columns."
     )
 
     def __init__(self, df: pd.DataFrame) -> None:
