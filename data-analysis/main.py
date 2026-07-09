@@ -17,7 +17,7 @@ from pathlib import Path
 
 from core.logging import get_logger
 from data.dataset import load_dataset
-from agent.orchestrator import OrchestratorConfig, ask
+from agent.orchestrator import OrchestratorConfig, Orchestrator, OrchestratorResponse
 
 
 def build_tools(game_records: str, llm_results: str) -> dict:
@@ -84,8 +84,10 @@ def run_agent(args) -> None:
         temperature=args.temperature,
     )
 
+    orchestrator = Orchestrator(config)
+
     if args.question:
-        print(ask(args.question, config))
+        print(orchestrator.ask(args.question).answer)
         return
 
     print("Enter a question and press Enter. Submit an empty line to exit.")
@@ -96,7 +98,7 @@ def run_agent(args) -> None:
             break
         if not question:
             break
-        print(ask(question, config))
+        print(orchestrator.ask(question).answer)
 
 
 if __name__ == "__main__":

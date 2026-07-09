@@ -9,6 +9,7 @@ from typing import Any
 from langchain_ollama import ChatOllama
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage
 from langchain.agents import create_agent
+from pydantic import BaseModel, Field
 
 from core.logging import get_logger
 from core.settings import get_settings
@@ -47,6 +48,59 @@ class OrchestratorConfig:
     temperature: float | None = None
 
 
+class OrchestratorResponse(BaseModel):
+    answer: str
+    conversation: list[dict[str, str]] = Field(default_factory=list)
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+class Orchestrator:
+    """Orchestrator for the data analysis agent."""
+
+    def __init__(self, config: OrchestratorConfig) -> None:
+        self.logger = get_logger("agents.orchestrator")
+        self.logger.debug("Initializing orchestrator with config: %s", config)
+
+        self.config = config
+        self.conversation: list[BaseMessage] = []
+        self.df = load_dataset(
+            config.game_records, config.llm_results, cache_dir=config.cache_dir
+        )
+        self.registry = build_tool_registry(self.df, config.plots_dir)
+        self.tools = [
+            self.registry.get_tool(name).as_langchain_tool()
+            for name in self.registry.list_tools()
+        ]
+        self.model = build_model(config)
+        self.agent = create_agent(self.model, self.tools, system_prompt=SYSTEM_PROMPT)
+
+    def ask(self, question: str) -> OrchestratorResponse:
+        self.logger.info("Orchestrator received question: %s", question)
+        self.conversation.append(HumanMessage(content=question))
+
+        result = self.agent.invoke({"messages": self.conversation})
+        self.logger.debug("Orchestrator generated response: %s", result)
+        messages = result.get("messages", [])
+        for message in reversed(messages):
+            if isinstance(message, AIMessage):
+                answer = _message_text(message).strip()
+                if answer:
+                    self.conversation.append(AIMessage(content=answer))
+                    return OrchestratorResponse(
+                        answer=answer,
+                        conversation=_conversation_to_dicts(self.conversation),
+                        metadata={
+                            "model": self.config.model,
+                            "n_messages": len(self.conversation),
+                            "n_tools": len(self.tools),
+                        },
+                    )
+        raise RuntimeError("orchestrator returned no assistant response")
+
+
+def ask(question: str, config: OrchestratorConfig) -> OrchestratorResponse:
+    return Orchestrator(config).ask(question)
+
+
 def build_tool_registry(df, plots_dir: str | Path = "analysis/plots") -> ToolRegistry:
     registry = ToolRegistry()
     registry.register_tool(CompareDataTool(df))
@@ -56,37 +110,16 @@ def build_tool_registry(df, plots_dir: str | Path = "analysis/plots") -> ToolReg
     return registry
 
 
-def build_Ollama_model() -> ChatOllama:
+def build_model(config: OrchestratorConfig) -> ChatOllama:
     settings = get_settings()
-    name = settings.agent_model
-    temperature = settings.agent_temperature
+    name = config.model or settings.agent_model
+    temperature = settings.agent_temperature if config.temperature is None else config.temperature
     base_url = settings.ollama_api_url
     api_key = settings.ollama_api_key
     client_kwargs = {"headers": {"Authorization": f"Bearer {api_key}"}}
     model = ChatOllama(model=name, temperature=temperature, base_url=base_url, client_kwargs=client_kwargs)
 
     return model
-
-
-def build_agent(config: OrchestratorConfig):
-    df = load_dataset(config.game_records, config.llm_results, cache_dir=config.cache_dir)
-    registry = build_tool_registry(df, config.plots_dir)
-    tools = [registry.get_tool(name).as_langchain_tool() for name in registry.list_tools()]
-    model = build_Ollama_model()
-    return create_agent(model, tools, system_prompt=SYSTEM_PROMPT)
-
-
-def ask(question: str, config: OrchestratorConfig) -> str:
-    agent = build_agent(config)
-    result = agent.invoke({"messages": [HumanMessage(content=question)]})
-    messages = result.get("messages", [])
-    for message in reversed(messages):
-        if isinstance(message, AIMessage):
-            answer = _message_text(message).strip()
-            if answer:
-                return answer
-    raise RuntimeError("orchestrator returned no assistant response")
-
 
 def _message_text(message: BaseMessage) -> str:
     content = message.content
@@ -103,3 +136,10 @@ def _message_text(message: BaseMessage) -> str:
                 parts.append(str(block))
         return "".join(parts)
     return str(content)
+
+
+def _conversation_to_dicts(messages: list[BaseMessage]) -> list[dict[str, str]]:
+    return [
+        {"role": message.type, "content": _message_text(message)}
+        for message in messages
+    ]
