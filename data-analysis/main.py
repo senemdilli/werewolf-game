@@ -10,8 +10,10 @@ The orchestrator (phase 3) will call the same tools programmatically.
 
 import argparse
 import json
+from pathlib import Path
 
 from data.dataset import load_dataset
+from agent.orchestrator import OrchestratorConfig, ask
 
 
 def build_tools(game_records: str, llm_results: str) -> dict:
@@ -34,7 +36,21 @@ def main() -> None:
     tool_cmd.add_argument("--params", default="{}", help="JSON object of run() arguments")
     tool_cmd.add_argument("--game-records", default="../results/game-records")
     tool_cmd.add_argument("--llm-results", default="../llm-labeling/results/llm-labeling")
+
+    agent_cmd = sub.add_parser("agent", help="ask the analysis agent a question")
+    agent_cmd.add_argument("question", nargs="?", help="natural-language question to ask")
+    agent_cmd.add_argument("--game-records", default="../results/game-records")
+    agent_cmd.add_argument("--llm-results", default="../llm-labeling/results/llm-labeling")
+    agent_cmd.add_argument("--cache-dir", default="analysis/cache")
+    agent_cmd.add_argument("--plots-dir", default="analysis/plots")
+    agent_cmd.add_argument("--model", default=None, help="chat model name, e.g. openai:gpt-5.4-mini")
+    agent_cmd.add_argument("--temperature", type=float, default=None)
+
     args = parser.parse_args()
+
+    if args.command == "agent":
+        run_agent(args)
+        return
 
     tools = build_tools(args.game_records, args.llm_results)
     if args.name not in tools:
@@ -49,6 +65,31 @@ def main() -> None:
 
     result = tools[args.name].run(**params)
     print(result.model_dump_json(indent=2, exclude_none=True))
+
+
+def run_agent(args) -> None:
+    config = OrchestratorConfig(
+        game_records=args.game_records,
+        llm_results=args.llm_results,
+        cache_dir=args.cache_dir,
+        plots_dir=args.plots_dir,
+        model=args.model,
+        temperature=args.temperature,
+    )
+
+    if args.question:
+        print(ask(args.question, config))
+        return
+
+    print("Enter a question and press Enter. Submit an empty line to exit.")
+    while True:
+        try:
+            question = input("> ").strip()
+        except EOFError:
+            break
+        if not question:
+            break
+        print(ask(question, config))
 
 
 if __name__ == "__main__":
