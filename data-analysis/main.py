@@ -5,7 +5,10 @@
     uv run python main.py tool delta_tool --params '{"filters": {}, "compare": "trust_type", "value_a": "alignment", "value_b": "information"}'
     uv run python main.py tool correlation_tool --params '{"filters_a": {"sources": ["human"]}, "filters_b": {"sources": ["llm"]}}'
 
-The orchestrator (phase 3) will call the same tools programmatically.
+Run the analysis agent from the CLI.
+    uv run python main.py agent
+    or
+    make run
 """
 
 import argparse
