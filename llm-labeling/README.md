@@ -2,6 +2,14 @@
 
 This engine runs experiments to evaluate how LLM players assess trust towards other players in the game of Werewolf.
 
+## Setup
+
+Before running the engine, create a `.env` file in the `llm-labeling/` directory and configure your Ollama API key:
+
+```env
+OLLAMA_API_KEY=your_key_here
+```
+
 ## CLI Usage Guide
 
 You can run the labeling engine CLI by executing the main script:
