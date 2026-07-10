@@ -11,10 +11,13 @@ from pathlib import Path
 from typing import Any, ClassVar, Literal
 
 import matplotlib
+from pydantic import BaseModel
 
 matplotlib.use("Agg")  # file output only, no display needed
 import matplotlib.pyplot as plt
 import pandas as pd
+
+from pydantic import BaseModel
 
 from contracts.tool_output import ToolOutput
 from data.filters import FilterSpec
@@ -23,6 +26,14 @@ from tools.slicing import slice_df
 
 PlotKind = Literal["line_per_phase", "line_per_game", "histogram", "box", "scatter", "heatmap"]
 
+class PlotInput(BaseModel):
+    filters: FilterSpec
+    kind: PlotKind
+    hue: str = "source"
+    agg: Literal["mean", "median"] = "mean"
+    use_raw: bool = False
+    title: str | None = None
+    filename: str | None = None
 
 class PlotTool(BaseTool):
     name: ClassVar[str] = "plot"
@@ -43,6 +54,7 @@ class PlotTool(BaseTool):
         super().__init__()
         self._df = df
         self._plots_dir = Path(plots_dir)
+        self.input_schema = PlotInput
 
     def run(
         self,
