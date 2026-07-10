@@ -81,26 +81,71 @@ class ConsoleSpinner:
         self.stop()
 
 
-def formatted_trust_scores(scores: TrustScores, formatter_type: FormatterType) -> str:
+def formatted_trust_scores(scores: TrustScores, formatter_type: FormatterType, use_likert: bool = False) -> str:
     """Format trust scores based on formatter type (json or markdown)."""
+    
+    def get_score_str(score: Score | None) -> tuple[str, str] | None:
+        if not score:
+            return None
+        
+        trust_val = score.trust
+        conf_val = score.confidence
+        
+        if use_likert:
+            trust_mapping = {
+                1: "STRONGLY_DISAGREE",
+                2: "DISAGREE",
+                3: "SLIGHTLY_DISAGREE",
+                4: "NEUTRAL",
+                5: "SLIGHTLY_AGREE",
+                6: "AGREE",
+                7: "STRONGLY_AGREE",
+            }
+            confidence_mapping = {
+                1: "LOW_CONFIDENCE",
+                2: "MEDIUM_CONFIDENCE",
+                3: "HIGH_CONFIDENCE",
+            }
+            
+            try:
+                t_int = int(trust_val)
+                trust_str = trust_mapping.get(t_int, str(trust_val))
+            except (ValueError, TypeError):
+                trust_str = str(trust_val)
+                
+            try:
+                c_int = int(conf_val)
+                conf_str = confidence_mapping.get(c_int, str(conf_val))
+            except (ValueError, TypeError):
+                conf_str = str(conf_val)
+                
+            return trust_str, conf_str
+        else:
+            return f"{trust_val}/7", str(conf_val)
+
     if formatter_type == "json":
         import json
         res = {}
-        if scores.alignment:
-            res["alignment"] = {"trust": scores.alignment.trust, "confidence": scores.alignment.confidence}
-        if scores.information:
-            res["information"] = {"trust": scores.information.trust, "confidence": scores.information.confidence}
-        if scores.consistency:
-            res["consistency"] = {"trust": scores.consistency.trust, "confidence": scores.consistency.confidence}
+        for cat in ["alignment", "information", "consistency"]:
+            score = getattr(scores, cat)
+            if score:
+                mapped = get_score_str(score)
+                if mapped:
+                    if use_likert:
+                        res[cat] = {"trust": mapped[0], "confidence": mapped[1]}
+                    else:
+                        res[cat] = {"trust": score.trust, "confidence": score.confidence}
         return json.dumps(res)
     else:
         lines = []
-        if scores.alignment:
-            lines.append(f"Alignment Trust: {scores.alignment.trust}/7 (Confidence: {scores.alignment.confidence})")
-        if scores.information:
-            lines.append(f"Information Trust: {scores.information.trust}/7 (Confidence: {scores.information.confidence})")
-        if scores.consistency:
-            lines.append(f"Consistency Trust: {scores.consistency.trust}/7 (Confidence: {scores.consistency.confidence})")
+        for cat_name, cat in [("Alignment", scores.alignment), ("Information", scores.information), ("Consistency", scores.consistency)]:
+            if cat:
+                mapped = get_score_str(cat)
+                if mapped:
+                    if use_likert:
+                        lines.append(f"{cat_name} Trust: {mapped[0]} (Confidence: {mapped[1]})")
+                    else:
+                        lines.append(f"{cat_name} Trust: {mapped[0]} (Confidence: {mapped[1]})")
         return "\n".join(lines)
 
 
@@ -353,7 +398,7 @@ def label_once(
                     return "No inner voice advice is available."
                 try:
                     scores = inner_voice.ask(player_name, context_ctx, game_data, prompt_set, phase_idx)
-                    advice_content = formatted_trust_scores(scores, formatter_type)
+                    advice_content = formatted_trust_scores(scores, formatter_type, use_likert=use_likert)
                     if not advice_content:
                         return f"No trust advice available for {player_name}."
                     
