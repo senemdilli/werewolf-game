@@ -403,8 +403,7 @@ def label_once(
                     "\n\n# Advisor Tool\n\n"
                     "You have access to a tool called 'ask_inner_trust_voice'. This tool provides you with advice from "
                     "your \"Inner Trust Voice\" (representing your historical trust assessments and intuitions about other players). "
-                    "Before reporting your final trust labels, you can call this tool to consult your "
-                    "Inner Trust Voice about any player you are uncertain of."
+                    "Before reporting your final trust labels, you can call this tool to consult your Inner Trust Voice about any player you are uncertain of."
                 )
             )
             if tool_instr:
@@ -413,6 +412,11 @@ def label_once(
                 else:
                     system_prompt += tool_instr
                 active_system_prompt.set(system_prompt)
+
+        # Clean up placeholder if not replaced (in Experiments A, B, C)
+        if "[PLACEHOLDER FOR INNER VOICE TOOL]" in system_prompt:
+            system_prompt = system_prompt.replace("[PLACEHOLDER FOR INNER VOICE TOOL]", "")
+            active_system_prompt.set(system_prompt)
 
         if context_as_tool:
             tools.append(get_context_tool)

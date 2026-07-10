@@ -170,6 +170,10 @@ The game ends immediately when either condition becomes true.
  
 # Trust Assessment for Current Game (Your task)
  
+[PLACEHOLDER FOR INNER VOICE TOOL]
+ 
+## General Instructions
+ 
 Evaluate your current trust toward every other living player based only on the information currently available to you.
  
 Your assessment must reflect your genuine internal beliefs at this point in the game. 
