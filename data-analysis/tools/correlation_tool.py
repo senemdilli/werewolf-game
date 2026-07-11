@@ -28,7 +28,14 @@ from scipy import stats
 from contracts.tool_output import ToolOutput
 from data.filters import FilterSpec
 from tools.base_tool import BaseTool
-from tools.slicing import MIN_TEST_N, differing_fields, matchable, matched_cells, slice_df
+from tools.slicing import (
+    MIN_TEST_N,
+    differing_fields,
+    explain_empty_slice,
+    matchable,
+    matched_cells,
+    slice_df,
+)
 
 
 class CorrelationTool(BaseTool):
@@ -64,10 +71,10 @@ class CorrelationTool(BaseTool):
 
         a = slice_df(self._df, filters_a)
         if a.empty:
-            return self._fail("filters_a matches no rows")
+            return self._fail("filters_a: " + explain_empty_slice(self._df, filters_a))
         b = slice_df(self._df, filters_b)
         if b.empty:
-            return self._fail("filters_b matches no rows")
+            return self._fail("filters_b: " + explain_empty_slice(self._df, filters_b))
 
         group_by = group_by or []
         unknown = [c for c in group_by if c not in self._df.columns]

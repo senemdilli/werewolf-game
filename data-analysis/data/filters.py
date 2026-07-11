@@ -10,10 +10,55 @@ Trust given vs received is expressed through the observer/target axes: filter
 """
 
 import pandas as pd
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, field_validator, model_validator
+
+# The orchestrator LLM often writes singular field names ("room_code") or bare
+# strings instead of lists. Both mistakes are unambiguous, so accept them —
+# and forbid anything else so a typo fails loudly instead of matching all rows.
+_SINGULAR_ALIASES = {
+    "game_id": "game_ids",
+    "room_code": "room_codes",
+    "game_mode": "game_modes",
+    "winner": "winners",
+    "source": "sources",
+    "run_id": "run_ids",
+    "observer": "observers",
+    "target": "targets",
+    "observer_team": "observer_teams",
+    "target_team": "target_teams",
+    "observer_role": "observer_roles",
+    "target_role": "target_roles",
+    "trust_type": "trust_types",
+    "checkpoint": "checkpoints",
+    "model": "models",
+    "experiment": "experiments",
+    "trust_scale_mode": "trust_scale_modes",
+}
+
+_LIST_FIELDS = tuple(_SINGULAR_ALIASES.values())
 
 
 class FilterSpec(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    @model_validator(mode="before")
+    @classmethod
+    def _accept_singular_aliases(cls, data):
+        if isinstance(data, dict):
+            data = dict(data)
+            for singular, plural in _SINGULAR_ALIASES.items():
+                if singular in data:
+                    value = data.pop(singular)
+                    data.setdefault(plural, value)
+        return data
+
+    @field_validator(*_LIST_FIELDS, mode="before")
+    @classmethod
+    def _wrap_bare_string(cls, value):
+        if isinstance(value, str):
+            return [value]
+        return value
+
     # game-level
     game_ids: list[str] | None = None
     room_codes: list[str] | None = None

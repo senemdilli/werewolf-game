@@ -8,7 +8,7 @@ from data.filters import FilterSpec
 from tests.conftest import FIXTURES
 from tools.compare_tool import CompareDataTool
 from tools.plot_tool import PlotTool
-from tools.slicing import describe_slice, match_keys_for, matched_cells
+from tools.slicing import describe_slice, explain_empty_slice, match_keys_for, matched_cells
 
 
 def _row(source, observer, target, phase, trust_type, raw, confidence=2, room="G1"):
@@ -101,6 +101,24 @@ class TestSlicing:
         a = FilterSpec(trust_types=["alignment"])
         b = FilterSpec(trust_types=["consistency"])
         assert "trust_type" not in match_keys_for(a, b)
+
+    def test_explain_empty_slice_names_right_field(self, synthetic_df):
+        # the agent's real mistake: a room code passed as game_ids
+        msg = explain_empty_slice(synthetic_df, FilterSpec(game_ids=["G1"]))
+        assert "not a game_id" in msg
+        assert "room_codes" in msg
+
+    def test_explain_empty_slice_unknown_value(self, synthetic_df):
+        msg = explain_empty_slice(synthetic_df, FilterSpec(room_codes=["NOPE"]))
+        assert "matches no room_code" in msg
+        assert "G1" in msg  # examples of valid values are listed
+
+    def test_explain_empty_slice_narrow_combination(self, synthetic_df):
+        # each value valid alone, but humans never rated Cal
+        msg = explain_empty_slice(
+            synthetic_df, FilterSpec(sources=["human"], targets=["Cal"])
+        )
+        assert "combination" in msg
 
 
 class TestCompareData:

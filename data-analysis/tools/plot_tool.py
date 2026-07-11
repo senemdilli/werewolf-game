@@ -22,7 +22,7 @@ from pydantic import BaseModel
 from contracts.tool_output import ToolOutput
 from data.filters import FilterSpec
 from tools.base_tool import BaseTool
-from tools.slicing import slice_df
+from tools.slicing import explain_empty_slice, slice_df
 
 PlotKind = Literal["line_per_phase", "line_per_game", "histogram", "box", "scatter", "heatmap"]
 
@@ -78,7 +78,7 @@ class PlotTool(BaseTool):
 
         rows = slice_df(self._df, filters)
         if rows.empty:
-            return self._fail("filters match no rows")
+            return self._fail(explain_empty_slice(self._df, filters))
         if hue not in rows.columns:
             return self._fail(f"unknown hue column: {hue!r}")
 

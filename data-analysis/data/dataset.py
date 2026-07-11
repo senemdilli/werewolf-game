@@ -89,6 +89,19 @@ def build_dataset(
         rows.extend(llm_rows(run, events, meta_by_game.get(run.game_id)))
 
     df = pd.DataFrame(rows, columns=COLUMNS)
+
+    # The game never asks players to rate themselves, so observer==target rows
+    # can only be labeling-engine glitches (the LLM including itself in the
+    # target list); they would dilute means and heatmap diagonals downstream.
+    self_labels = df["observer"] == df["target"]
+    if self_labels.any():
+        logger.warning(
+            "Dropping %d self-label rows (observer == target), all from: %s",
+            int(self_labels.sum()),
+            sorted(df.loc[self_labels, "run_id"].dropna().unique()),
+        )
+        df = df[~self_labels].reset_index(drop=True)
+
     logger.info(
         "Dataset built: %d rows (%d human files, %d LLM runs, %d games with events).",
         len(df), len(human_files), len(llm_runs), len(events_by_game),
