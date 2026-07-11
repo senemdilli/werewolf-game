@@ -26,6 +26,19 @@ from tools.slicing import explain_empty_slice, slice_df
 
 PlotKind = Literal["line_per_phase", "line_per_game", "histogram", "box", "scatter", "heatmap"]
 
+_ROLE_ABBREVIATIONS = {"WEREWOLF": "W", "VILLAGER": "V", "SEER": "S", "WITCH": "Wi"}
+
+# Colorbar anchors for normalized trust: the 7 likert levels sit at (k-1)/6.
+_TRUST_TICK_LABELS = [
+    "VERY_LOW_TRUST",
+    "LOW_TRUST",
+    "SLIGHTLY_LOW_TRUST",
+    "NEUTRAL",
+    "SLIGHTLY_HIGH_TRUST",
+    "HIGH_TRUST",
+    "VERY_HIGH_TRUST",
+]
+
 class PlotInput(BaseModel):
     filters: FilterSpec
     kind: PlotKind
@@ -182,12 +195,25 @@ class PlotTool(BaseTool):
             if rows["room_code"].nunique() > 1:
                 raise ValueError("heatmap needs a single game; add room_codes to the filters")
             pivoted = rows.pivot_table(index="observer", columns="target", values=value, aggfunc=agg)
+
+            # name -> "name (W)" using whichever role column knows the player
+            roles = dict(rows.groupby("target")["target_role"].first().dropna())
+            roles |= dict(rows.groupby("observer")["observer_role"].first().dropna())
+
+            def _with_role(name: str) -> str:
+                role = roles.get(name)
+                if role is None:
+                    return str(name)
+                return f"{name} ({_ROLE_ABBREVIATIONS.get(role, role[0])})"
+
             im = ax.imshow(pivoted.to_numpy(), cmap="RdYlGn", vmin=0, vmax=1 if value == "score_norm" else None)
-            ax.set_xticks(range(len(pivoted.columns)), pivoted.columns, rotation=45)
-            ax.set_yticks(range(len(pivoted.index)), pivoted.index)
+            ax.set_xticks(range(len(pivoted.columns)), [_with_role(c) for c in pivoted.columns], rotation=45)
+            ax.set_yticks(range(len(pivoted.index)), [_with_role(i) for i in pivoted.index])
             ax.set_xlabel("target")
             ax.set_ylabel("observer")
-            ax.figure.colorbar(im, ax=ax, label=value)
+            cbar = ax.figure.colorbar(im, ax=ax, label=value)
+            if value == "score_norm":
+                cbar.set_ticks([k / 6 for k in range(7)], labels=_TRUST_TICK_LABELS)
             return _table(pivoted)
 
         raise ValueError(f"unknown plot kind: {kind!r}")
