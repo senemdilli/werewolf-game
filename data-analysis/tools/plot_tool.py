@@ -22,9 +22,48 @@ from pydantic import BaseModel
 from contracts.tool_output import ToolOutput
 from data.filters import FilterSpec
 from tools.base_tool import BaseTool
-from tools.slicing import slice_df
+from tools.slicing import explain_empty_slice, slice_df
 
 PlotKind = Literal["line_per_phase", "line_per_game", "histogram", "box", "scatter", "heatmap"]
+
+_ROLE_ABBREVIATIONS = {"WEREWOLF": "W", "VILLAGER": "V", "SEER": "S", "WITCH": "Wi"}
+
+
+def _likert_y_axis(ax: plt.Axes) -> None:
+    """Tick the normalized-trust y axis with the likert level names.
+
+    Ticks sit at the 7 level positions; matplotlib hides the ones outside the
+    data range, so a plot spanning 0.3-0.6 shows only the relevant levels.
+    """
+    ax.set_yticks([k / 6 for k in range(7)], labels=_TRUST_TICK_LABELS, fontsize=8)
+    ax.set_ylabel("trust")
+
+
+def _describe_filters(spec: FilterSpec) -> str:
+    """Compact 'filters: sources=llm, room_codes=5NOHGS' line for the chart.
+
+    Only non-default fields appear, so an unfiltered plot says so explicitly
+    instead of listing 20 Nones.
+    """
+    active = spec.model_dump(exclude_defaults=True, exclude_none=True)
+    if not active:
+        return "filters: none (all rows)"
+    parts = [
+        f"{field}={','.join(map(str, value)) if isinstance(value, list) else value}"
+        for field, value in active.items()
+    ]
+    return "filters: " + ", ".join(parts)
+
+# Colorbar anchors for normalized trust: the 7 likert levels sit at (k-1)/6.
+_TRUST_TICK_LABELS = [
+    "VERY_LOW_TRUST",
+    "LOW_TRUST",
+    "SLIGHTLY_LOW_TRUST",
+    "NEUTRAL",
+    "SLIGHTLY_HIGH_TRUST",
+    "HIGH_TRUST",
+    "VERY_HIGH_TRUST",
+]
 
 class PlotInput(BaseModel):
     filters: FilterSpec
@@ -78,7 +117,7 @@ class PlotTool(BaseTool):
 
         rows = slice_df(self._df, filters)
         if rows.empty:
-            return self._fail("filters match no rows")
+            return self._fail(explain_empty_slice(self._df, filters))
         if hue not in rows.columns:
             return self._fail(f"unknown hue column: {hue!r}")
 
@@ -101,10 +140,12 @@ class PlotTool(BaseTool):
 
         ax.set_title(title or self._default_title(kind, rows))
         fig.tight_layout()
+        filters_line = _describe_filters(filters)
+        fig.text(0.99, 0.005, filters_line, ha="right", va="bottom", fontsize=7, color="dimgray")
         path = self._save(fig, kind, filters, filename)
         plt.close(fig)
 
-        caption = f"{kind} of {value} ({agg}) over {len(rows)} rows, split by {hue}"
+        caption = f"{kind} of {value} ({agg}) over {len(rows)} rows, split by {hue} [{filters_line}]"
         return ToolOutput(
             success=True,
             source=self.name,
@@ -127,6 +168,8 @@ class PlotTool(BaseTool):
             pivoted.plot(ax=ax, marker="o")
             ax.set_xlabel("phase")
             ax.set_ylabel(value)
+            if value == "score_norm":
+                _likert_y_axis(ax)
             return _table(pivoted)
 
         if kind == "line_per_game":
@@ -136,6 +179,8 @@ class PlotTool(BaseTool):
             pivoted.plot(ax=ax, marker="o")
             ax.set_xlabel("game (chronological)")
             ax.set_ylabel(value)
+            if value == "score_norm":
+                _likert_y_axis(ax)
             ax.tick_params(axis="x", rotation=45)
             return _table(pivoted)
 
@@ -144,12 +189,20 @@ class PlotTool(BaseTool):
             counts.plot.bar(ax=ax)
             ax.set_xlabel("raw score")
             ax.set_ylabel("count")
+            if rows["scale"].iloc[0] == "7pt":  # single scale guaranteed by guard above
+                ax.set_xticklabels(
+                    [_TRUST_TICK_LABELS[int(v) - 1] for v in counts.index],
+                    rotation=30, ha="right", fontsize=8,
+                )
+                ax.set_xlabel("trust level")
             return _table(counts)
 
         if kind == "box":
             groups = [(str(k), g[value].dropna()) for k, g in rows.groupby(hue)]
             ax.boxplot([g for _, g in groups], tick_labels=[k for k, _ in groups])
             ax.set_ylabel(value)
+            if value == "score_norm":
+                _likert_y_axis(ax)
             summary = rows.groupby(hue)[value].describe()[["count", "mean", "50%", "std"]]
             return _table(summary)
 
@@ -182,12 +235,25 @@ class PlotTool(BaseTool):
             if rows["room_code"].nunique() > 1:
                 raise ValueError("heatmap needs a single game; add room_codes to the filters")
             pivoted = rows.pivot_table(index="observer", columns="target", values=value, aggfunc=agg)
+
+            # name -> "name (W)" using whichever role column knows the player
+            roles = dict(rows.groupby("target")["target_role"].first().dropna())
+            roles |= dict(rows.groupby("observer")["observer_role"].first().dropna())
+
+            def _with_role(name: str) -> str:
+                role = roles.get(name)
+                if role is None:
+                    return str(name)
+                return f"{name} ({_ROLE_ABBREVIATIONS.get(role, role[0])})"
+
             im = ax.imshow(pivoted.to_numpy(), cmap="RdYlGn", vmin=0, vmax=1 if value == "score_norm" else None)
-            ax.set_xticks(range(len(pivoted.columns)), pivoted.columns, rotation=45)
-            ax.set_yticks(range(len(pivoted.index)), pivoted.index)
+            ax.set_xticks(range(len(pivoted.columns)), [_with_role(c) for c in pivoted.columns], rotation=45)
+            ax.set_yticks(range(len(pivoted.index)), [_with_role(i) for i in pivoted.index])
             ax.set_xlabel("target")
             ax.set_ylabel("observer")
-            ax.figure.colorbar(im, ax=ax, label=value)
+            cbar = ax.figure.colorbar(im, ax=ax, label=value)
+            if value == "score_norm":
+                cbar.set_ticks([k / 6 for k in range(7)], labels=_TRUST_TICK_LABELS)
             return _table(pivoted)
 
         raise ValueError(f"unknown plot kind: {kind!r}")

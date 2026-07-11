@@ -71,7 +71,8 @@ class TestNoOverlapIsAFailureNotACrash:
             compare="trust_type", value_a="alignment", value_b="consistency",
         )
         assert not out.success
-        assert "no rows match the filters" in out.error
+        assert "filters match no rows" in out.error
+        assert "matches no game_id" in out.error  # names the offending value
 
     def test_unknown_compare_value_fails_cleanly(self, tool):
         out = tool.run(

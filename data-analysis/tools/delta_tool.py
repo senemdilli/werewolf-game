@@ -16,7 +16,7 @@ from contracts.tool_output import ToolOutput
 from data.filters import FilterSpec
 from tools.base_tool import BaseTool
 from tools.slicing import MATCH_KEYS as _SLICING_MATCH_KEYS
-from tools.slicing import matched_cells, slice_df
+from tools.slicing import explain_empty_slice, matched_cells, slice_df
 
 _BASE_KEYS = [k for k in _SLICING_MATCH_KEYS if k != "trust_type"]  # game_id, room_code, observer, target, phase_idx
 _OTHER_AXIS = {"source": "trust_type", "trust_type": "source"}
@@ -62,7 +62,10 @@ class DeltaTool(BaseTool):
 
         df = slice_df(self._df, filters)
         if df.empty:
-            return ToolOutput(success=False, source=self.name, error="no rows match the filters")
+            return ToolOutput(
+                success=False, source=self.name,
+                error=explain_empty_slice(self._df, filters),
+            )
 
         group_by = group_by or []
         match_keys = _BASE_KEYS + [_OTHER_AXIS[compare]]

@@ -47,13 +47,44 @@ class TestApplyFilters:
         assert "Delta" not in set(alive["target"])
         assert len(alive) == len(df) - 3  # only the Delta target rows drop
 
-    def test_llm_config_filters(self, df):
+    def test_llm_config_filters_constrain_llm_rows_only(self, df):
+        # pinning the LLM config must not drop human rows: the point of these
+        # fields is comparing humans against one specific engine configuration
         exp_a = apply_filters(df, FilterSpec(experiments=["a"]))
-        assert set(exp_a["run_id"]) == {"Alpha-likert01"}
+        assert set(exp_a.loc[exp_a["source"] == "llm", "run_id"]) == {"Alpha-likert01"}
+        assert (exp_a["source"] == "human").sum() == 8  # all human rows kept
+
         cool = apply_filters(df, FilterSpec(temperature_max=0.5))
-        assert set(cool["run_id"]) == {"Alpha-likert01"}  # numeric run has no temperature
+        assert set(cool.loc[cool["source"] == "llm", "run_id"]) == {"Alpha-likert01"}
+        assert (cool["source"] == "human").sum() == 8
+
+        # combined with sources=["llm"], humans drop as before
+        llm_only = apply_filters(df, FilterSpec(sources=["llm"], experiments=["a"]))
+        assert set(llm_only["source"]) == {"llm"}
 
     def test_combined(self, df):
         rows = apply_filters(df, FilterSpec(sources=["llm"], targets=["Carol"], trust_types=["alignment"]))
         assert len(rows) == 2  # Carol labeled in phases 1 and 3
         assert sorted(rows["score_raw"]) == [2, 7]
+
+
+class TestSpecLeniency:
+    """The orchestrator LLM writes sloppy specs; unambiguous ones must work."""
+
+    def test_singular_alias(self):
+        spec = FilterSpec.model_validate({"room_code": ["G1"], "source": ["human"]})
+        assert spec.room_codes == ["G1"]
+        assert spec.sources == ["human"]
+
+    def test_bare_string_becomes_list(self):
+        spec = FilterSpec.model_validate({"room_codes": "G1", "trust_type": "alignment"})
+        assert spec.room_codes == ["G1"]
+        assert spec.trust_types == ["alignment"]
+
+    def test_unknown_field_fails_loudly(self):
+        with pytest.raises(Exception, match="game"):
+            FilterSpec.model_validate({"game": "5NOHGS"})
+
+    def test_plural_wins_over_singular(self):
+        spec = FilterSpec.model_validate({"room_codes": ["G1"], "room_code": "G2"})
+        assert spec.room_codes == ["G1"]
