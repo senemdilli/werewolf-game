@@ -6,9 +6,10 @@ the [labeling engine](../llm-labeling/) produces LLM annotations of the same gam
 This package loads both into one unified table and (in later phases) exposes
 analysis tools to an LLM orchestrator you can query in natural language.
 
-**Status:** Phase 1 (data foundation) and Phase 2 (analysis tools:
-`compare_data`, `plot`, `delta_tool`, `correlation_tool`) are implemented. The
-orchestrator (phase 3) is next.
+**Status:** Phase 1 (data foundation), Phase 2 (analysis tools:
+`compare_data`, `plot`, `delta_tool`, `correlation_tool`), and a first
+Phase 3 orchestrator (natural-language agent over those tools) are
+implemented.
 See `Data_Scientist_Agent_Spec.md` for the research questions driving this.
 
 ---
@@ -48,6 +49,25 @@ uv run pytest
 The suite includes integration tests against the real exports in
 `../results/game-records`; they skip automatically when that directory is absent.
 
+## Asking the agent
+
+The orchestrator answers natural-language questions by driving the analysis
+tools with a chat model on the SNET Ollama server. Copy `.env.example` to
+`.env` and set `OLLAMA_API_KEY` (note: the model is configured via
+`AGENT_MODEL`, default `gemma4:26b`), then:
+
+```bash
+uv run python main.py agent "How does human trust in werewolves evolve across phases?"
+uv run python main.py agent        # interactive: type questions, empty line exits
+make run                           # same as the interactive form
+```
+
+Answers take ~30–60 s (usually several tool calls). Plots the agent creates
+land in `analysis/plots/`. Run with `LOG_LEVEL=DEBUG` to watch every tool call
+and its arguments — the agent often gets a filter wrong on the first try and
+recovers from the tool's error message; that loop is by design (see
+"Errors are prompts" below).
+
 ---
 
 ## Input data
@@ -71,7 +91,14 @@ match or parse.
 Everything downstream works on one long-format DataFrame:
 **one row per (game, source, run, observer, target, phase, trust dimension)**.
 Built by `build_dataset()`, cached by `load_dataset()` (parquet, invalidated
-whenever any input file changes).
+whenever any input file changes — but **not** when loader code changes; after
+editing loaders, `rm -rf analysis/cache`).
+
+One cleaning step happens at build time: **`observer == target` rows are
+dropped** (with a warning naming the run files). The game never asks players
+to rate themselves, so self-labels can only be labeling-engine glitches — the
+LLM occasionally includes itself in its own target list and rates itself
+NEUTRAL, which would dilute means and put ghost values on heatmap diagonals.
 
 | Column(s) | Meaning |
 |---|---|
@@ -174,11 +201,40 @@ FilterSpec(
 apply_filters(df, spec)  # -> filtered DataFrame
 ```
 
+### Semantics worth knowing
+
+- **LLM-config fields constrain LLM rows only.** `models`, `experiments`,
+  `trust_scale_modes`, `temperature_min/max`, and `context_as_tool` never drop
+  human rows (humans have no run configuration). So
+  `FilterSpec(experiments=["b"])` means "humans + the experiment-b LLM runs" —
+  exactly what a human-vs-LLM comparison pinned to one engine config needs.
+  Add `sources=["llm"]` to get only the LLM side.
+- **Excluding werewolf-produced labels**: there is no negation syntax; use the
+  complement. `observer_teams=["VILLAGERS"]` keeps only labels *given by* the
+  village side (seer and witch included — they're on the villager team).
+  Werewolves know all roles, so their "trust" labels are strategic theater;
+  the villager-observers slice is the honest-trust one. Mirror question:
+  `target_teams` filters by who *received* the trust.
+- **Lenient where unambiguous, loud where not.** Written for an LLM caller:
+  singular field names (`room_code=...`) and bare strings (`"5NOHGS"` instead
+  of `["5NOHGS"]`) are accepted and normalized, but an unknown field is a
+  validation error, never silently ignored.
+
+### Errors are prompts
+
+Tool error messages are written for the orchestrator LLM, whose next move is
+determined by the error text. An empty slice therefore explains *why* it is
+empty ("`'5NOHGS' is not a game_id; use room_codes instead`", "matches no
+room_code (examples: ...)", or "the combination is too narrow; drop one
+constraint"). Observed effect: the same misfiled heatmap request went from
+10 minutes of blind retries to a one-retry recovery. When changing tools,
+keep error messages actionable — say what to do, not just what failed.
+
 ## Project layout
 
 ```
 data-analysis/
-├── agent/                  # LLM orchestrator (phase 3, stub)
+├── agent/                  # LLM orchestrator: natural-language queries -> tool calls
 ├── analysis/               # generated artifacts: cache/, plots/ (gitignored)
 ├── contracts/tool_output.py    # ToolOutput contract all tools return
 ├── core/                   # settings (.env) + logging
@@ -245,6 +301,14 @@ Kinds: `line_per_phase` (one game), `line_per_game` (chronological),
 `hue` defaults to `"source"` so human vs LLM overlay; `use_raw=true` is
 rejected when the slice mixes scales.
 
+Charts are self-describing: trust axes and the heatmap colorbar are labeled
+with the seven likert level names (`VERY_LOW_TRUST` … `NEUTRAL` …
+`VERY_HIGH_TRUST`) instead of normalized numbers; heatmap axes annotate each
+player's role (`Blue (W)`, `Lime (Wi)`, `Beige (S)`, `... (V)`); and every
+figure prints its active filters bottom-right (also appended to the returned
+caption), so any PNG can be traced back to the exact slice it shows.
+Confidence plots keep numeric axes — likert trust words would be wrong there.
+
 **`delta_tool`** — `score_a - score_b` between two values of `compare`:
 `compare="source"` (`value_a`/`value_b` in `{"human","llm"}`) or
 `compare="trust_type"` (`value_a`/`value_b` in
@@ -276,15 +340,17 @@ signature:
 ```python
 from contracts.tool_output import ToolOutput
 from tools.base_tool import BaseTool
+from tools.slicing import explain_empty_slice, slice_df
 
 class MyTool(BaseTool):
     name = "my_tool"
     description = "What the orchestrator should know about this tool."
 
     def run(self, filters: FilterSpec) -> ToolOutput:
-        rows = apply_filters(self._df, filters)
+        rows = slice_df(self._df, filters)
         if rows.empty:
-            return ToolOutput(success=False, source=self.name, error="no rows match the filters")
+            return ToolOutput(success=False, source=self.name,
+                              error=explain_empty_slice(self._df, filters))
         return ToolOutput(success=True, source=self.name, data=..., metadata={"n_rows": len(rows)})
 ```
 
