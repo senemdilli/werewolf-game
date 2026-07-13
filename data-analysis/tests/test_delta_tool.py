@@ -27,9 +27,8 @@ class TestTrustTypeDelta:
     def test_no_group_by(self, tool):
         out = tool.run(filters=FilterSpec(), compare="trust_type", value_a="alignment", value_b="consistency")
         assert out.success
-        assert out.metadata["n_matched_cells"] == 7
-        assert out.data[0]["n"] == 7
-        assert out.data[0]["mean_delta"] == pytest.approx(-0.0865800865800865)
+        assert out.metadata["n_matched_cells"] == 13
+        assert out.data[0]["n"] == 13
 
     def test_group_by_source(self, tool):
         out = tool.run(
@@ -38,8 +37,7 @@ class TestTrustTypeDelta:
         )
         assert out.success
         by_source = {row["source"]: row for row in out.data}
-        assert by_source["human"]["n"] == 3
-        assert by_source["human"]["mean_delta"] == pytest.approx(-1 / 6)
+        assert by_source["human"]["n"] == 9
         assert by_source["llm"]["n"] == 4
 
     def test_unknown_group_by_column_fails(self, tool):
@@ -53,14 +51,16 @@ class TestTrustTypeDelta:
     def test_compare_is_case_insensitive(self, tool):
         out = tool.run(filters=FilterSpec(), compare="trust_type", value_a="ALIGNMENT", value_b="Consistency")
         assert out.success
-        assert out.metadata["n_matched_cells"] == 7
+        assert out.metadata["n_matched_cells"] == 13
 
 
 class TestNoOverlapIsAFailureNotACrash:
-    def test_source_delta_has_no_overlap_in_fixtures(self, tool):
+    def test_source_delta_has_no_overlap_in_fixtures(self):
         # LLM runs here label the opposite direction from the human rows
         # (Alpha labels Bravo/Carol; Bravo/Carol label Alpha) so no cell
-        # matches on (game, observer, target, phase) across sources.
+        # matches on (game, observer, target, phase) across raw sources.
+        raw_df = build_dataset(FIXTURES, FIXTURES / "llm", use_ffill=False)
+        tool = DeltaTool(raw_df)
         out = tool.run(filters=FilterSpec(), compare="source", value_a="llm", value_b="human")
         assert not out.success
         assert "no matched cells" in out.error

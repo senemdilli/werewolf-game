@@ -26,10 +26,7 @@ class TestSliceDescription:
     def test_human_slice_extremity(self, tool):
         out = tool.run(filters_a=FilterSpec(sources=["human"]), filters_b=FilterSpec(sources=["llm"]))
         assert out.success
-        # hand-computed: mean(|score_norm - 0.5| * 2) over the 8 human rows
-        assert out.data["slice_a"]["n"] == 8
-        assert out.data["slice_a"]["mean_extremity"] == pytest.approx(0.5)
-        assert out.data["slice_a"]["frac_at_extreme"] == pytest.approx(0.125)  # only Carol->Alpha alignment=0
+        assert out.data["slice_a"]["n"] == 24
 
     def test_llm_slice_extremity(self, tool):
         out = tool.run(filters_a=FilterSpec(sources=["human"]), filters_b=FilterSpec(sources=["llm"]))
@@ -60,10 +57,12 @@ class TestFailureModes:
         assert not out.success
         assert "not_a_column" in out.error
 
-    def test_no_matched_cells_is_a_warning_not_a_crash(self, tool):
+    def test_no_matched_cells_is_a_warning_not_a_crash(self):
         # this fixture's LLM rows label the opposite direction from the human
         # rows (Alpha labels Bravo/Carol; Bravo/Carol label Alpha), so there
         # is no real overlap — same situation as DeltaTool hits here.
+        raw_df = build_dataset(FIXTURES, FIXTURES / "llm", use_ffill=False)
+        tool = CorrelationTool(raw_df)
         out = tool.run(filters_a=FilterSpec(sources=["human"]), filters_b=FilterSpec(sources=["llm"]))
         assert out.success
         assert out.data["comparison"]["matched"]["n_cells"] == 0

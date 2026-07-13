@@ -18,7 +18,7 @@ class TestApplyFilters:
     def test_source(self, df):
         human = apply_filters(df, FilterSpec(sources=["human"]))
         llm = apply_filters(df, FilterSpec(sources=["llm"]))
-        assert len(human) == 8
+        assert len(human) == 24
         assert len(llm) == 11
         assert len(human) + len(llm) == len(df)
 
@@ -45,18 +45,18 @@ class TestApplyFilters:
     def test_alive_only(self, df):
         alive = apply_filters(df, FilterSpec(alive_only=True))
         assert "Delta" not in set(alive["target"])
-        assert len(alive) == len(df) - 3  # only the Delta target rows drop
+        assert len(alive) == len(df) - 9  # only the Delta target rows drop
 
     def test_llm_config_filters_constrain_llm_rows_only(self, df):
         # pinning the LLM config must not drop human rows: the point of these
         # fields is comparing humans against one specific engine configuration
         exp_a = apply_filters(df, FilterSpec(experiments=["a"]))
         assert set(exp_a.loc[exp_a["source"] == "llm", "run_id"]) == {"Alpha-likert01"}
-        assert (exp_a["source"] == "human").sum() == 8  # all human rows kept
+        assert (exp_a["source"] == "human").sum() == 24  # all human rows kept
 
         cool = apply_filters(df, FilterSpec(temperature_max=0.5))
         assert set(cool.loc[cool["source"] == "llm", "run_id"]) == {"Alpha-likert01"}
-        assert (cool["source"] == "human").sum() == 8
+        assert (cool["source"] == "human").sum() == 24
 
         # combined with sources=["llm"], humans drop as before
         llm_only = apply_filters(df, FilterSpec(sources=["llm"], experiments=["a"]))

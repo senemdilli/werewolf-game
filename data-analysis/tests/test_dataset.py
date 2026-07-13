@@ -13,8 +13,8 @@ def df():
 class TestBuildDataset:
 
     def test_all_sources_loaded(self, df):
-        assert len(df) == 19  # 8 human + 8 likert llm + 3 numeric llm
-        assert df["source"].value_counts().to_dict() == {"llm": 11, "human": 8}
+        assert len(df) == 35  # 24 human + 8 likert llm + 3 numeric llm
+        assert df["source"].value_counts().to_dict() == {"human": 24, "llm": 11}
 
     def test_column_contract(self, df):
         assert list(df.columns) == COLUMNS
