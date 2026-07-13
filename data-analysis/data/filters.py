@@ -10,10 +10,55 @@ Trust given vs received is expressed through the observer/target axes: filter
 """
 
 import pandas as pd
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, field_validator, model_validator
+
+# The orchestrator LLM often writes singular field names ("room_code") or bare
+# strings instead of lists. Both mistakes are unambiguous, so accept them —
+# and forbid anything else so a typo fails loudly instead of matching all rows.
+_SINGULAR_ALIASES = {
+    "game_id": "game_ids",
+    "room_code": "room_codes",
+    "game_mode": "game_modes",
+    "winner": "winners",
+    "source": "sources",
+    "run_id": "run_ids",
+    "observer": "observers",
+    "target": "targets",
+    "observer_team": "observer_teams",
+    "target_team": "target_teams",
+    "observer_role": "observer_roles",
+    "target_role": "target_roles",
+    "trust_type": "trust_types",
+    "checkpoint": "checkpoints",
+    "model": "models",
+    "experiment": "experiments",
+    "trust_scale_mode": "trust_scale_modes",
+}
+
+_LIST_FIELDS = tuple(_SINGULAR_ALIASES.values())
 
 
 class FilterSpec(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    @model_validator(mode="before")
+    @classmethod
+    def _accept_singular_aliases(cls, data):
+        if isinstance(data, dict):
+            data = dict(data)
+            for singular, plural in _SINGULAR_ALIASES.items():
+                if singular in data:
+                    value = data.pop(singular)
+                    data.setdefault(plural, value)
+        return data
+
+    @field_validator(*_LIST_FIELDS, mode="before")
+    @classmethod
+    def _wrap_bare_string(cls, value):
+        if isinstance(value, str):
+            return [value]
+        return value
+
     # game-level
     game_ids: list[str] | None = None
     room_codes: list[str] | None = None
@@ -76,20 +121,29 @@ _EXACT_COLUMNS = {
 }
 
 
+# LLM run-configuration fields constrain LLM rows only: human rows have no
+# model/experiment/scale-mode/temperature, and dropping them would break
+# human-vs-LLM comparisons that pin the LLM side to one configuration.
+_LLM_CONFIG_FIELDS = {"models", "experiments", "trust_scale_modes"}
+
+
 def apply_filters(df: pd.DataFrame, spec: FilterSpec) -> pd.DataFrame:
     """Return the rows of the unified table matching the spec."""
     mask = pd.Series(True, index=df.index)
+    is_human = df["source"] == "human"
 
     for field, column in _EXACT_COLUMNS.items():
         values = getattr(spec, field)
         if values:
-            mask &= df[column].isin(values)
+            matches = df[column].isin(values)
+            mask &= (is_human | matches) if field in _LLM_CONFIG_FIELDS else matches
 
     for field, column in _CASEFOLD_COLUMNS.items():
         values = getattr(spec, field)
         if values:
             wanted = {str(v).strip().casefold() for v in values}
-            mask &= df[column].astype("string").str.casefold().isin(wanted)
+            matches = df[column].astype("string").str.casefold().isin(wanted)
+            mask &= (is_human | matches) if field in _LLM_CONFIG_FIELDS else matches
 
     if spec.exclude_self:
         mask &= df["observer"] != df["target"]
@@ -105,10 +159,10 @@ def apply_filters(df: pd.DataFrame, spec: FilterSpec) -> pd.DataFrame:
     if spec.phase_idx_max is not None:
         mask &= df["phase_idx"] <= spec.phase_idx_max
     if spec.temperature_min is not None:
-        mask &= df["temperature"] >= spec.temperature_min
+        mask &= is_human | (df["temperature"] >= spec.temperature_min)
     if spec.temperature_max is not None:
-        mask &= df["temperature"] <= spec.temperature_max
+        mask &= is_human | (df["temperature"] <= spec.temperature_max)
     if spec.context_as_tool is not None:
-        mask &= df["context_as_tool"] == spec.context_as_tool
+        mask &= is_human | (df["context_as_tool"] == spec.context_as_tool)
 
     return df[mask]

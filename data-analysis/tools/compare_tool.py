@@ -19,6 +19,7 @@ from tools.slicing import (
     MIN_TEST_N,
     describe_slice,
     differing_fields,
+    explain_empty_slice,
     match_keys_for,
     matchable,
     matched_cells,
@@ -66,7 +67,7 @@ class CompareDataTool(BaseTool):
 
         rows_a = slice_df(self._df, filters_a)
         if rows_a.empty:
-            return self._fail("filters_a matches no rows")
+            return self._fail("filters_a: " + explain_empty_slice(self._df, filters_a))
 
         data: dict[str, Any] = {"slice_a": describe_slice(rows_a)}
         warnings: list[str] = []
@@ -75,7 +76,7 @@ class CompareDataTool(BaseTool):
         if filters_b is not None:
             rows_b = slice_df(self._df, filters_b)
             if rows_b.empty:
-                return self._fail("filters_b matches no rows")
+                return self._fail("filters_b: " + explain_empty_slice(self._df, filters_b))
             data["slice_b"] = describe_slice(rows_b)
             data["comparison"] = self._compare(
                 rows_a, rows_b, filters_a, filters_b, mode, value, warnings

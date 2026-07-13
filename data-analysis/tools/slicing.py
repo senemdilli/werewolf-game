@@ -38,6 +38,46 @@ def slice_df(df: pd.DataFrame, spec: FilterSpec) -> pd.DataFrame:
     return apply_filters(df, spec)
 
 
+def explain_empty_slice(df: pd.DataFrame, spec: FilterSpec) -> str:
+    """Actionable message for a spec that matched no rows.
+
+    The commonest agent mistake is a correct value in the wrong field (a room
+    code passed as game_ids), so for each unknown value we look for the column
+    it actually lives in and name the field to use instead.
+    """
+    from data.filters import _CASEFOLD_COLUMNS, _EXACT_COLUMNS
+
+    field_to_column = {**_EXACT_COLUMNS, **_CASEFOLD_COLUMNS}
+    originals: dict[str, list[str]] = {
+        column: sorted(str(v) for v in df[column].dropna().unique())
+        for column in field_to_column.values()
+    }
+    known: dict[str, set[str]] = {
+        column: {v.casefold() for v in values} for column, values in originals.items()
+    }
+    column_to_field = {column: field for field, column in field_to_column.items()}
+
+    problems = []
+    for field, column in field_to_column.items():
+        for value in getattr(spec, field) or []:
+            if str(value).casefold() in known[column]:
+                continue
+            homes = [c for c, vals in known.items() if str(value).casefold() in vals]
+            if homes:
+                suggestions = ", ".join(column_to_field[c] for c in homes)
+                problems.append(f"{value!r} is not a {column}; use {suggestions} instead")
+            else:
+                examples = originals[column][:5]
+                problems.append(f"{value!r} matches no {column} (examples: {examples})")
+
+    if not problems:
+        return (
+            "filters match no rows: every value exists on its own, but the "
+            "combination is too narrow; drop one constraint and retry"
+        )
+    return "filters match no rows: " + "; ".join(problems)
+
+
 def describe_slice(rows: pd.DataFrame) -> dict:
     """Descriptive stats for one slice, JSON-serializable.
 

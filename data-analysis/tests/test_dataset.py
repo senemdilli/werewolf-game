@@ -28,6 +28,26 @@ class TestBuildDataset:
         df = build_dataset(FIXTURES)
         assert set(df["source"]) == {"human"}
 
+    def test_self_labels_dropped(self, tmp_path):
+        # The engine sometimes labels the observer themselves; the game never
+        # allows that, so such rows must not reach the unified table.
+        import json
+        import shutil
+
+        shutil.copy(FIXTURES / "game-TEST01-labels.json", tmp_path)
+        shutil.copy(FIXTURES / "game-TEST01.json", tmp_path)
+        llm_dir = tmp_path / "llm"
+        llm_dir.mkdir()
+        run = json.loads((FIXTURES / "llm" / "Alpha-likert01.json").read_text())
+        phase = run["phases"][0]
+        phase["labels"]["Alpha"] = phase["labels"]["Bravo"]  # self-label
+        (llm_dir / "Alpha-likert01.json").write_text(json.dumps(run))
+
+        df = build_dataset(tmp_path, llm_dir)
+        assert not (df["observer"] == df["target"]).any()
+        # only the likert run was copied: its usual 8 rows, self-labels gone
+        assert len(df[df["source"] == "llm"]) == 8
+
 
 class TestParquetCache:
     def test_cache_roundtrip(self, tmp_path):
