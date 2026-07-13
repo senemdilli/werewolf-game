@@ -161,10 +161,11 @@ def apply_ffill(df: pd.DataFrame) -> pd.DataFrame:
         group["confidence_norm"] = group["confidence_norm"].fillna(0.5)
         
         group = group.reset_index()
+        group = group[[c for c in COLUMNS if c in group.columns]]
         filled_dfs.append(group)
         
     filled_human_df = pd.concat(filled_dfs, ignore_index=True)
-    return pd.concat([filled_human_df, llm_df], ignore_index=True)
+    return pd.concat([filled_human_df, llm_df], ignore_index=True)[COLUMNS]
 
 
 def load_dataset(
@@ -186,9 +187,12 @@ def load_dataset(
     fingerprint = _fingerprint(game_records_dir, llm_results_dir)
     
     # Isolate cache files for ffill vs raw
-    parquet_name = "dataset.parquet" if use_ffill else "dataset_raw.parquet"
-    parquet_path = cache_dir / parquet_name
-    fingerprint_path = cache_dir / f"{parquet_name}.fingerprint"
+    if use_ffill:
+        parquet_path = cache_dir / "dataset.parquet"
+        fingerprint_path = cache_dir / "dataset.fingerprint"
+    else:
+        parquet_path = cache_dir / "dataset_raw.parquet"
+        fingerprint_path = cache_dir / "dataset_raw.fingerprint"
 
     if parquet_path.exists() and fingerprint_path.exists():
         if fingerprint_path.read_text() == fingerprint:
