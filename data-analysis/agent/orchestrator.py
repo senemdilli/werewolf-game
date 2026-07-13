@@ -46,6 +46,8 @@ class OrchestratorConfig:
     plots_dir: str | Path = "analysis/plots"
     model: str | None = None
     temperature: float | None = None
+    use_ffill: bool = True
+    full_y_scale: bool = False
 
 
 class OrchestratorResponse(BaseModel):
@@ -63,9 +65,9 @@ class Orchestrator:
         self.config = config
         self.conversation: list[BaseMessage] = []
         self.df = load_dataset(
-            config.game_records, config.llm_results, cache_dir=config.cache_dir
+            config.game_records, config.llm_results, cache_dir=config.cache_dir, use_ffill=config.use_ffill
         )
-        self.registry = build_tool_registry(self.df, config.plots_dir)
+        self.registry = build_tool_registry(self.df, config.plots_dir, default_full_y_scale=config.full_y_scale)
         self.tools = [
             self.registry.get_tool(name).as_langchain_tool()
             for name in self.registry.list_tools()
@@ -101,10 +103,12 @@ def ask(question: str, config: OrchestratorConfig) -> OrchestratorResponse:
     return Orchestrator(config).ask(question)
 
 
-def build_tool_registry(df, plots_dir: str | Path = "analysis/plots") -> ToolRegistry:
+def build_tool_registry(
+    df, plots_dir: str | Path = "analysis/plots", default_full_y_scale: bool = False
+) -> ToolRegistry:
     registry = ToolRegistry()
     registry.register_tool(CompareDataTool(df))
-    registry.register_tool(PlotTool(df, plots_dir=plots_dir))
+    registry.register_tool(PlotTool(df, plots_dir=plots_dir, default_full_y_scale=default_full_y_scale))
     registry.register_tool(DeltaTool(df))
     registry.register_tool(CorrelationTool(df))
     return registry
@@ -116,7 +120,9 @@ def build_model(config: OrchestratorConfig) -> ChatOllama:
     temperature = settings.agent_temperature if config.temperature is None else config.temperature
     base_url = settings.ollama_api_url
     api_key = settings.ollama_api_key
-    client_kwargs = {"headers": {"Authorization": f"Bearer {api_key}"}}
+    client_kwargs = {}
+    if api_key:
+        client_kwargs["headers"] = {"Authorization": f"Bearer {api_key}"}
     model = ChatOllama(model=name, temperature=temperature, base_url=base_url, client_kwargs=client_kwargs)
 
     return model

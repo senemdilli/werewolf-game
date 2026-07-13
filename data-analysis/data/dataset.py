@@ -41,6 +41,7 @@ COLUMNS = [
 def build_dataset(
     game_records_dir: Path | str,
     llm_results_dir: Path | str | None = None,
+    use_ffill: bool = True,
 ) -> pd.DataFrame:
     """Load every recognized JSON export into one unified DataFrame.
 
@@ -89,17 +90,77 @@ def build_dataset(
         rows.extend(llm_rows(run, events, meta_by_game.get(run.game_id)))
 
     df = pd.DataFrame(rows, columns=COLUMNS)
+    if use_ffill:
+        df = apply_ffill(df)
+    
     logger.info(
-        "Dataset built: %d rows (%d human files, %d LLM runs, %d games with events).",
-        len(df), len(human_files), len(llm_runs), len(events_by_game),
+        "Dataset built (ffill=%s): %d rows (%d human files, %d LLM runs, %d games with events).",
+        use_ffill, len(df), len(human_files), len(llm_runs), len(events_by_game),
     )
     return df
+
+
+def apply_ffill(df: pd.DataFrame) -> pd.DataFrame:
+    """Apply forward-fill and default fallback (4/7 trust, 2/3 confidence) to human rows."""
+    human_df = df[df["source"] == "human"].copy()
+    llm_df = df[df["source"] == "llm"].copy()
+    
+    if human_df.empty:
+        return df
+
+    groups = human_df.groupby(["game_id", "observer", "target", "trust_type"])
+    filled_dfs = []
+    
+    for (game_id, observer, target, trust_type), group in groups:
+        all_phases = sorted(df[df["game_id"] == game_id]["phase_idx"].dropna().unique())
+        if not all_phases:
+            filled_dfs.append(group)
+            continue
+            
+        group = group.drop_duplicates(subset=["phase_idx"], keep="last")
+        group = group.set_index("phase_idx")
+        group = group.reindex(all_phases)
+        
+        group["game_id"] = game_id
+        group["observer"] = observer
+        group["target"] = target
+        group["trust_type"] = trust_type
+        group["source"] = "human"
+        group["run_id"] = "human"
+        group["scale"] = group["scale"].fillna("7pt")
+        group["confidence_scale"] = group["confidence_scale"].fillna("3-level")
+        
+        valid_rows = group.dropna(subset=["room_code"])
+        if not valid_rows.empty:
+            first_row = valid_rows.iloc[0]
+            for col in ["room_code", "game_mode", "winner", "exported_at", "observer_role", "observer_team", "target_role", "target_team"]:
+                group[col] = group[col].fillna(first_row[col])
+                
+        group["score_raw"] = group["score_raw"].ffill()
+        group["score_norm"] = group["score_norm"].ffill()
+        group["confidence_raw"] = group["confidence_raw"].ffill()
+        group["confidence_norm"] = group["confidence_norm"].ffill()
+        
+        group["observer_alive"] = group["observer_alive"].bfill().ffill()
+        group["target_alive"] = group["target_alive"].bfill().ffill()
+        
+        group["score_raw"] = group["score_raw"].fillna(4.0)
+        group["score_norm"] = group["score_norm"].fillna(0.5)
+        group["confidence_raw"] = group["confidence_raw"].fillna(2.0)
+        group["confidence_norm"] = group["confidence_norm"].fillna(0.5)
+        
+        group = group.reset_index()
+        filled_dfs.append(group)
+        
+    filled_human_df = pd.concat(filled_dfs, ignore_index=True)
+    return pd.concat([filled_human_df, llm_df], ignore_index=True)
 
 
 def load_dataset(
     game_records_dir: Path | str,
     llm_results_dir: Path | str | None = None,
     cache_dir: Path | str | None = None,
+    use_ffill: bool = True,
 ) -> pd.DataFrame:
     """`build_dataset` with a parquet cache keyed on input file stats.
 
@@ -107,20 +168,23 @@ def load_dataset(
     modified (path/mtime/size fingerprint).
     """
     if cache_dir is None:
-        return build_dataset(game_records_dir, llm_results_dir)
+        return build_dataset(game_records_dir, llm_results_dir, use_ffill=use_ffill)
 
     cache_dir = Path(cache_dir)
     cache_dir.mkdir(parents=True, exist_ok=True)
     fingerprint = _fingerprint(game_records_dir, llm_results_dir)
-    parquet_path = cache_dir / "dataset.parquet"
-    fingerprint_path = cache_dir / "dataset.fingerprint"
+    
+    # Isolate cache files for ffill vs raw
+    parquet_name = "dataset.parquet" if use_ffill else "dataset_raw.parquet"
+    parquet_path = cache_dir / parquet_name
+    fingerprint_path = cache_dir / f"{parquet_name}.fingerprint"
 
     if parquet_path.exists() and fingerprint_path.exists():
         if fingerprint_path.read_text() == fingerprint:
             logger.info("Loading dataset from cache: %s", parquet_path)
             return pd.read_parquet(parquet_path)
 
-    df = build_dataset(game_records_dir, llm_results_dir)
+    df = build_dataset(game_records_dir, llm_results_dir, use_ffill=use_ffill)
     df.to_parquet(parquet_path, index=False)
     fingerprint_path.write_text(fingerprint)
     return df

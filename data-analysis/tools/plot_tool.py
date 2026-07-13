@@ -34,6 +34,7 @@ class PlotInput(BaseModel):
     use_raw: bool = False
     title: str | None = None
     filename: str | None = None
+    full_y_scale: bool | None = None
 
 class PlotTool(BaseTool):
     name: ClassVar[str] = "plot"
@@ -50,10 +51,11 @@ class PlotTool(BaseTool):
         "The hue dimension controls how values are grouped. It defaults to \"source\" (e.g., human vs LLM comparison). Use another table column (such as \"trust_type\") to define a different grouping."
     )
 
-    def __init__(self, df: pd.DataFrame, plots_dir: str | Path = "analysis/plots") -> None:
+    def __init__(self, df: pd.DataFrame, plots_dir: str | Path = "analysis/plots", default_full_y_scale: bool = False) -> None:
         super().__init__()
         self._df = df
         self._plots_dir = Path(plots_dir)
+        self._default_full_y_scale = default_full_y_scale
         self.input_schema = PlotInput
 
     def run(
@@ -65,8 +67,9 @@ class PlotTool(BaseTool):
         use_raw: bool = False,
         title: str | None = None,
         filename: str | None = None,
+        full_y_scale: bool | None = None,
     ) -> ToolOutput:
-        self.logger.debug("Running PlotTool with filters=%s, kind=%s, hue=%s, agg=%s, use_raw=%s, title=%s, filename=%s",
+        self.logger.debug("Running PlotTool with filters=%s, kind=%s, hue=%s, agg=%s, use_raw=%s, title=%s, filename=%s, full_y_scale=%s",
             filters,
             kind,
             hue,
@@ -74,6 +77,7 @@ class PlotTool(BaseTool):
             use_raw,
             title,
             filename,
+            full_y_scale,
         )
 
         rows = slice_df(self._df, filters)
@@ -100,6 +104,19 @@ class PlotTool(BaseTool):
             return self._fail(str(exc))
 
         ax.set_title(title or self._default_title(kind, rows))
+        
+        # Enforce standard scales only if full_y_scale is enabled (or for scatter which always needs it)
+        actual_full_y = self._default_full_y_scale if full_y_scale is None else full_y_scale
+        if kind in ("line_per_phase", "line_per_game", "box"):
+            if actual_full_y:
+                if use_raw:
+                    ax.set_ylim(0.5, 7.5)  # Padding for 1 to 7 scale
+                else:
+                    ax.set_ylim(-0.05, 1.05)  # Padding for 0 to 1 scale
+        elif kind == "scatter":
+            ax.set_xlim(-0.05, 1.05)
+            ax.set_ylim(-0.05, 1.05)
+
         fig.tight_layout()
         path = self._save(fig, kind, filters, filename)
         plt.close(fig)

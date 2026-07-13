@@ -19,15 +19,14 @@ from core.logging import get_logger
 from data.dataset import load_dataset
 from agent.orchestrator import OrchestratorConfig, Orchestrator, OrchestratorResponse
 
-
-def build_tools(game_records: str, llm_results: str) -> dict:
+def build_tools(game_records: str, llm_results: str, use_ffill: bool = True, full_y_scale: bool = False) -> dict:
     from tools.compare_tool import CompareDataTool
     from tools.correlation_tool import CorrelationTool
     from tools.delta_tool import DeltaTool
     from tools.plot_tool import PlotTool
 
-    df = load_dataset(game_records, llm_results, cache_dir="analysis/cache")
-    tools = (CompareDataTool(df), PlotTool(df), DeltaTool(df), CorrelationTool(df))
+    df = load_dataset(game_records, llm_results, cache_dir="analysis/cache", use_ffill=use_ffill)
+    tools = (CompareDataTool(df), PlotTool(df, plots_dir="analysis/plots", default_full_y_scale=full_y_scale), DeltaTool(df), CorrelationTool(df))
     return {tool.name: tool for tool in tools}
 
 
@@ -43,6 +42,8 @@ def main() -> None:
     tool_cmd.add_argument("--params", default="{}", help="JSON object of run() arguments")
     tool_cmd.add_argument("--game-records", default="../results/game-records")
     tool_cmd.add_argument("--llm-results", default="../llm-labeling/results/llm-labeling")
+    tool_cmd.add_argument("--raw-human", action="store_true", help="disable forward-fill for human labels (keep raw events)")
+    tool_cmd.add_argument("--full-y-scale", action="store_true", help="enforce full Y-axis limits [0, 1] / [1, 7]")
 
     agent_cmd = sub.add_parser("agent", help="ask the analysis agent a question")
     agent_cmd.add_argument("question", nargs="?", help="natural-language question to ask")
@@ -52,6 +53,8 @@ def main() -> None:
     agent_cmd.add_argument("--plots-dir", default="analysis/plots")
     agent_cmd.add_argument("--model", default=None, help="chat model name, e.g. openai:gpt-5.4-mini")
     agent_cmd.add_argument("--temperature", type=float, default=None)
+    agent_cmd.add_argument("--raw-human", action="store_true", help="disable forward-fill for human labels (keep raw events)")
+    agent_cmd.add_argument("--full-y-scale", action="store_true", help="enforce full Y-axis limits [0, 1] / [1, 7]")
 
     args = parser.parse_args()
 
@@ -59,7 +62,7 @@ def main() -> None:
         run_agent(args)
         return
 
-    tools = build_tools(args.game_records, args.llm_results)
+    tools = build_tools(args.game_records, args.llm_results, use_ffill=not args.raw_human, full_y_scale=args.full_y_scale)
     if args.name not in tools:
         parser.error(f"unknown tool {args.name!r}; available: {sorted(tools)}")
 
@@ -82,6 +85,8 @@ def run_agent(args) -> None:
         plots_dir=args.plots_dir,
         model=args.model,
         temperature=args.temperature,
+        use_ffill=not args.raw_human,
+        full_y_scale=args.full_y_scale,
     )
 
     orchestrator = Orchestrator(config)
