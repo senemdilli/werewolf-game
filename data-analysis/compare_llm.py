@@ -24,10 +24,10 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--game", help="restrict to one room code, e.g. 5NOHGS")
     parser.add_argument("--game-records", default="../results/game-records")
-    parser.add_argument("--llm-results", default="../llm-labeling/results/llm-labeling")
+    parser.add_argument("--llm-results", default="../results/llm-labeling")
     args = parser.parse_args()
 
-    df = load_dataset(args.game_records, args.llm_results, cache_dir="analysis/cache")
+    df = load_dataset(args.game_records, args.llm_results, cache_dir="../results/data-analysis/cache")
     if args.game:
         df = apply_filters(df, FilterSpec(room_codes=[args.game]))
 

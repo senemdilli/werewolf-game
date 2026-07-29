@@ -77,7 +77,7 @@ def main():
     parser.add_argument("--inner-voice-model", type=str, help="Model for the inner voice (default: same as primary)")
     parser.add_argument("--ollama-url", required=True, type=str, help="URL of the Ollama server")
     parser.add_argument("--player-name", type=str, help="Player name or index to run labeling for (runs for all players if not specified)")
-    parser.add_argument("--output-dir", type=str, default="./results/llm-labeling", help="Base output directory")
+    parser.add_argument("--output-dir", type=str, default="../results/llm-labeling", help="Base output directory")
     parser.add_argument("--experiment", required=True, type=str, help="Experiment id e.g. a.py or b.py")
     parser.add_argument("--max-phases", type=int, default=0, help="Limit maximum number of phases to label (0 for infinite)")
     parser.add_argument("--experiment-args", type=str, default="", help="Config args for the experiment (legacy space-separated string)")

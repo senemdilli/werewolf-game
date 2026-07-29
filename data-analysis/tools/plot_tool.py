@@ -90,7 +90,7 @@ class PlotTool(BaseTool):
         "The hue dimension controls how values are grouped. It defaults to \"source\" (e.g., human vs LLM comparison). Use another table column (such as \"trust_type\") to define a different grouping."
     )
 
-    def __init__(self, df: pd.DataFrame, plots_dir: str | Path = "analysis/plots", default_full_y_scale: bool = False) -> None:
+    def __init__(self, df: pd.DataFrame, plots_dir: str | Path = "../results/data-analysis/plots", default_full_y_scale: bool = False) -> None:
         super().__init__()
         self._df = df
         self._plots_dir = Path(plots_dir)

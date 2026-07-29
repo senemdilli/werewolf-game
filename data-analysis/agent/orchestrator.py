@@ -42,8 +42,8 @@ Rules:
 class OrchestratorConfig:
     game_records: str | Path
     llm_results: str | Path | None = None
-    cache_dir: str | Path | None = "analysis/cache"
-    plots_dir: str | Path = "analysis/plots"
+    cache_dir: str | Path | None = "../results/data-analysis/cache"
+    plots_dir: str | Path = "../results/data-analysis/plots"
     model: str | None = None
     temperature: float | None = None
     use_ffill: bool = True
@@ -104,7 +104,7 @@ def ask(question: str, config: OrchestratorConfig) -> OrchestratorResponse:
 
 
 def build_tool_registry(
-    df, plots_dir: str | Path = "analysis/plots", default_full_y_scale: bool = False
+    df, plots_dir: str | Path = "../results/data-analysis/plots", default_full_y_scale: bool = False
 ) -> ToolRegistry:
     registry = ToolRegistry()
     registry.register_tool(CompareDataTool(df))

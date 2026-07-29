@@ -41,7 +41,7 @@ def main():
                         ollama_url=url,
                         experiment=exp,
                         experiment_args=args,
-                        output_dir="./results/llm-labeling",
+                        output_dir="../results/llm-labeling",
                     )
                 except Exception as e:
                     print(f"Error executing {exp} with {model} on {csv_path}: {e}", file=sys.stderr)

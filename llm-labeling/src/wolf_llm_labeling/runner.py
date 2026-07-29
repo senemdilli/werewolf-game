@@ -162,7 +162,7 @@ def run_labeling_experiment(
     experiment: str,
     inner_voice_model: str | None = None,
     player_name: str | None = None,
-    output_dir: str = "./results/llm-labeling",
+    output_dir: str = "../results/llm-labeling",
     max_phases: int = 0,
     experiment_args: str = "",
     prompt_set_path: str | None = None,

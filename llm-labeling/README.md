@@ -41,7 +41,7 @@ python .\src\wolf_llm_labeling\main.py <game_record.json> <game_record.csv> [opt
 | `--formatter` | `str` | Optional. Context format type: `markdown` (default) or `json` |
 | `--context-as-tool` | `flag` | Optional. If set, the game context is retrieved dynamically by the LLM via tool call instead of pre-injected in the prompt |
 | `--prompt-set` | `str` | Optional. Path to a JSON file mapping custom prompts |
-| `--output-dir` | `str` | Optional. Base directory where JSON results are saved (default: `./results/llm-labeling`) |
+| `--output-dir` | `str` | Optional. Base directory where JSON results are saved (default: `../results/llm-labeling`) |
 | `--use-numeric` | `flag` | Optional. If set, forces numeric integer scale (1-100) instead of the default Likert scale |
 | `--likert-type` | `str` | Optional. Likert scale format to use: `agree-disagree` (strongly disagree to strongly agree, default) or `legacy` (very low to very high trust) |
 | `--parallel` | `int` | Optional. If set, runs the labeling tasks for different players concurrently (specify number of threads, e.g. `--parallel 4`. Default: `2` if flag is present but value omitted). |
@@ -173,7 +173,7 @@ python .\src\wolf_llm_labeling\main.py `
 | `--inner-voice-model` | String | Model ID for the inner voice agent (defaults to primary model). |
 | `--ollama-url` | String | URL of the Ollama server (or `http://localhost:1234/v1` for LM Studio). |
 | `--player-name` | String | Player name or index to label (runs for all players if omitted). |
-| `--output-dir` | String | Base output directory (default: `./results/llm-labeling`). |
+| `--output-dir` | String | Base output directory (default: `../results/llm-labeling`). |
 | `--experiment` | String | Experiment ID module to load (e.g. `a`, `b`, etc.). |
 | `--cutoff` | Integer | Historical context cutoff (number of phases to look back). |
 | `--variant` | Integer | Inner trust voice variant (1: pre-injected context, 2: agentic tool call, default: `2`). |

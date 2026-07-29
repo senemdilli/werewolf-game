@@ -31,8 +31,8 @@ from data.filters import FilterSpec, apply_filters
 
 df = load_dataset(
     "../results/game-records",              # human labels + game events exports
-    "../llm-labeling/results/llm-labeling", # labeling engine outputs (optional)
-    cache_dir="analysis/cache",             # parquet cache (optional)
+    "../results/llm-labeling",             # labeling engine outputs (optional)
+    cache_dir="../results/data-analysis/cache", # parquet cache (optional)
 )
 
 # Average alignment trust received by werewolves, human labels only
@@ -63,7 +63,7 @@ make run                           # same as the interactive form
 ```
 
 Answers take ~30–60 s (usually several tool calls). Plots the agent creates
-land in `analysis/plots/`. Run with `LOG_LEVEL=DEBUG` to watch every tool call
+land in `../results/data-analysis/plots/`. Run with `LOG_LEVEL=DEBUG` to watch every tool call
 and its arguments — the agent often gets a filter wrong on the first try and
 recovers from the tool's error message; that loop is by design (see
 "Errors are prompts" below).
@@ -92,7 +92,7 @@ Everything downstream works on one long-format DataFrame:
 **one row per (game, source, run, observer, target, phase, trust dimension)**.
 Built by `build_dataset()`, cached by `load_dataset()` (parquet, invalidated
 whenever any input file changes — but **not** when loader code changes; after
-editing loaders, `rm -rf analysis/cache`).
+editing loaders, `rm -rf ../results/data-analysis/cache`).
 
 One cleaning step happens at build time: **`observer == target` rows are
 dropped** (with a warning naming the run files). The game never asks players
@@ -293,7 +293,7 @@ only on source-like fields. `group_by` yields a per-value breakdown;
 `correlate=true` adds the score-extremity ↔ confidence Spearman per slice.
 Empty slices and n below 5 come back as errors/warnings, never silent numbers.
 
-**`plot`** — renders the slice to `analysis/plots/*.png` and returns the
+**`plot`** — renders the slice to `../results/data-analysis/plots/*.png` and returns the
 aggregated values behind the figure (the orchestrator can't see images).
 Kinds: `line_per_phase` (one game), `line_per_game` (chronological),
 `histogram` (raw scores per hue — the extremeness picture), `box`, `scatter`

@@ -25,7 +25,7 @@ __all__ = [
 ]
 
 
-def build_analysis_tools(df, plots_dir: str | Path = "analysis/plots") -> dict[str, BaseTool]:
+def build_analysis_tools(df, plots_dir: str | Path = "../results/data-analysis/plots") -> dict[str, BaseTool]:
 	tools = (
 		CompareDataTool(df),
 		PlotTool(df, plots_dir=plots_dir),
