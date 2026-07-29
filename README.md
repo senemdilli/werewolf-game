@@ -6,7 +6,7 @@ Research platform & game environment for analyzing how LLMs can build trust with
 
 ## Repository Structure & Modules
 
-This repository is organized into three core subprojects. **Each directory contains its own dedicated `README.md` and `.env.example` file** with detailed setup, architecture notes and configuration instructions.
+This repository is organized into three coding subprojects. **Each directory contains its own dedicated `README.md` and `.env.example` file** with detailed setup, architecture notes and configuration instructions.
 
 ### 🐺 1. Game Application (`werewolf-game/`)
 Multiplayer web application (in Next.js 16) for humans playing Werewolf in Classic & Arena modes and collecting research dataset logs

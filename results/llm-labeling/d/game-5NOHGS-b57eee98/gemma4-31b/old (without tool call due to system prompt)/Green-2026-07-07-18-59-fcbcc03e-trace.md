@@ -7,6 +7,9 @@
 | Game File | `game-5NOHGS-b57eee98` |
 | Game ID | `b57eee98-8f2f-4fdc-a2c3-85bd8a28970a` |
 | Experiment | `d` |
+| Cutoff | 3 |
+| Variant | 2 |
+| Inner Voice Type | human |
 | Primary Model | `gemma4:31b` |
 | Inner Voice Model | `—` |
 | Prompt Set | `prompts/prompt_sets/pimped.json` |

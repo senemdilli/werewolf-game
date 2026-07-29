@@ -493,6 +493,13 @@ def run_labeling_experiment(
                     print("Connection/Timeout error detected. Aborting experiment execution.", file=sys.stderr)
                     return []
 
+        exp_parts = [p.strip() for p in experiment_args.split()] if experiment_args else []
+        cutoff_val = int(exp_parts[0]) if len(exp_parts) > 0 and exp_parts[0].isdigit() else 0
+        variant_val = int(exp_parts[1]) if len(exp_parts) > 1 and exp_parts[1].isdigit() else None
+        inner_voice_type_val = exp_parts[2] if len(exp_parts) > 2 else None
+
+        player_elapsed = time.time() - player_start_time
+
         run_data = {
             "game_id": game_record.get_game_id() or "unknown_game",
             "game_file": game_file,
@@ -505,21 +512,25 @@ def run_labeling_experiment(
             "prompts": prompt_set.raw_mapping,
             "time": datetime.utcnow().isoformat() + "Z",
             "experiment": experiment_name,
+            "cutoff": cutoff_val,
+            "variant": variant_val,
+            "inner_voice_type": inner_voice_type_val,
             "formatter": formatter,
-            "experiment_args": experiment_args,
             "temperature": temperature,
             "max_phases": max_phases,
             "context_as_tool": context_as_tool,
             "total_phases": total_phases,
             "alive_phases": alive_phases,
+            "elapsed_seconds": round(player_elapsed, 2),
             "phases": phase_results
         }
 
         if run_data["models"]["inner_voice_model"] is None:
             del run_data["models"]["inner_voice_model"]
-
-        player_elapsed = time.time() - player_start_time
-        run_data["elapsed_seconds"] = round(player_elapsed, 2)
+        if run_data["variant"] is None:
+            del run_data["variant"]
+        if run_data["inner_voice_type"] is None:
+            del run_data["inner_voice_type"]
 
         # Generate date and time string (Berlin, fallback to system local time if tzdata is missing)
         try:
@@ -559,6 +570,11 @@ def run_labeling_experiment(
             tf.write(f"| Game File | `{game_file}` |\n")
             tf.write(f"| Game ID | `{run_data.get('game_id')}` |\n")
             tf.write(f"| Experiment | `{experiment_name}` |\n")
+            tf.write(f"| Cutoff | `{cutoff_val}` |\n")
+            if variant_val is not None:
+                tf.write(f"| Variant | `{variant_val}` |\n")
+            if inner_voice_type_val is not None:
+                tf.write(f"| Inner Voice Type | `{inner_voice_type_val}` |\n")
             tf.write(f"| Primary Model | `{primary_model}` |\n")
             tf.write(f"| Inner Voice Model | `{iv_model if iv_model != primary_model else '—'}` |\n")
             tf.write(f"| Prompt Set | `{prompt_set_path or 'default (simple.json)'}` |\n")

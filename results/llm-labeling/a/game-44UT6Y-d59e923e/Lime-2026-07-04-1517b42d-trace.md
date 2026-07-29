@@ -7,6 +7,7 @@
 | Game File | `game-44UT6Y-d59e923e` |
 | Game ID | `d59e923e-8478-4514-9ccd-8d4ac5a18d5a` |
 | Experiment | `a` |
+| Cutoff | 0 |
 | Primary Model | `google/gemma-4-12b-qat` |
 | Inner Voice Model | `—` |
 | Prompt Set | `prompts/prompt_sets/pimped.json` |
