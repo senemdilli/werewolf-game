@@ -119,8 +119,8 @@ const classicRules = [
   'The Witch can see who the werewolves targeted before deciding whether to heal.',
   'Each Witch potion (heal & kill) can only be used once per game.',
   'Mayor is elected on the first morning and re-elected on the morning after their death.',
-  'The Mayor\'s day vote counts as 2.',
-  'If a day vote ends in a tie, no one is eliminated that day.',
+  'The Mayor breaks ties in day votes (counts as 1.5x votes in Classic Mode).',
+  'If a day vote remains tied after the Mayor\'s tiebreaker, no one is eliminated that day.',
   'Eliminated players\' roles are always revealed to everyone.',
 ]
 
@@ -253,7 +253,7 @@ export default function HowToPlay() {
       </section>
 
       {/* Rules */}
-      <section className="mb-12">
+      <section className="mb-10">
         <h2 className="text-lg font-bold text-slate-100 mb-4 uppercase tracking-wide">Rules ({mode})</h2>
         <ul className="space-y-2">
           {rules.map((r, i) => (
@@ -263,6 +263,69 @@ export default function HowToPlay() {
             </li>
           ))}
         </ul>
+      </section>
+
+      {/* Configurable Game Settings */}
+      <section className="mb-12">
+        <h2 className="text-lg font-bold text-slate-100 mb-4 uppercase tracking-wide">Configurable Game Settings</h2>
+        <div className="space-y-3">
+          <div className="bg-slate-900 border border-slate-700 rounded-xl p-4">
+            <div className="flex items-center gap-2 mb-1 flex-wrap">
+              <span className="text-lg">🧙</span>
+              <p className="font-semibold text-slate-200 text-sm">Witch Self-Healing</p>
+              <span className="text-xs text-amber-400 border border-amber-800/60 bg-amber-950/40 px-2 py-0.5 rounded ml-auto font-mono">
+                Default: Round 1 Only
+              </span>
+            </div>
+            <p className="text-slate-400 text-xs leading-relaxed mb-2">
+              Controls whether the Witch can use her healing potion on herself if she is targeted by werewolves at night.
+            </p>
+            <ul className="text-xs text-slate-300 space-y-1 list-disc list-inside">
+              <li><strong className="text-slate-200">Round 1 Only (Default):</strong> The Witch may self-heal only during Night 1.</li>
+              <li><strong className="text-slate-200">Always:</strong> The Witch can self-heal in any night round.</li>
+              <li><strong className="text-slate-200">Never:</strong> The Witch can never use her healing potion on herself.</li>
+            </ul>
+          </div>
+
+          <div className="bg-slate-900 border border-slate-700 rounded-xl p-4">
+            <div className="flex items-center gap-2 mb-1 flex-wrap">
+              <span className="text-lg">⏱️</span>
+              <p className="font-semibold text-slate-200 text-sm">Bidding & Speaking Timers (Arena)</p>
+              <span className="text-xs text-slate-400 border border-slate-700 bg-slate-800 px-2 py-0.5 rounded ml-auto font-mono">
+                Default: 30s / 30s
+              </span>
+            </div>
+            <p className="text-slate-400 text-xs leading-relaxed">
+              In Arena Mode, the host can adjust the duration for bid submission (10s–120s) and speaking turns (10s–120s).
+            </p>
+          </div>
+
+          <div className="bg-slate-900 border border-slate-700 rounded-xl p-4">
+            <div className="flex items-center gap-2 mb-1 flex-wrap">
+              <span className="text-lg">🧪</span>
+              <p className="font-semibold text-slate-200 text-sm">Sandbox Mode & Name Randomization</p>
+              <span className="text-xs text-slate-400 border border-slate-700 bg-slate-800 px-2 py-0.5 rounded ml-auto font-mono">
+                Optional
+              </span>
+            </div>
+            <p className="text-slate-400 text-xs leading-relaxed">
+              Host can enable Sandbox Mode to auto-fill empty room slots with simulated bots (1–12 bots) for solo playtesting, or force randomized player/color names upon game start.
+            </p>
+          </div>
+
+          <div className="bg-slate-900 border border-slate-700 rounded-xl p-4">
+            <div className="flex items-center gap-2 mb-1 flex-wrap">
+              <span className="text-lg">👀</span>
+              <p className="font-semibold text-slate-200 text-sm">Spectator Mode (Observer)</p>
+              <span className="text-xs text-slate-400 border border-slate-700 bg-slate-800 px-2 py-0.5 rounded ml-auto font-mono">
+                Lobby Option
+              </span>
+            </div>
+            <p className="text-slate-400 text-xs leading-relaxed">
+              Extra players or observers can select &ldquo;Join as Spectator&rdquo; in the lobby. Spectators follow the live game in real-time without participating in votes, actions, or trust-labeling surveys, and are excluded from research logs.
+            </p>
+          </div>
+        </div>
       </section>
 
       <div className="text-center">

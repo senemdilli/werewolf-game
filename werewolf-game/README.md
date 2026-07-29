@@ -4,13 +4,14 @@ A multiplayer Werewolf (Mafia) social deduction game. Built as a research tool f
 
 ## Features
 
-- **5 roles**: Werewolf, Seer, Witch, Villager, plus an elected Mayor whose vote counts double
+- **5 roles**: Werewolf, Seer, Witch, Villager, plus an elected Mayor who breaks ties in day votes (1.5x vote weight in Classic Mode)
 - **Real-time multiplayer** over WebSockets — 4 to 12 players per room
 - **Full game loop**: lobby → role reveal → night → mayor election → day discussion → day vote → day result → repeat
 - **Skip vote**: the village can collectively choose not to eliminate anyone
 - **Private notes**: each player can record their suspicions per phase/round (visible only to them, stored for research)
 - **Voice-to-Text (Speech-to-Text)**: Speak your reasonings in the labeling panel. Supports low-latency real-time streaming, quick EN/DE language switching, a robust automatic HTTP fallback for firewalled networks, and 6-second AI silence detection.
 - **Sandbox/Testing Mode**: Host can toggle sandbox mode at room creation to automatically fill empty spots with bots, allowing solo-testing of all game phases without needing 4 tabs.
+- **Spectator Mode**: Extra players or observers can join as non-participating spectators to watch live gameplay without voting, acting, or affecting research logs.
 - **Werewolf-only night chat** routed through a private Socket.IO room
 - **Seer investigations** delivered as private events that don't pass through chat
 - **Witch potions**: one heal, one kill — each usable once per game, with full visibility of the werewolves' chosen victim
@@ -90,7 +91,7 @@ App will be on <http://localhost:3000>.
 | `DATABASE_URL` | PostgreSQL connection string |
 | `REDIS_URL` | Redis connection string |
 | `ADMIN_SECRET` | Password for the `/admin` dashboard |
-| `DEEPGRAM_API_KEY` | Deepgram API Key for Voice-to-Text transcription (optional, enables speech recognition) |
+| `DEEPGRAM_API_KEY` | *(Optional)* Deepgram API Key — required only if Voice-to-Text / Speech input is used in Chat & Trust Labeling |
 | `NEXT_PUBLIC_APP_URL` | Public origin — used for the Socket.IO CORS allowlist |
 | `PORT` | HTTP port (Railway sets this automatically) |
 
@@ -99,11 +100,25 @@ App will be on <http://localhost:3000>.
 1. **Lobby** — players join via 6-char room code, mark themselves ready. Game auto-starts when everyone is ready (min 4 players); host can also force-start.
 2. **Role reveal** — each player sees their own role privately; everyone acknowledges before night begins.
 3. **Night** — werewolves vote on a victim (private channel), seer investigates one player, witch decides whether to heal the werewolves' target and/or kill someone of her own.
-4. **Mayor election** — first morning only: everyone votes for a Mayor. The Mayor's day vote counts double for the rest of the game. Re-election happens if the Mayor dies.
+4. **Mayor election** — first morning only (or after Mayor dies): everyone votes for a Mayor. The Mayor breaks ties in day votes (1.5x weight in Classic Mode).
 5. **Day discussion** (2 min timer) → **Day vote** → **Day result** (8s announcement screen everyone sees together).
 6. **Win**: villagers when all werewolves are eliminated; werewolves when they equal or outnumber the rest.
 
 Detailed rules are also available in-app at `/how-to-play`.
+
+## Game Settings & Configuration
+
+When creating a room, the host can customize several gameplay parameters:
+
+| Setting | Options | Default | Description |
+|---|---|---|---|
+| **Game Mode** | `Classic` / `Arena` | `Classic` | Free-form chat vs structured bidding-based discussion |
+| **Witch Self-Healing** | `round_1_only` / `always` / `never` | `round_1_only` | Restricts whether the Witch can use her healing potion on herself |
+| **Bidding Duration** | 10s – 120s | `30s` | Timer per bid round (Arena Mode only) |
+| **Speaking Duration** | 10s – 120s | `30s` | Timer per speaker turn (Arena Mode only) |
+| **Sandbox Mode** | On / Off | Off | Auto-fills empty room slots with 1–12 automated bot players |
+| **Force Random Names** | On / Off | Off | Randomizes player names upon game start (optionally using color names) |
+| **Spectator Mode** | Active Player / Spectator | Active Player | Allows extra participants to observe live gameplay without voting or appearing in logs |
 
 ## Sandbox Mode & Voice-to-Text (Speech-to-Text)
 
@@ -113,9 +128,9 @@ Hosts can toggle **Sandbox Mode** when creating a room. When active, any empty p
 - Allows a developer or researcher to solo-playtest the entire multi-phase game loop in a single browser window.
 
 ### Voice-to-Text (Speech-to-Text)
-The trust-labeling panel (`LabelPanel.tsx`) integrates a real-time speech-to-text reasoning helper. Speak your thoughts naturally, and they will be transcribed directly into the reasoning text area.
+Both the **In-Game Chat** (`Chat.tsx`) and **Trust-Labeling Panel** (`LabelPanel.tsx`) integrate real-time speech-to-text helpers. Speak your messages or reasonings naturally, and they will be transcribed directly into the text area.
 - **Model**: Powered by Deepgram's state-of-the-art **Nova-3** model for low-latency, highly accurate word-by-word streaming.
-- **Language Selection**: A toggle between English (`EN`) and German (`DE`) is built directly into the UI. Explicitly selecting the language prevents phonetic translation errors (e.g., Deepgram transcribing German speech into phonetically similar but nonsensical English words).
+- **Language Selection**: A toggle between English (`EN`) and German (`DE`) is built directly into the UI. Explicitly selecting the language prevents phonetic translation errors.
 - **Network Resilience**: Operates via a real-time WebSocket connection. If the client is behind a restrictive university or corporate firewall (or VPN) that blocks WebSockets, it automatically and gracefully falls back to a chunked **HTTP POST fallback API** (`/api/speech-to-text`) which dynamically routes the correct language header.
 - **AI Silence Detection**: Automatically stops recording after 6 seconds of silence to conserve API credits and provide a hands-free UX.
 

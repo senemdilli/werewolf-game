@@ -1,4 +1,44 @@
 # wolf-iosl-2026
 
-### .env for labeling:
-OLLAMA_API_KEY=token
+Research platform & game environment for analyzing how LLMs can build trust with one another in the social deduction game Werewolf.
+
+---
+
+## Repository Structure & Modules
+
+This repository is organized into three core subprojects. **Each directory contains its own dedicated `README.md` and `.env.example` file** with detailed setup, architecture notes and configuration instructions.
+
+### 🐺 1. Game Application (`werewolf-game/`)
+Multiplayer web application (in Next.js 16) for humans playing Werewolf in Classic & Arena modes and collecting research dataset logs
+- **Features**: Live WebSocket Werewolf gameplay, trust-labeling checkpoints, sandbox mode with bot players, Speech-to-Text voice transcription (Deepgram) and Admin CSV/JSON export 
+- **Details & Setup**: See [`werewolf-game/README.md`](./werewolf-game/README.md) and [`werewolf-game/.env.example`](./werewolf-game/.env.example)
+
+### 🏷️ 2. LLM Trust Labeling (`llm-labeling/`)
+Python evaluation pipeline for running LLM (agents) that observe game transcripts and generate trust-labeling outputs
+- **Features**: Game Log Parsing, (System) Prompt & Context Builder, LLM Labeling and optional Inner Voice
+- **Details & Setup**: See [`llm-labeling/README.md`](./llm-labeling/README.md) and [`llm-labeling/.env.example`](./llm-labeling/.env.example)
+
+### 📊 3. Data Analysis (`data-analysis/`)
+Data science environment and AI Data Scientist agent tools for statistical evaluation, metric computation and model comparison
+- **Features**: Game transcript & LLM Labling output parsing, metric computation scripts, LLM comparison tools and agent toolspecs
+- **Details & Setup**: See [`data-analysis/README.md`](./data-analysis/README.md) and [`data-analysis/.env.example`](./data-analysis/.env.example)
+
+---
+
+## Environment Configuration Overview
+
+Each subproject manages its own configuration via a `.env` file located in its respective directory. Copy the provided `.env.example` file in each folder to `.env` before running:
+
+| Subproject Directory | Environment File | Primary Variables | Dedicated Documentation |
+|---|---|---|---|
+| **`werewolf-game/`** | `werewolf-game/.env` | `DATABASE_URL`, `REDIS_URL`, `ADMIN_SECRET`, `DEEPGRAM_API_KEY` | [`werewolf-game/README.md`](./werewolf-game/README.md) |
+| **`llm-labeling/`** | `llm-labeling/.env` | `OLLAMA_API_KEY`, `OLLAMA_API_URL`, `MODEL_NAME` | [`llm-labeling/README.md`](./llm-labeling/README.md) |
+| **`data-analysis/`** | `data-analysis/.env` | `OLLAMA_API_KEY`, `OLLAMA_API_URL`, `MODEL_NAME` | [`data-analysis/README.md`](./data-analysis/README.md) |
+
+---
+
+## Additional Documentation & Resources
+
+- **[`design/`](./design)**: Game design concepts, initial requirements, prompt structure proposals, labeling engine architecture specs and trust measurement models
+- **[`docs/`](./docs)**: Dataset schemas, CSV event documentation, and export specifications
+
