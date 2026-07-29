@@ -12,9 +12,14 @@ OLLAMA_API_KEY=your_key_here
 
 ## CLI Usage Guide
 
-You can run the labeling engine CLI by executing the main script:
+> **Important**:
+> Make sure your terminal working directory is inside the `llm-labeling/` subfolder (`cd llm-labeling`) before executing any commands!
+
+Execute the main labeling script:
 
 ```powershell
+cd llm-labeling
+
 python .\src\wolf_llm_labeling\main.py <game_record.json> <game_record.csv> [options]
 ```
 
