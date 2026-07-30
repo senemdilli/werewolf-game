@@ -56,6 +56,6 @@ Each subproject manages its own configuration via a `.env` file located in its r
 
 ## Additional Documentation & Resources
 
-- **[`design/`](./design)**: Game design concepts, initial requirements, prompt structure proposals, labeling engine architecture specs and trust measurement models
-- **[`docs/`](./docs)**: Dataset schemas, CSV event documentation, and export specifications
+- **[`design/`](./design)**: Game design concepts & rules, initial requirements, prompt structure proposals, labeling engine architecture specs and trust measurement models
+- **[`docs/`](./docs)**: Dataset schemas, CSV event documentation and export specifications
 
