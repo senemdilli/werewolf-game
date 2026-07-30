@@ -3,21 +3,6 @@
 Answers two related spec questions about *how* two slices of the trust table
 label, not just what they score on average:
 
-- "Compare how extreme the labelling of the LLMs are compared to the humans"
-  (humans cluster near the midpoint; LLMs often hit the endpoints).
-- "Find correlation between likert value and confidence, human vs LLM"
-  (humans are confident when they commit to an extreme score; LLM confidence
-  may not track how extreme its own score is).
-
-`extremity` is `|score_norm - 0.5| * 2`, in [0, 1]: 0 = scale midpoint,
-1 = either endpoint. Using the fold-to-endpoint distance (rather than the raw
-score) is what makes "1/7 and 7/7 are both extreme" comparable and
-correlatable in one number, and keeps it meaningful across the 1-7 and
-1-100 scales at once.
-
-Built on `tools/slicing.py`'s matched-cell join (same `MATCH_KEYS`,
-`matchable`/`differing_fields` soundness check as `compare_data`), just
-matching on `extremity` instead of raw `score_norm`.
 """
 
 from typing import Any, ClassVar
