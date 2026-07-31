@@ -127,18 +127,20 @@ export default function Home() {
             >
               Join a game
             </button>
-            <a
-              href="/how-to-play"
-              className="block text-center text-slate-500 hover:text-slate-300 text-sm mt-4 transition-colors"
-            >
-              How to play? →
-            </a>
-            <a
-              href="/admin"
-              className="block text-center text-slate-500 hover:text-slate-300 text-sm transition-colors"
-            >
-              Research admin →
-            </a>
+            <div className="pt-3 space-y-2 border-t border-slate-800/80 mt-4">
+              <a
+                href="/how-to-play"
+                className="flex items-center justify-center gap-2 w-full py-2.5 bg-slate-900/90 hover:bg-slate-800 text-indigo-300 hover:text-indigo-200 font-medium rounded-xl transition-all border border-indigo-900/40 hover:border-indigo-500/50 shadow-sm text-sm"
+              >
+                <span>📖</span> How to Play
+              </a>
+              <a
+                href="/admin"
+                className="flex items-center justify-center gap-2 w-full py-2.5 bg-slate-900/90 hover:bg-slate-800 text-purple-300 hover:text-purple-200 font-medium rounded-xl transition-all border border-purple-900/40 hover:border-purple-500/50 shadow-sm text-sm"
+              >
+                <span>🔬</span> Research Admin Panel
+              </a>
+            </div>
           </div>
         )}
 

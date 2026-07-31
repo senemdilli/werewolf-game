@@ -59,12 +59,21 @@ export default function AdminPage() {
     fetchGames()
   }, [page, filter])
 
+  function triggerSilentDownload(url: string) {
+    const a = document.createElement('a')
+    a.href = url
+    a.download = ''
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+  }
+
   function exportEvents(gameId: string, format: 'csv' | 'json') {
-    window.open(`/api/admin/export/${gameId}?format=${format}`, '_blank')
+    triggerSilentDownload(`/api/admin/export/${gameId}?format=${format}`)
   }
 
   function exportLabelsJson(gameId: string) {
-    window.open(`/api/admin/export/${gameId}/labels`, '_blank')
+    triggerSilentDownload(`/api/admin/export/${gameId}/labels`)
   }
 
   async function handleStopGame(gameId: string) {
