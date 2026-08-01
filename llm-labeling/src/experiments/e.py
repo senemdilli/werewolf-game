@@ -7,7 +7,7 @@ from wolf_llm_labeling.contexts import (
     PhaseTrustContext,
     InnerTrustVoiceContext,
 )
-from wolf_llm_labeling.inner_voice import InnerVoice, AskMyselfInnerVoice, HistoricInnerVoice, RandomInnerVoice
+from wolf_llm_labeling.inner_voice import InnerVoice, LLMInnerVoice, HumanHistoricInnerVoice, RandomInnerVoice
 from wolf_llm_labeling.models import PlayerName, LLMModelProviders
 
 
@@ -22,11 +22,11 @@ def experiment(
     iv_type = parts[2] if len(parts) > 2 else "llm"
     
     if iv_type == "human":
-        inner_voice = HistoricInnerVoice(player_name)
+        inner_voice = HumanHistoricInnerVoice(player_name)
     elif iv_type == "random":
         inner_voice = RandomInnerVoice()
     else:
-        inner_voice = AskMyselfInnerVoice()
+        inner_voice = LLMInnerVoice()
     
     # Base context: Game static + Game now
     base_ctx = JoinedContext('Game Information', None, 1000, StaticContext(player_name), GameNowContext(player_name))

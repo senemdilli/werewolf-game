@@ -193,8 +193,8 @@ To do this, add the corresponding keys to your prompt set JSON file (pointing to
 {
   "system_prompt": "system_prompts/pimped_system_prompt.md",
   "inner_voice__random_voice": "inner_voices/tool_descriptions/random_voice.txt",
-  "inner_voice__historic_voice": "inner_voices/tool_descriptions/historic_voice.txt",
-  "inner_voice__ask_myself": "inner_voices/tool_descriptions/llm_voice.txt",
+  "inner_voice__human_historic_voice": "inner_voices/tool_descriptions/historic_voice.txt",
+  "inner_voice__llm_voice": "inner_voices/tool_descriptions/llm_voice.txt",
   "inner_voice__constant_voice": "inner_voices/tool_descriptions/constant_voice.txt",
   "inner_voice_tool_instruction": "inner_voices/tool_instructions/default_instruction.txt"
 }

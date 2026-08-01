@@ -48,7 +48,7 @@ class InnerVoice(Protocol):
         ...
 
 
-class HistoricInnerVoice:
+class HumanHistoricInnerVoice:
     observer: PlayerName
 
     def __init__(self, observer: PlayerName) -> None:
@@ -80,7 +80,7 @@ class HistoricInnerVoice:
         if prompt_set is None:
             prompt_set = PromptSet()
         return prompt_set.get_prompt(
-            "inner_voice__historic_voice",
+            "inner_voice__human_historic_voice",
             {"observer": self.observer},
             f"Returns the trust scores that {self.observer} actually recorded "
             "toward the given player at this point in the recorded game."
@@ -200,7 +200,7 @@ def _ask_llm_for_trust(player_name: PlayerName, context_str: str) -> TrustScores
         return _neutral_trust_scores()
 
 
-class AskMyselfInnerVoice:
+class LLMInnerVoice:
     def ask(
         self,
         player_name: PlayerName,
@@ -223,50 +223,10 @@ class AskMyselfInnerVoice:
         if prompt_set is None:
             prompt_set = PromptSet()
         return prompt_set.get_prompt(
-            "inner_voice__ask_myself",
+            "inner_voice__llm_voice",
             {},
-            "Asks the same LLM with its current context for a gut-feeling trust assessment "
+            "Asks an LLM with its current context for a gut-feeling trust assessment "
             "toward the given player. Returns trust scores without rationale."
-        )
-
-    def feed_context(self, game_records: GameRecord, phase_idx: int) -> None:
-        pass
-
-
-class OtherContextInnerVoice:
-    context: ContextProvider
-
-    def __init__(self, context: ContextProvider) -> None:
-        self.context = context
-
-    def ask(
-        self,
-        player_name: PlayerName,
-        context: Ctx | None,
-        game_records: GameRecord,
-        prompt_set_or_phase_idx: Any = None,
-        phase_idx: int | None = None,
-    ) -> TrustScores:
-        if phase_idx is None:
-            target_phase_idx = prompt_set_or_phase_idx
-            prompt_set = PromptSet()
-        else:
-            target_phase_idx = phase_idx
-            prompt_set = prompt_set_or_phase_idx if isinstance(prompt_set_or_phase_idx, PromptSet) else PromptSet()
-
-        own_context = self.context.get_context(game_records, prompt_set, target_phase_idx)
-        context_str = own_context.to_string() if own_context is not None else "No context available."
-        return _ask_llm_for_trust(player_name, context_str)
-
-    def tool_description(self, prompt_set: PromptSet | None = None) -> str:
-        if prompt_set is None:
-            prompt_set = PromptSet()
-        return prompt_set.get_prompt(
-            "inner_voice__other_context",
-            {},
-            "Asks an LLM for a gut-feeling trust assessment toward the given player "
-            "using an alternative context provider instead of the main labeling context. "
-            "Returns trust scores without rationale."
         )
 
     def feed_context(self, game_records: GameRecord, phase_idx: int) -> None:

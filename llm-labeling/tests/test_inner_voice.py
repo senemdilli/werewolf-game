@@ -10,7 +10,7 @@ from wolf_llm_labeling.inner_voice import (
     TRUST_MAX,
     TRUST_MIN,
     ConstantInnerVoice,
-    HistoricInnerVoice,
+    HumanHistoricInnerVoice,
     RandomInnerVoice,
 )
 from wolf_llm_labeling.models import Score, TrustScores
@@ -71,36 +71,36 @@ class TestConstantInnerVoice:
         assert ConstantInnerVoice(Score(4, 1)).tool_description().strip()
 
 
-class TestHistoricInnerVoice:
+class TestHumanHistoricInnerVoice:
     def test_returns_latest_label_for_observer_and_target(self):
         latest = object()
         records = FakeGameRecord({"alice": {"bob": [_label(object()), _label(latest)]}})
-        voice = HistoricInnerVoice("alice")
+        voice = HumanHistoricInnerVoice("alice")
 
         assert voice.ask("bob", None, records, 0) is latest
 
     def test_neutral_fallback_when_no_labels_at_all(self):
-        voice = HistoricInnerVoice("alice")
+        voice = HumanHistoricInnerVoice("alice")
         scores = voice.ask("bob", None, FakeGameRecord({}), 0)
         self._assert_neutral(scores)
 
     def test_neutral_fallback_when_observer_missing(self):
         records = FakeGameRecord({"someone_else": {"bob": [_label(object())]}})
-        scores = HistoricInnerVoice("alice").ask("bob", None, records, 0)
+        scores = HumanHistoricInnerVoice("alice").ask("bob", None, records, 0)
         self._assert_neutral(scores)
 
     def test_neutral_fallback_when_target_missing(self):
         records = FakeGameRecord({"alice": {"charlie": [_label(object())]}})
-        scores = HistoricInnerVoice("alice").ask("bob", None, records, 0)
+        scores = HumanHistoricInnerVoice("alice").ask("bob", None, records, 0)
         self._assert_neutral(scores)
 
     def test_neutral_fallback_when_get_labels_returns_none(self):
         records = FakeGameRecord(None)
-        scores = HistoricInnerVoice("alice").ask("bob", None, records, 0)
+        scores = HumanHistoricInnerVoice("alice").ask("bob", None, records, 0)
         self._assert_neutral(scores)
 
     def test_tool_description_mentions_observer(self):
-        assert "alice" in HistoricInnerVoice("alice").tool_description()
+        assert "alice" in HumanHistoricInnerVoice("alice").tool_description()
 
     @staticmethod
     def _assert_neutral(scores):
