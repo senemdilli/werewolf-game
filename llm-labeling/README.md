@@ -238,6 +238,17 @@ python main.py --primary-model "gemma3:31b" --inner-voice-model "qwen3.6:35b" --
 
 ---
 
+## JSON Schemas (`schemas/`)
+
+All input game records and generated output label files have a JSON Schema  stored under `schemas/`:
+
+*   **`game_events_schema.json`**: Raw game event export files (`game-<ID>.json`).
+*   **`human_game_labels_schema.json`**: Ground-truth human trust label export files (`game-<ID>-labels.json`).
+*   **`label_output_schema.json`**: Generated LLM labeling engine result files (`<model>-labels-output.json`).
+
+
+---
+
 ## Context Structure & Information Filtering
 
 To prevent information leakage, the context builder dynamically filters all phase logs based on the role of the player being evaluated (because Game Results have every event):
