@@ -228,7 +228,12 @@ Main Labeling Agent / Decider (primary_model)
         └── Option 4: constant   ──> Configured Constant Scores Baseline
 ```
 
-This architecture allows studying whether a primary agent (e.g., `gemma4:31b`) "listens" to a different inner voice model (e.g., `qwen3.6:35b`), human player history, or control baselines when making trust evaluations.
+This architecture allows studying whether a primary agent (e.g., `gemma3:31b`) "listens" to a different inner voice model (e.g., `qwen3.6:35b`), human player history, or control baselines when making trust evaluations:
+
+```bash
+# Example: Primary model gemma3:31b using a different inner voice model qwen3.6:35b
+python main.py --primary-model "gemma3:31b" --inner-voice-model "qwen3.6:35b" --inner-voice-type "llm" --experiment "d.py" --variant 2 --ollama-url "http://localhost:11434"
+```
 
 
 ---
