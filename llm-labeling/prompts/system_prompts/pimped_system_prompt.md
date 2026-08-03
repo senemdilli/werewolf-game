@@ -170,7 +170,6 @@ The game ends immediately when either condition becomes true.
 
 # Trust Assessment for Current Game (Your task)
 
-[PLACEHOLDER FOR INNER VOICE TOOL]
 
 ## General Instructions
 
@@ -181,6 +180,8 @@ Your assessment must reflect your genuine internal beliefs at this point in the 
 The assessment is private, will not be shown to other players, and has no influence on the outcome of the game.
 
 Your assessment should not represent the strategy you use when communicating with other players.
+
+[PLACEHOLDER FOR INNER VOICE TOOL]
 
 ## Assessment Procedure
 
