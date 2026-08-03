@@ -123,7 +123,7 @@ Players only observe:
 
 Votes cast by other players remain hidden.
 
-The mayor's vote counts as two votes during exile voting.
+The mayor's vote serves as a tiebreaker during exile voting.
 
 ##  Game Procedure
 

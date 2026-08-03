@@ -71,8 +71,8 @@ _CHECKPOINT_ORDER = tuple(_CHECKPOINT_TYPES)
 _CONFIDENCE = {"LOW": 1, "MEDIUM": 2, "HIGH": 3}
 _DAWN_DEATH_RE = re.compile(r"Dawn breaks\. (?P<victims>.+?) (?:was|were) found dead\.")
 _PLAYER_WITH_ROLE_RE = re.compile(r"([^(),]+?)\s*\(([^)]+)\)")
-_MAYOR_RE = re.compile(r"^(?P<player>.+?) has been elected Mayor\. Their vote counts double\.$")
-_RANDOM_MAYOR_RE = re.compile(r"^No one voted\. (?P<player>.+?) was randomly selected as Mayor\. Their vote counts double\.$")
+_MAYOR_RE = re.compile(r"^(?P<player>.+?) has been elected Mayor\.(?: Their vote (?:counts double|serves as a tiebreaker)\.)?$")
+_RANDOM_MAYOR_RE = re.compile(r"^No one voted\. (?P<player>.+?) was randomly selected as Mayor\.(?: Their vote (?:counts double|serves as a tiebreaker)\.)?$")
 _EXILE_RE = re.compile(r"^The village voted\. (?P<player>.+?) \((?P<role>[^)]+)\) has been eliminated\.$")
 
 
