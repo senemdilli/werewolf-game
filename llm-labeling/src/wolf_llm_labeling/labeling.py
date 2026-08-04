@@ -499,7 +499,7 @@ def label_once(
         step_count = 0
         
         stop_stream = False
-        print("Running agentic loop:")
+        print("Running Labeling Process:")
         try:
             for event in agent.stream({"messages": messages}):
                 if stop_stream:
@@ -536,7 +536,7 @@ def label_once(
                             step_count += 1
         except Exception as e:
             print(f"    Warning: Agent stream encountered exception: {e}. Falling back to normal invoke...")
-            with ConsoleSpinner("Running agentic loop (fallback)..."):
+            with ConsoleSpinner("Running Labeling Process (fallback)..."):
                 result = agent.invoke({"messages": messages})
             current_messages = result.get("messages", [])
             

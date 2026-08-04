@@ -174,6 +174,7 @@ def run_labeling_experiment(
     likert_type: str = "agree-disagree",
     chronology: str = "numeric",
     parallel: bool = False,
+    runs: int = 1,
 ) -> list[str]:
     """Execute a labeling experiment for game records and save the results."""
     import time
@@ -351,7 +352,30 @@ def run_labeling_experiment(
     output_path = Path(output_dir)
     game_file = Path(game_record_csv).stem
     sanitized_model = primary_model.replace(":", "-").replace("/", "-")
-    base_out_path = output_path / experiment_name / game_file / sanitized_model
+    exp_game_dir = output_path / experiment_name / game_file
+    
+    all_players_in_game = set(player_names)
+
+    # Determine run directory:
+    # Use base model dir (e.g. qwen3.6-35b) for run 1 (or while incomplete).
+    # Automatically roll over to qwen3.6-35b_run2, qwen3.6-35b_run3, etc. once a run is 100% complete.
+    current_run_idx = 1
+    while True:
+        candidate_name = sanitized_model if current_run_idx == 1 else f"{sanitized_model}_run{current_run_idx}"
+        candidate_path = exp_game_dir / candidate_name
+        
+        completed_players_in_dir = set()
+        if candidate_path.exists():
+            for p in player_names:
+                if any(not f.name.endswith("-trace.md") for f in candidate_path.glob(f"{p}-*.json")):
+                    completed_players_in_dir.add(p)
+
+        if completed_players_in_dir != all_players_in_game:
+            base_out_path = candidate_path
+            break
+        
+        current_run_idx += 1
+
     base_out_path.mkdir(parents=True, exist_ok=True)
 
     import concurrent.futures
@@ -362,6 +386,11 @@ def run_labeling_experiment(
         active_player_name.set(player)
         chronology_type.set(chronology)
         parallel_mode.set(parallel)
+
+        existing_json = [f for f in base_out_path.glob(f"{player}-*.json") if not f.name.endswith("-trace.md")]
+        if existing_json:
+            print(f"[Skip] Resuming partial run in '{base_out_path.name}' for player '{player}' ({existing_json[0].name}). Skipping.")
+            return [str(f) for f in existing_json]
 
         player_start_time = time.time()
         total_phases = game_record.get_phase_count()
@@ -399,21 +428,31 @@ def run_labeling_experiment(
             
             try:
                 max_retries = 3
+                phase_timeout_seconds = 900  # 15 minutes max per phase per player
                 for attempt in range(1, max_retries + 1):
                     try:
-                        labels, call_info = label_once(
-                            models=models,
-                            prompt_set=prompt_set,
-                            context=context_provider,
-                            inner_voice=inner_voice,
-                            formatter_type=formatter,
-                            game_data=game_record,
-                            phase_idx=phase_idx,
-                            context_as_tool=context_as_tool,
-                            use_likert=use_likert,
-                            likert_type=likert_type,
-                        )
+                        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as phase_executor:
+                            phase_future = phase_executor.submit(
+                                label_once,
+                                models=models,
+                                prompt_set=prompt_set,
+                                context=context_provider,
+                                inner_voice=inner_voice,
+                                formatter_type=formatter,
+                                game_data=game_record,
+                                phase_idx=phase_idx,
+                                context_as_tool=context_as_tool,
+                                use_likert=use_likert,
+                                likert_type=likert_type,
+                            )
+                            labels, call_info = phase_future.result(timeout=phase_timeout_seconds)
                         break
+                    except concurrent.futures.TimeoutError:
+                        if attempt < max_retries:
+                            print(f"    [Retry] Player '{player}' phase {phase_idx} exceeded 15 minutes wall-clock timeout. Retrying phase (Attempt {attempt}/{max_retries})...", file=sys.stderr)
+                            time.sleep(5)
+                        else:
+                            raise TimeoutError(f"Player '{player}' phase {phase_idx} exceeded 15 minutes wall-clock time limit after {max_retries} attempts.")
                     except Exception as e:
                         err_str = str(e).lower()
                         is_conn_error = "connection" in err_str or "timeout" in err_str or "unreachable" in err_str or "host" in err_str or "connect" in err_str

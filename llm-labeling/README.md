@@ -38,8 +38,8 @@ python .\src\wolf_llm_labeling\main.py <game_record.json> <game_record.csv> [opt
 | `--experiment` | `str` | **Required.** The experiment file/id to run: `a`, `b`, `c`, `d`, `e`, or `f` |
 | `--inner-voice-model` | `str` | Optional. Model name to use for the inner trust voice (defaults to the primary model) |
 | `--player-name` | `str` | Optional. Specific player name or index (e.g. `Blue` or `0`) to run labeling for. Runs for **all players** if omitted |
-| `--max-phases` | `int` | Optional. Maximum number of phases to evaluate (default: 0 for all phases) |
-| `--cutoff` | `int` | Optional. Number of historical phases to look back for context (used in experiments A-F) |
+| `--max-phases` | `int` | Optional. Maximum number of phases to evaluate (default: 0 for all phases in game) |
+| `--cutoff` | `int` | Optional. Number of historical phases to look back for context (used in experiments A-F, default: 0) |
 | `--variant` | `int` | Optional. Inner trust voice variant for experiments D-F (`1` for pre-injected context, `2` for agentic tool loop, default: `2`) |
 | `--inner-voice-type` | `str` | Optional. Inner trust voice type for experiments D-F (`llm` (default), `human`, `random`, or `constant`) |
 | `--experiment-args` | `str` | Legacy (now splitted). Optional. Space-separated string argument containing `<cutoff> [variant] [inner_voice_type]` (e.g. `"3 2 human"`) |
@@ -355,6 +355,13 @@ python print_context.py --player "Blue" --phase 0
 python print_context.py --player "Blue" --phase 0 --json
 ```
 
+
+---
+
+## Timeout Protection (against Reasoning Loops)
+
+
+> **Automatic 15-Minute Timeout:** Each player phase evaluation (not the entire player execution across all phases) is protected by a 15-minute timeout and automatic 3x retry mechanism, for example, if a reasoning loop occurs. If a model call stalls for more than 15 minutes, it automatically cancels, retries, and prevents single player evaluation tasks from hanging indefinitely
 
 ---
 
