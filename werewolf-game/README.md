@@ -115,9 +115,10 @@ When creating a room, the host can customize several gameplay parameters:
 | **Game Mode** | `Classic` / `Arena` | `Classic` | Free-form chat vs structured bidding-based discussion |
 | **Witch Self-Healing** | `round_1_only` / `always` / `never` | `round_1_only` | Restricts whether the Witch can use her healing potion on herself |
 | **Bidding Duration** | 10s – 120s | `30s` | Timer per bid round (Arena Mode only) |
-| **Speaking Duration** | 10s – 120s | `30s` | Timer per speaker turn (Arena Mode only) |
+| **Speaking Duration** | 10s – 120s | `60s` | Timer per speaker turn (Arena Mode only) |
 | **Sandbox Mode** | On/Off | Off | Auto-fills empty room slots with 1–12 automated bot players |
-| **Force Random Names** | On/Off | Off | Randomizes player names upon game start (optionally using color names) |
+| **Force Random Names** | On/Off | On | Randomizes player names upon game start |
+| **Colors as Names** | On/Off | On | Uses color names (Red, Blue, Green...) instead of fantasy names for randomized player names |
 | **Spectator Mode** | Active Player/Spectator | Active Player | Allows extra participants to observe live gameplay without voting or appearing in logs |
 
 ## Sandbox Mode & Speech-to-Text
