@@ -46,6 +46,14 @@ def _describe_filters(spec: FilterSpec) -> str:
     instead of listing 20 Nones.
     """
     active = spec.model_dump(exclude_defaults=True, exclude_none=True)
+    if "trust_types" not in active:
+        active_copy = dict(active)
+        active_copy["trust_types"] = ["all (align+info+cons combined)"]
+        parts = [
+            f"{field}={','.join(map(str, value)) if isinstance(value, list) else value}"
+            for field, value in active_copy.items()
+        ]
+        return "filters: " + ", ".join(parts)
     if not active:
         return "filters: none (all rows)"
     parts = [
