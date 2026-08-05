@@ -750,8 +750,7 @@ def _render_trust_scores_no_rationale(scores: TrustScores) -> str | None:
 
 class InnerTrustVoiceContext:
     '''
-        This context returns the scores of an inner trust voice for all players (except self).
-        The inner voice is provided a custom trust context.
+        This context returns the scores of an inner trust voice for all players (except self), the inner voice is provided a custom trust context
     '''
 
     def __init__(self, inner_voice: InnerVoice, inner_voice_context: ContextProvider) -> None:
