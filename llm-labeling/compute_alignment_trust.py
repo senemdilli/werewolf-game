@@ -107,6 +107,24 @@ def compute_alignment_trust_by_phase(model_dir: Path) -> Dict[int, float]:
     return {k: round(sum(v) / len(v), 2) for k, v in sorted(phases.items()) if len(v) > 0}
 
 
+def sort_column_key(col_name: str):
+    """Sort columns: Human first, then by Experiment (A, B, C, ...) and Model (Qwen=1, Gemma=2, Mistral=3)"""
+    if col_name == 'Human':
+        return (0, '', 0, col_name)
+    exp_letter = ''
+    if '(' in col_name and ')' in col_name:
+        exp_letter = col_name.split('(')[1].split(')')[0]
+    model_order = 99
+    lower = col_name.lower()
+    if 'qwen' in lower or 'qw' in lower:
+        model_order = 1
+    elif 'gemma' in lower or 'ge' in lower:
+        model_order = 2
+    elif 'mistral' in lower or 'mis' in lower:
+        model_order = 3
+    return (1, exp_letter, model_order, col_name)
+
+
 def main():
     parser = argparse.ArgumentParser(description="Compute Phase-by-Phase Alignment Trust")
     parser.add_argument("game", nargs="?", default="5NOHGS", help="Game ID or substring (e.g. 5NOHGS, UBY0T7)")
@@ -192,12 +210,12 @@ def main():
             if p not in cols['Human']:
                 cols['Human'][p] = last_h_val
 
-    col_names = list(cols.keys())
+    col_names = sorted(cols.keys(), key=sort_column_key)
     
     print(f"##### ALIGNMENT TRUST EVALUATION FOR GAME: {game_sub} #####")
     
     # Header
-    header_str = f"{'Phase':<8}" + "".join(f"{name:>13}" for name in col_names)
+    header_str = f"{'Phase':<8}" + "".join(f"{name:>14}" for name in col_names)
     print(header_str)
     print("_" * len(header_str))
     
@@ -206,7 +224,7 @@ def main():
         row_str = f"{p:<8}"
         for name in col_names:
             val = cols[name].get(p)
-            row_str += f"{val:>13.2f}" if val is not None else f"{'N/A':>13}"
+            row_str += f"{val:>14.2f}" if val is not None else f"{'N/A':>14}"
         print(row_str)
         
     print("_" * len(header_str))
@@ -217,9 +235,9 @@ def main():
         vals = list(cols[name].values())
         if vals:
             m_val = round(sum(vals) / len(vals), 2)
-            mean_str += f"{m_val:>13.2f}"
+            mean_str += f"{m_val:>14.2f}"
         else:
-            mean_str += f"{'N/A':>13}"
+            mean_str += f"{'N/A':>14}"
     print(mean_str)
 
 if __name__ == '__main__':
