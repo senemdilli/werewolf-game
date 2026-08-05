@@ -19,7 +19,7 @@ def analyze_inner_voice_usage(results_dir: str, target_game: str | None = None, 
         return
 
     experiments = ["d", "e", "f"]
-
+    print("########################" "\n")
     print(f"Inner Voice Tool Usage Report ({'Latest run per player' if dedup else 'All JSON Files'})")
     if target_game:
         print(f"Filter Game: {target_game}")
@@ -102,7 +102,7 @@ def analyze_inner_voice_usage(results_dir: str, target_game: str | None = None, 
                 calls = phase_call_counts[p_idx]
                 p_cnt = len(phase_active_players[p_idx])
                 avg_p = round(calls / evals, 2) if evals > 0 else 0
-                print(f"   * Phase {p_idx}: {calls:<2} calls across {evals} player evaluations ({p_cnt} players triggered tool, Avg: {avg_p:.2f} calls/phase)")
+                print(f"   * Phase {p_idx}: {calls:<2} calls across {evals} player evaluations ({p_cnt} LLM players triggered tool, Avg: {avg_p:.2f} calls/phase)")
             print()
 
         print("-" * 70 + "\n")

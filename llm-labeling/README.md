@@ -423,4 +423,34 @@ To run default presets across all game files with repeated executions without a 
 python .\src\wolf_llm_labeling\batch_runner.py --primary-model "gemma4:31b" --runs 10
 ```
 
+---
+
+## Evaluation & Analysis Helper Scripts
+
+### 1. Phase Alignment Trust Evaluator (`compute_alignment_trust.py`)
+
+Parses JSON result files across models (`Qwen 35B`, `Gemma 31B`, `Mistral 123B`) and experiments (currently only `Exp A`, `Exp B`) for a specific game and computes phase Alignment Trust averages and overall average
+
+```powershell
+# Usage examples (run inside llm-labeling directory):
+python compute_alignment_trust.py 5NOHGS
+python compute_alignment_trust.py 5NOHGS -e a b
+python compute_alignment_trust.py UBY0T7 --experiments d e f
+```
+
+* **Output:** Formatted alignment trust comparison table across models and experiment runs (supports optional `-e` or `--experiments` CLI filter)
+
+### 2. Inner Voice Tool Usage Counter (`count_inner_voice_usage.py`)
+
+Counts `ask_inner_trust_voice` tool calls per phase across agentic runs (Experiments D, E, F  &  Variant 2)
+
+```powershell
+# Example Usage (run inside llm-labeling directory):
+python count_inner_voice_usage.py
+python count_inner_voice_usage.py --game UBY0T7
+```
+
+* **Output:** Phase breakdown of total and average tool calls
+
+
 
