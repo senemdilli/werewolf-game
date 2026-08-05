@@ -110,9 +110,9 @@ def main():
                         )
                     except Exception as e:
                         print(f"Error in batch run for {csv_path} (iteration {r_idx + 1}): {e}", file=sys.stderr)
-    else:
+    else: # Fallback, if no config
         game_dir_path = Path(args.game_dir)
-        csv_files = glob.glob(str(game_dir_path / "game-*.csv"))
+        csv_files = glob.glob(str(game_dir_path/ "game-*.csv"))
         
         experiments = [
             {"experiment": "a", "cutoff": args.cutoff},
