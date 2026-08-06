@@ -19,29 +19,11 @@ make install        # = uv sync --extra dev
 
 ## Quickstart
 
-```python
-from data.dataset import load_dataset
-from data.filters import FilterSpec, apply_filters
-
-df = load_dataset(
-    "../results/game-records",              # human labels + game events exports
-    "../results/llm-labeling",             # labeling engine outputs (optional)
-    cache_dir="../results/data-analysis/cache", # parquet cache (optional)
-)
-
-# Average alignment trust received by werewolves, human labels only
-spec = FilterSpec(sources=["human"], trust_types=["alignment"], target_teams=["WEREWOLVES"])
-apply_filters(df, spec)["score_norm"].mean()
-```
-
-Run the tests:
+To start the agent simply use:
 
 ```bash
-uv run pytest
+make run
 ```
-
-The suite includes integration tests against the real exports in
-`../results/game-records`; they skip automatically when that directory is absent.
 
 ## Asking the agent
 
