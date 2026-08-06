@@ -365,6 +365,13 @@ python print_context.py --player "Blue" --phase 0 --json
 
 ---
 
+## Automatic Resuming & Run Directory Rollover
+
+- **Automatic Resume of Partial Runs:** If an experiment run is interrupted (e.g. due to a server problems or manual cancellation), re-running the command automatically detects already completed player result files in the output folder, skips them (`[Skip] Resuming partial run ...`), and only processes the remaining uncompleted players
+- **Automatic `_runN` Folder Rollover:** Once an output folder (e.g.: `qwen3.6-35b`) is 100% complete with all game players saved, executing the command again for a new experiment run automatically creates and goes over to a new folder (e.g.:`qwen3.6-35b_run2`, `qwen3.6-35b_run3`, etc.)
+
+---
+
 ## Local Testing with LM Studio
 
 LM Studio hosts local models behind an OpenAI-compatible API endpoint (default: `http://localhost:1234/v1`) 
@@ -440,9 +447,21 @@ python compute_alignment_trust.py UBY0T7 --experiments d e f
 
 * **Output:** Formatted alignment trust comparison table across models and experiment runs (supports optional `-e` or `--experiments` CLI filter)
 
-### 2. Inner Voice Tool Usage Counter (`count_inner_voice_usage.py`)
+### 2. Phase Alignment Confidence Evaluator (`compute_alignment_confidence.py`)
 
-Counts `ask_inner_trust_voice` tool calls per phase across agentic runs (Experiments D, E, F  &  Variant 2)
+Parses Alignment Confidence ratings (1=LOW, 2=MEDIUM, 3=HIGH) phases across Human Ground Truth and LLMs
+
+```powershell
+# Usage examples (run inside llm-labeling directory):
+python compute_alignment_confidence.py 5NOHGS
+python compute_alignment_confidence.py UBY0T7 -e a b
+```
+
+* **Output:** Formatted alignment confidence comparison table across models and experiment runs (supports optional `-e` or `--experiments` CLI filter)
+
+### 3. Inner Voice Tool Usage Counter (`count_inner_voice_usage.py`)
+
+Counts `ask_inner_trust_voice` tool calls per phase across agentic runs (Experiments D, E, F  & Variant 2)
 
 ```powershell
 # Example Usage (run inside llm-labeling directory):

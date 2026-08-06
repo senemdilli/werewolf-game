@@ -58,6 +58,9 @@ def analyze_inner_voice_usage(results_dir: str, target_game: str | None = None, 
         print(f" EXPERIMENT {exp.upper()}")
 
         for room_code, model_map in sorted(runs_by_game.items()):
+            all_game_phases = set()
+            model_stats = {}
+
             for model_name, player_map in sorted(model_map.items()):
                 selected_player_runs = {}
 
@@ -73,43 +76,51 @@ def analyze_inner_voice_usage(results_dir: str, target_game: str | None = None, 
 
                 total_phases = 0
                 total_calls = 0
-                phase_eval_counts = Counter()
                 phase_call_counts = Counter()
-                phase_active_players = defaultdict(set)
 
                 for p_key, data in selected_player_runs.items():
-                    p_name = data.get("player_name", p_key)
                     phases = data.get("phases", [])
-
                     for p_data in phases:
                         p_idx = p_data.get("phase_idx")
                         if p_idx is None:
                             continue
-                        phase_eval_counts[p_idx] += 1
+                        all_game_phases.add(p_idx)
                         total_phases += 1
 
-                        iv_list = p_data.get("inner_voice", [])
-                        num_calls = len(iv_list)
-
+                        num_calls = len(p_data.get("inner_voice", []))
                         if num_calls > 0:
                             total_calls += num_calls
                             phase_call_counts[p_idx] += num_calls
-                            phase_active_players[p_idx].add(p_name)
 
-                avg_calls = round(total_calls / total_phases, 2) if total_phases > 0 else 0
+                avg_eval = round(total_calls / total_phases, 2) if total_phases > 0 else 0
+                model_stats[model_name] = {
+                    "total_calls": total_calls,
+                    "avg_eval": avg_eval,
+                    "phase_calls": phase_call_counts,
+                    "players_count": len(selected_player_runs),
+                    "total_phases": total_phases
+                }
 
-                print(f"Game [{room_code}] Model [{model_name}] ({len(selected_player_runs)} players evaluated, {total_phases} phase instances):")
-                print(f"  -Total Inner Voice Calls: {total_calls} (Avg: {avg_calls} calls/phase)")
-                print("  -Phase Breakdown:")
-                for p_idx in sorted(phase_eval_counts.keys()):
-                    evals = phase_eval_counts[p_idx]
-                    calls = phase_call_counts[p_idx]
-                    p_cnt = len(phase_active_players[p_idx])
-                    avg_p = round(calls / evals, 2) if evals > 0 else 0
-                    print(f"   * Phase {p_idx}: {calls:<2} calls across {evals} player evaluations ({p_cnt} LLM players triggered tool, Avg: {avg_p:.2f} calls/phase)")
-                print()
+            sorted_phases = sorted(all_game_phases)
+            first_m = list(model_stats.keys())[0]
+            n_players = model_stats[first_m]["players_count"]
+            n_evals = model_stats[first_m]["total_phases"]
 
-        print("-" * 70 + "\n")
+            print(f"Game [{room_code}] ({n_players} players, {n_evals} phase evaluations):")
+            p_hdr = "  ".join([f"P{p:<2}" for p in sorted_phases])
+            header_str = f"Model                Total    Calls/Eval   {p_hdr}"
+            print(header_str)
+            print("_" * len(header_str))
+
+            for m_name, stats in model_stats.items():
+                pc = stats["phase_calls"]
+                p_str = "  ".join([f"{pc.get(p, 0):<3}" for p in sorted_phases])
+                tc = stats["total_calls"]
+                ae = stats["avg_eval"]
+                print(f"{m_name:<20} {tc:>5}     {ae:>6.2f}/eval   {p_str}")
+            print()
+
+        print("_" * 70 + "\n")
 
 def main():
     parser = argparse.ArgumentParser(description="Count Inner Voice tool calls in LLM labeling runs")
