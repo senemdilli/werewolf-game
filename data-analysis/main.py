@@ -46,7 +46,7 @@ def main() -> None:
     tool_cmd.add_argument("--full-y-scale", action="store_true", help="enforce full Y-axis limits [0, 1] / [1, 7]")
 
     agent_cmd = sub.add_parser("agent", help="ask the analysis agent a question")
-    agent_cmd.add_argument("question", nargs="?", help="natural-language question to ask")
+    agent_cmd.add_argument("--question", nargs="?", help="natural-language question to ask")
     agent_cmd.add_argument("--game-records", default="../results/game-records")
     agent_cmd.add_argument("--llm-results", default="../results/llm-labeling")
     agent_cmd.add_argument("--cache-dir", default="../results/data-analysis/cache")
