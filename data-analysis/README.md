@@ -1,22 +1,16 @@
 # Data Analysis — Werewolf Trust Data Scientist Agent
 
-Analyzes how **LLM trust labeling differs from human trust labeling** on the same
-werewolf games ("BI over the trust data"). Humans annotate trust in the web game;
+Analyzes how **LLM trust labeling behaves compared to human trust labeles** on the same
+werewolf games. Humans annotate trust in the web game;
 the [labeling engine](../llm-labeling/) produces LLM annotations of the same games.
-This package loads both into one unified table and (in later phases) exposes
-analysis tools to an LLM orchestrator you can query in natural language.
-
-**Status:** Phase 1 (data foundation), Phase 2 (analysis tools:
-`compare_data`, `plot`, `delta_tool`, `correlation_tool`), and a first
-Phase 3 orchestrator (natural-language agent over those tools) are
-implemented.
-See `Data_Scientist_Agent_Spec.md` for the research questions driving this.
+This package loads both into one unified table and exposes
+analysis tools to an LLM orchestrator the user can query in natural language.
 
 ---
 
 ## Setup
 
-Requires [uv](https://docs.astral.sh/uv/) (Python 3.12 is fetched automatically).
+Requires [uv](https://docs.astral.sh/uv/) (Python 3.12 is fetched automatically) as well as a [.env](/data-analysis/.env) file with an Ollama API key(see [.env.example](data-analysis/.env.example)).
 
 ```bash
 cd data-analysis
