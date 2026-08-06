@@ -31,7 +31,7 @@ def analyze_inner_voice_usage(results_dir: str, target_game: str | None = None, 
             print(f"Skipping Experiment {exp.upper()}: Directory not found ({exp_dir})")
             continue
 
-        files = [f for f in exp_dir.rglob("*.json") if not f.name.endswith("-trace.json")]
+        files = [f for f in exp_dir.rglob("*.json") if not f.name.endswith("-trace.json") and not f.name.endswith("-trace.md")]
 
         if target_game:
             files = [f for f in files if target_game.lower() in f.name.lower() or target_game.lower() in str(f).lower()]
@@ -40,8 +40,8 @@ def analyze_inner_voice_usage(results_dir: str, target_game: str | None = None, 
             print(f"No result files found for Experiment {exp.upper()}.\n")
             continue
 
-        # Group by game & player
-        runs_by_game = defaultdict(lambda: defaultdict(list))
+        # Group by game & model & player
+        runs_by_game = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
         for fpath in sorted(files):
             try:
                 with open(fpath, "r", encoding="utf-8") as f:
@@ -52,58 +52,62 @@ def analyze_inner_voice_usage(results_dir: str, target_game: str | None = None, 
             game_id = data.get("game_id", "unknown_game")
             room_code = data.get("room_code") or (game_id.split("-")[0] if "-" in game_id else game_id)
             player_name = data.get("player_name", "unknown_player")
-            runs_by_game[room_code][player_name].append((fpath, data))
+            model_name = fpath.parent.name if fpath.parent != exp_dir else "default_model"
+            runs_by_game[room_code][model_name][player_name].append((fpath, data))
 
         print(f" EXPERIMENT {exp.upper()}")
 
-        for room_code, player_map in sorted(runs_by_game.items()):
-            selected_player_runs = {}
+        for room_code, model_map in sorted(runs_by_game.items()):
+            for model_name, player_map in sorted(model_map.items()):
+                selected_player_runs = {}
 
-            if dedup:
-                # Keep latest file per player
-                for p_name, file_list in player_map.items():
-                    latest_tuple = sorted(file_list, key=lambda x: x[0].name)[-1]
-                    selected_player_runs[p_name] = latest_tuple[1]
-            else:
-                for p_name, file_list in player_map.items():
-                    for idx, (fpath, data) in enumerate(file_list):
-                        selected_player_runs[f"{p_name}_{idx}"] = data
+                if dedup:
+                    # Keep latest file per player
+                    for p_name, file_list in player_map.items():
+                        latest_tuple = sorted(file_list, key=lambda x: x[0].name)[-1]
+                        selected_player_runs[p_name] = latest_tuple[1]
+                else:
+                    for p_name, file_list in player_map.items():
+                        for idx, (fpath, data) in enumerate(file_list):
+                            selected_player_runs[f"{p_name}_{idx}"] = data
 
-            total_phases = 0
-            total_calls = 0
-            phase_eval_counts = Counter()
-            phase_call_counts = Counter()
-            phase_active_players = defaultdict(set)
+                total_phases = 0
+                total_calls = 0
+                phase_eval_counts = Counter()
+                phase_call_counts = Counter()
+                phase_active_players = defaultdict(set)
 
-            for p_key, data in selected_player_runs.items():
-                p_name = data.get("player_name", p_key)
-                phases = data.get("phases", [])
+                for p_key, data in selected_player_runs.items():
+                    p_name = data.get("player_name", p_key)
+                    phases = data.get("phases", [])
 
-                for p_data in phases:
-                    p_idx = p_data.get("phase_idx")
-                    phase_eval_counts[p_idx] += 1
-                    total_phases += 1
+                    for p_data in phases:
+                        p_idx = p_data.get("phase_idx")
+                        if p_idx is None:
+                            continue
+                        phase_eval_counts[p_idx] += 1
+                        total_phases += 1
 
-                    iv_list = p_data.get("inner_voice", [])
-                    num_calls = len(iv_list)
+                        iv_list = p_data.get("inner_voice", [])
+                        num_calls = len(iv_list)
 
-                    if num_calls > 0:
-                        total_calls += num_calls
-                        phase_call_counts[p_idx] += num_calls
-                        phase_active_players[p_idx].add(p_name)
+                        if num_calls > 0:
+                            total_calls += num_calls
+                            phase_call_counts[p_idx] += num_calls
+                            phase_active_players[p_idx].add(p_name)
 
-            avg_calls = round(total_calls / total_phases, 2) if total_phases > 0 else 0
+                avg_calls = round(total_calls / total_phases, 2) if total_phases > 0 else 0
 
-            print(f"Game [{room_code}] ({len(selected_player_runs)} players evaluated, {total_phases} phase instances):")
-            print(f"  -Total Inner Voice Calls: {total_calls} (Avg: {avg_calls} calls/phase)")
-            print("  -Phase Breakdown:")
-            for p_idx in sorted(phase_eval_counts.keys()):
-                evals = phase_eval_counts[p_idx]
-                calls = phase_call_counts[p_idx]
-                p_cnt = len(phase_active_players[p_idx])
-                avg_p = round(calls / evals, 2) if evals > 0 else 0
-                print(f"   * Phase {p_idx}: {calls:<2} calls across {evals} player evaluations ({p_cnt} LLM players triggered tool, Avg: {avg_p:.2f} calls/phase)")
-            print()
+                print(f"Game [{room_code}] Model [{model_name}] ({len(selected_player_runs)} players evaluated, {total_phases} phase instances):")
+                print(f"  -Total Inner Voice Calls: {total_calls} (Avg: {avg_calls} calls/phase)")
+                print("  -Phase Breakdown:")
+                for p_idx in sorted(phase_eval_counts.keys()):
+                    evals = phase_eval_counts[p_idx]
+                    calls = phase_call_counts[p_idx]
+                    p_cnt = len(phase_active_players[p_idx])
+                    avg_p = round(calls / evals, 2) if evals > 0 else 0
+                    print(f"   * Phase {p_idx}: {calls:<2} calls across {evals} player evaluations ({p_cnt} LLM players triggered tool, Avg: {avg_p:.2f} calls/phase)")
+                print()
 
         print("-" * 70 + "\n")
 
