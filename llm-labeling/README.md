@@ -434,30 +434,33 @@ python .\src\wolf_llm_labeling\batch_runner.py --primary-model "gemma4:31b" --ru
 
 ## Evaluation & Analysis Helper Scripts
 
-### 1. Phase Alignment Trust Evaluator (`compute_alignment_trust.py`)
+### 1. Phase Trust Evaluator (`compute_alignment_trust.py`)
 
-Parses JSON result files across models (`Qwen 35B`, `Gemma 31B`, `Mistral 123B`) and experiments for a specific game and computes phase Alignment Trust averages (rated on a 7-point Likert scale where 1 = Strongly Disagree, 4 = Neutral, 7 = Strongly Agree)
+Parses JSON result files across models (`Qwen 35B`, `Gemma 31B`, `Mistral 123B`) and experiments for a specific game and computes phase Trust averages (rated on a 7-point Likert scale where 1 = Strongly Disagree, 4 = Neutral, 7 = Strongly Agree). Supports evaluating `alignment`, `information`, or `consistency` trust (default: `alignment`)
 
 ```powershell
 # Usage examples (run inside llm-labeling directory):
 python compute_alignment_trust.py 5NOHGS
-python compute_alignment_trust.py 5NOHGS -e a b
-python compute_alignment_trust.py UBY0T7 --experiments d e f
+python compute_alignment_trust.py UBY0T7 -e a b
+python compute_alignment_trust.py UBY0T7 -d information -e a b
+python compute_alignment_trust.py UBY0T7 -d consistency -e a b
 ```
 
-* **Output:** Formatted alignment trust comparison table across models and experiment runs (supports optional `-e` or `--experiments` CLI filter)
+* **Output:** Formatted trust comparison table across models and experiment runs (supports optional `-e` or `--experiments` and `-d` or `--dimension` CLI filters)
 
-### 2. Phase Alignment Confidence Evaluator (`compute_alignment_confidence.py`)
+### 2. Phase Trust Confidence Evaluator (`compute_alignment_confidence.py`)
 
-Parses Alignment Confidence ratings (1=LOW, 2=MEDIUM, 3=HIGH) phases across Human Ground Truth and LLMs
+Parses Trust Confidence ratings (1=LOW, 2=MEDIUM, 3=HIGH) phases across Human Ground Truth and LLMs. Supports evaluating confidence for `alignment`, `information`, or `consistency` trust (default: `alignment`)
 
 ```powershell
 # Usage examples (run inside llm-labeling directory):
 python compute_alignment_confidence.py 5NOHGS
 python compute_alignment_confidence.py UBY0T7 -e a b
+python compute_alignment_confidence.py UBY0T7 -d information -e a b
+python compute_alignment_confidence.py UBY0T7 -d consistency -e a b
 ```
 
-* **Output:** Formatted alignment confidence comparison table across models and experiment runs (supports optional `-e` or `--experiments` CLI filter)
+* **Output:** Formatted trust confidence comparison table across models and experiment runs (supports optional `-e` or `--experiments` and `-d` or `--dimension` CLI filters)
 
 ### 3. Inner Voice Tool Usage Counter (`count_inner_voice_usage.py`)
 
