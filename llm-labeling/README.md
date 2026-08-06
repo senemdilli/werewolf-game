@@ -436,7 +436,7 @@ python .\src\wolf_llm_labeling\batch_runner.py --primary-model "gemma4:31b" --ru
 
 ### 1. Phase Alignment Trust Evaluator (`compute_alignment_trust.py`)
 
-Parses JSON result files across models (`Qwen 35B`, `Gemma 31B`, `Mistral 123B`) and experiments (currently only `Exp A`, `Exp B`) for a specific game and computes phase Alignment Trust averages and overall average
+Parses JSON result files across models (`Qwen 35B`, `Gemma 31B`, `Mistral 123B`) and experiments for a specific game and computes phase Alignment Trust averages (rated on a 7-point Likert scale where 1 = Strongly Disagree, 4 = Neutral, 7 = Strongly Agree)
 
 ```powershell
 # Usage examples (run inside llm-labeling directory):

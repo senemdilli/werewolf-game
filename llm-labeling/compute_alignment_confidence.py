@@ -154,7 +154,7 @@ def sort_column_key(col_name: str):
 
 def main():
     parser = argparse.ArgumentParser(description="Compute Phase-by-Phase Alignment Trust CONFIDENCE")
-    parser.add_argument("game", nargs="?", default="5NOHGS", help="Game ID or substring (e.g. 5NOHGS, UBY0T7)")
+    parser.add_argument("game", help="Game ID or substring (e.g. 5NOHGS, UBY0T7)")
     parser.add_argument("-e", "--experiments", nargs="+", help="Limit to specific experiment letters (e.g. a b or d e f)")
     args = parser.parse_args()
 
