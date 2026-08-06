@@ -1,5 +1,5 @@
 """
-Standalone Script to compute phase Alignment Trust averages for Human Truth and LLMs (currently Qwen, Gemma, and maybe Mistral) across games and experiments (A, B, etc.)
+Standalone Script to compute phase Alignment (or Information/Consistency) Trust averages for Human Truth and LLMs (currently Qwen, Gemma, and maybe Mistral) across games and experiments (A, B, etc.)
 """
 
 from pathlib import Path
@@ -8,11 +8,14 @@ import sys
 import argparse
 from typing import Dict, List
 
-def compute_human_alignment_trust_dynamic(game_sub: str, game_records_dir: Path) -> Dict[int, float]:
-    """Parse human labels"""
+def compute_human_alignment_trust_dynamic(game_sub: str, game_records_dir: Path, dimension: str = 'alignment') -> Dict[int, float]:
+    """Parse human labels dynamically for specified dimension."""
     if not game_records_dir.exists():
         return {}
 
+    dim_key = dimension.lower()
+
+    # Parse human label files from game-records
     files = list(game_records_dir.glob(f"*{game_sub}*-labels.json"))
     if not files:
         files = list(game_records_dir.glob(f"*{game_sub}*.json"))
@@ -40,7 +43,7 @@ def compute_human_alignment_trust_dynamic(game_sub: str, game_records_dir: Path)
             obs = label_block.get('observer', {}).get('name')
             for t_item in label_block.get('targets', []):
                 t_name = t_item.get('player', {}).get('name')
-                align = t_item.get('alignment', {})
+                align = t_item.get(dim_key, {})
                 score = align.get('score') if isinstance(align, dict) else None
                 if obs and t_name and obs != t_name and score is not None:
                     pair_key = (obs, t_name)
@@ -72,12 +75,14 @@ def compute_human_alignment_trust_dynamic(game_sub: str, game_records_dir: Path)
     return phase_means
 
 
-def compute_alignment_trust_by_phase(model_dir: Path) -> Dict[int, float]:
-    """Parse JSON run files in model_dir and return phase_idx -> average alignment trust"""
+def compute_alignment_trust_by_phase(model_dir: Path, dimension: str = 'alignment') -> Dict[int, float]:
+    """Parse JSON run files in model_dir and return phase_idx -> average trust for specified dimension."""
     phases = {}
     if not model_dir.exists():
         return {}
     
+    dim_key = dimension.lower()
+
     for p in model_dir.glob('*.json'):
         if p.name.endswith('-trace.md'):
             continue
@@ -97,8 +102,8 @@ def compute_alignment_trust_by_phase(model_dir: Path) -> Dict[int, float]:
             labels = phase.get('labels', {})
             if isinstance(labels, dict):
                 for target, dims in labels.items():
-                    if obs != target and isinstance(dims, dict) and 'alignment' in dims:
-                        align = dims.get('alignment')
+                    if obs != target and isinstance(dims, dict) and dim_key in dims:
+                        align = dims.get(dim_key)
                         if isinstance(align, dict):
                             score = align.get('trust')
                             if score is not None:
@@ -126,13 +131,15 @@ def sort_column_key(col_name: str):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Compute Phase-by-Phase Alignment Trust")
-    parser.add_argument("game", nargs="?", default="5NOHGS", help="Game ID or substring (e.g. 5NOHGS, UBY0T7)")
+    parser = argparse.ArgumentParser(description="Compute Phase-by-Phase Trust Evaluation")
+    parser.add_argument("game", help="Game ID or substring (e.g. 5NOHGS, UBY0T7)")
     parser.add_argument("-e", "--experiments", nargs="+", help="Limit to specific experiment letters (e.g. a b or d e f)")
+    parser.add_argument("-d", "--dimension", type=str, default="alignment", choices=["alignment", "information", "consistency"], help="Trust dimension to evaluate (default: alignment)")
     args = parser.parse_args()
 
     game_sub = args.game
     target_exps = [e.lower() for e in args.experiments] if args.experiments else None
+    dimension = args.dimension.lower()
     
     # Locate base results directory
     candidates = [
@@ -164,13 +171,13 @@ def main():
 
     cols = {}
     
-    # Compute Human Ground Truth from game-records
+    # 1. Dynamically compute Human Ground Truth for specified dimension
     if rec_dir:
-        human_scores = compute_human_alignment_trust_dynamic(game_sub, rec_dir)
+        human_scores = compute_human_alignment_trust_dynamic(game_sub, rec_dir, dimension=dimension)
         if human_scores:
             cols['Human'] = human_scores
             
-    # Discover experiment directories + Filter
+    # 2. Dynamically discover experiment directories
     for exp_dir in sorted(base_dir.iterdir()):
         if exp_dir.is_dir():
             exp_name_lower = exp_dir.name.lower()
@@ -192,7 +199,7 @@ def main():
                         elif 'mistral' in m_name.lower():
                             disp_name = f"Mistral ({exp_letter})"
                             
-                        scores = compute_alignment_trust_by_phase(model_dir)
+                        scores = compute_alignment_trust_by_phase(model_dir, dimension=dimension)
                         if scores:
                             cols[disp_name] = scores
 
@@ -202,7 +209,7 @@ def main():
 
     all_phases = sorted(set(p for res in cols.values() for p in res.keys()))
     
-    # Forward-fill Human column
+    # Forward-fill Human column for any terminal phases
     if 'Human' in cols and cols['Human']:
         max_h_p = max(cols['Human'].keys())
         last_h_val = cols['Human'][max_h_p]
@@ -212,7 +219,7 @@ def main():
 
     col_names = sorted(cols.keys(), key=sort_column_key)
     
-    print(f"##### ALIGNMENT TRUST EVALUATION FOR GAME: {game_sub} #####")
+    print(f"##### {dimension.upper()} TRUST EVALUATION FOR GAME: {game_sub} #####")
     
     # Header
     header_str = f"{'Phase':<8}" + "".join(f"{name:>14}" for name in col_names)

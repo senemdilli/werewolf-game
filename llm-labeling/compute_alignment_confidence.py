@@ -1,5 +1,5 @@
 """
- Compute phase Alignment Trust CONFIDENCE averages for Human Ground Truth and LLMs across any experiment (A, B, C, D, E, F, etc.) and model (Qwen, Gemma, Mistral)
+ Compute phase Alignment (or Information/Consistency) Trust CONFIDENCE averages for Human Ground Truth and LLMs across any experiment (A, B, C, D, E, F, etc.) and model (Qwen, Gemma, Mistral)
 
 """
 
@@ -9,10 +9,12 @@ import json
 import sys
 from typing import Dict, List
 
-def compute_human_alignment_confidence_dynamic(game_sub: str, game_records_dir: Path) -> Dict[int, float]:
-    """Parse human labels dynamically matching dataset.py for alignment confidence"""
+def compute_human_alignment_confidence_dynamic(game_sub: str, game_records_dir: Path, dimension: str = 'alignment') -> Dict[int, float]:
+    """Parse human labels dynamically for specified dimension confidence."""
     if not game_records_dir.exists():
         return {}
+
+    dim_key = dimension.lower()
 
     # Attempt to import load_dataset from data-analysis/data/dataset.py
     try:
@@ -25,7 +27,7 @@ def compute_human_alignment_confidence_dynamic(game_sub: str, game_records_dir: 
             
         from data.dataset import load_dataset
         df = load_dataset(str(game_records_dir), llm_results_dir=None)
-        sub_df = df[(df['source'] == 'human') & (df['trust_type'] == 'alignment')]
+        sub_df = df[(df['source'] == 'human') & (df['trust_type'] == dim_key)]
         sub_df = sub_df[sub_df['room_code'].str.contains(game_sub, case=False, na=False) | 
                         sub_df['game_id'].str.contains(game_sub, case=False, na=False)]
         
@@ -65,7 +67,7 @@ def compute_human_alignment_confidence_dynamic(game_sub: str, game_records_dir: 
             obs = label_block.get('observer', {}).get('name')
             for t_item in label_block.get('targets', []):
                 t_name = t_item.get('player', {}).get('name')
-                align = t_item.get('alignment', {})
+                align = t_item.get(dim_key, {})
                 conf = align.get('confidence') if isinstance(align, dict) else None
                 if obs and t_name and obs != t_name and conf is not None:
                     val = conf_map_str.get(str(conf).upper(), conf if isinstance(conf, (int, float)) else None)
@@ -99,12 +101,14 @@ def compute_human_alignment_confidence_dynamic(game_sub: str, game_records_dir: 
     return phase_means
 
 
-def compute_alignment_confidence_by_phase(model_dir: Path) -> Dict[int, float]:
+def compute_alignment_confidence_by_phase(model_dir: Path, dimension: str = 'alignment') -> Dict[int, float]:
     """Parse JSON run files and return phase_idx"""
     phases = {}
     if not model_dir.exists():
         return {}
     
+    dim_key = dimension.lower()
+
     for p in model_dir.glob('*.json'):
         if p.name.endswith('-trace.md'):
             continue
@@ -124,8 +128,8 @@ def compute_alignment_confidence_by_phase(model_dir: Path) -> Dict[int, float]:
             labels = phase.get('labels', {})
             if isinstance(labels, dict):
                 for target, dims in labels.items():
-                    if obs != target and isinstance(dims, dict) and 'alignment' in dims:
-                        align = dims.get('alignment')
+                    if obs != target and isinstance(dims, dict) and dim_key in dims:
+                        align = dims.get(dim_key)
                         if isinstance(align, dict):
                             conf = align.get('confidence')
                             if conf is not None and isinstance(conf, (int, float)):
@@ -153,13 +157,15 @@ def sort_column_key(col_name: str):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Compute Phase-by-Phase Alignment Trust CONFIDENCE")
-    parser.add_argument("game", nargs="?", default="5NOHGS", help="Game ID or substring (e.g. 5NOHGS, UBY0T7)")
+    parser = argparse.ArgumentParser(description="Compute Phase Trust CONFIDENCE")
+    parser.add_argument("game", help="Game ID or substring (e.g. 5NOHGS, UBY0T7)")
     parser.add_argument("-e", "--experiments", nargs="+", help="Limit to specific experiment letters (e.g. a b or d e f)")
+    parser.add_argument("-d", "--dimension", type=str, default="alignment", choices=["alignment", "information", "consistency"], help="Trust dimension to evaluate confidence (default: alignment)")
     args = parser.parse_args()
 
     game_sub = args.game
     target_exps = [e.lower() for e in args.experiments] if args.experiments else None
+    dimension = args.dimension.lower()
     
     # Locate base results directory
     candidates = [
@@ -193,7 +199,7 @@ def main():
     
     # Human Alignment Confidence
     if rec_dir:
-        human_scores = compute_human_alignment_confidence_dynamic(game_sub, rec_dir)
+        human_scores = compute_human_alignment_confidence_dynamic(game_sub, rec_dir, dimension=dimension)
         if human_scores:
             cols['Human'] = human_scores
             
@@ -219,7 +225,7 @@ def main():
                         elif 'mistral' in m_name.lower():
                             disp_name = f"Mistral ({exp_letter})"
                             
-                        scores = compute_alignment_confidence_by_phase(model_dir)
+                        scores = compute_alignment_confidence_by_phase(model_dir, dimension=dimension)
                         if scores:
                             cols[disp_name] = scores
 
@@ -239,7 +245,7 @@ def main():
 
     col_names = sorted(cols.keys(), key=sort_column_key)
     
-    print(f"##### ALIGNMENT CONFIDENCE EVALUATION FOR GAME: {game_sub} #####")
+    print(f"##### {dimension.upper()} CONFIDENCE EVALUATION FOR GAME: {game_sub} #####")
     
     # Header
     header_str = f"{'Phase':<8}" + "".join(f"{name:>14}" for name in col_names)
