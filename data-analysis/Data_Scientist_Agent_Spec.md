@@ -1,5 +1,7 @@
 # Data Scientist Agent
 
+These are the planned specifications for the data scientist agent.
+
 ## Questions
 
 Questions for the LLM Analyser (like BI over the trust data)
