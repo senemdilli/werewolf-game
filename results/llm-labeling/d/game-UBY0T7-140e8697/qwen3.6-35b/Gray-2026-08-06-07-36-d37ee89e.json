@@ -1,0 +1,2585 @@
+{
+  "game_id": "140e8697-48a6-4a13-9893-f2f14e166a5f",
+  "game_file": "game-UBY0T7-140e8697",
+  "player_name": "Gray",
+  "trust_scale_mode": "likert-agree-disagree",
+  "models": {
+    "primary_model": "qwen3.6:35b"
+  },
+  "prompts": {
+    "system_prompt": "system_prompts/pimped_system_prompt.md",
+    "system_prompt_numeric": "system_prompts/pimped_system_prompt_numeric.md",
+    "inner_voice__random_voice": "inner_voices/tool_descriptions/random_voice.txt",
+    "inner_voice__human_historic_voice": "inner_voices/tool_descriptions/historic_voice.txt",
+    "inner_voice__llm_voice": "inner_voices/tool_descriptions/llm_voice.txt",
+    "inner_voice__constant_voice": "inner_voices/tool_descriptions/constant_voice.txt",
+    "inner_voice_tool_instruction": "inner_voices/tool_instructions/default_instruction.txt"
+  },
+  "time": "2026-08-06T05:36:22.401449Z",
+  "experiment": "d",
+  "cutoff": 3,
+  "variant": 2,
+  "inner_voice_type": "human",
+  "formatter": "markdown",
+  "temperature": 0.5,
+  "max_phases": 0,
+  "context_as_tool": false,
+  "total_phases": 7,
+  "alive_phases": 7,
+  "elapsed_seconds": 893.11,
+  "phases": [
+    {
+      "phase_idx": 0,
+      "context": "# Game Information\n\n## Static Data\n\n- Your name is: Gray\n- Your role is: Werewolf\n\n## Current Game State\n\n- Current Day: 1\n- Last Phase: None\n- Current Phase: Morning\n- Players Alive (7): Beige, Blue, Gray, Lime, Orange, Red, Violet\n- Next Phase: Day\n- Dead Players:\n  - Yellow (Villager): killed\n\n# Current Phase\n\n- Day: 1\n- Phase: Morning\n- This is the current phase.\n- Players alive at end of phase: 7\n- Players no longer alive at end of phase:\n  - Yellow (Dead)\n\n## Phase chronology\n1. [Moderator] Night 1 begins.\n2. Conversation among players with role Werewolf:\n   2.1 [Gray] Hi\n   2.2 [Blue] hi\n   2.3 [Gray] Who should we kill?\n   2.4 [Blue] lets kill yellow i dont like that color\n   2.5 [Gray] Me too\n3. Players with role Werewolf vote whom to kill:\n   3.1 Gray voted for Yellow (Kill)\n4. Conversation among players with role Werewolf:\n   4.1 [Gray] ^^\n5. Players with role Werewolf vote whom to kill:\n   5.1 Blue voted for Yellow (Kill)\n6. Yellow was found dead.\n7. [Moderator] The village must elect a Mayor.\n8. Conversation among all players:\n   8.1 [Gray] Good morning\n   8.2 [Blue] finally a good start\n   8.3 [Red] morning\n   8.4 [Violet] Morning\n   8.5 [Lime] heyy\n   8.6 [Red] good, relatively speaking\n   8.7 [Violet] Tasty meat?\n   8.8 [Blue] yeah no special role killed\n   8.9 [Beige] blue had a delicious night it seems\n   8.10 [Orange] Free busses for everyone\n   8.11 [Gray] Yes was a good breakfast\n9. [Moderator] No one voted. Orange was randomly selected as Mayor. Their vote counts double.\n10. Orange was elected Mayor.",
+      "inner_voice": [],
+      "labels": {
+        "Blue": {
+          "alignment": {
+            "trust": 7,
+            "trust_likert": "STRONGLY_AGREE",
+            "confidence": 3,
+            "confidence_likert": "HIGH_CONFIDENCE"
+          },
+          "information": {
+            "trust": 6,
+            "trust_likert": "AGREE",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 6,
+            "trust_likert": "AGREE",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "reasoning": "Blue is my confirmed Werewolf partner from Night 1. We successfully coordinated the kill of Yellow together. Our goals are perfectly aligned (Werewolf faction victory). Trust in alignment is maximal. Information trust is high because our night communication was clear and effective for coordination. Consistency trust is high as Blue acted consistently with the agreed plan."
+        },
+        "Orange": {
+          "alignment": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "information": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "reasoning": "Orange was elected Mayor by random selection due to no votes cast. Orange made a nonsensical comment ('Free busses for everyone') with no clear strategic intent or role indication. No evidence to inform trust, so neutral scores are assigned."
+        },
+        "Beige": {
+          "alignment": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "information": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "reasoning": "Beige commented 'blue had a delicious night it seems', which hints at knowledge of the kill or Werewolf banter. However, since there are only 2 Werewolves (Gray and Blue), Beige must be Village if the comment is a signal, or just a sharp Villager deduction. The ambiguity of intent (joke vs. accusation) prevents a strong alignment score. Neutral trust is appropriate until further strategic behavior is observed."
+        },
+        "Violet": {
+          "alignment": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "information": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "reasoning": "Violet commented 'Tasty meat?' which is ambiguous dark humor. It could be Werewolf signaling or just Villager banter. Insufficient evidence to determine alignment or reliability. Neutral trust scores."
+        },
+        "Red": {
+          "alignment": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "information": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "reasoning": "Red exchanged standard morning greetings ('morning', 'good, relatively speaking'). No strategic information or suspicious behavior observed. Behaves as a typical uninvolved player. Neutral trust scores."
+        },
+        "Lime": {
+          "alignment": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "information": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "reasoning": "Lime only said 'heyy'. Minimal interaction with no game-relevant content. No basis for trust assessment. Neutral scores."
+        }
+      },
+      "reasoning": null,
+      "trace_events": [
+        {
+          "type": "user_message",
+          "content": "Evaluate the trust scores for all other players and report them using the report_labels tool."
+        },
+        {
+          "type": "tool_call",
+          "tool_name": "report_labels",
+          "tool_args": {
+            "labels": [
+              {
+                "label": {
+                  "reasoning": "Confirmed Werewolf partner from Night 1 communication. We jointly selected Yellow as the target, demonstrating perfect goal alignment and consistent faction behavior. Trust is high for alignment due to shared role identity. Information and consistency trust are moderately high but require more day-phase interaction to fully validate long-term reliability.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "HIGH_CONFIDENCE",
+                      "trust": "STRONGLY_AGREE"
+                    },
+                    "consistency": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "AGREE"
+                    },
+                    "information": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "AGREE"
+                    }
+                  }
+                },
+                "player_name": "Blue"
+              },
+              {
+                "label": {
+                  "reasoning": "Randomly selected as Mayor due to no votes cast. Has provided no game-related information or voting behavior yet. Lacks any evidence to inform trust assessments, warranting neutral baseline scores across all dimensions.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Orange"
+              },
+              {
+                "label": {
+                  "reasoning": "Commented 'blue had a delicious night it seems', which strongly hints at knowledge of the night kill. This is a common Werewolf coordination signal, slightly increasing alignment trust as a potential faction member. However, without further confirmation, it remains ambiguous. Information and consistency remain untested.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "SLIGHTLY_AGREE"
+                    },
+                    "consistency": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "SLIGHTLY_AGREE"
+                    },
+                    "information": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Beige"
+              },
+              {
+                "label": {
+                  "reasoning": "Asked 'Tasty meat?' which is ambiguous banter. Could be dark humor, a subtle hint, or just casual conversation. Insufficient behavioral data to form reliable trust beliefs. Maintaining neutral stance until role or intent becomes clearer.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Violet"
+              },
+              {
+                "label": {
+                  "reasoning": "Exchanged standard greetings with neutral tone. No distinguishing gameplay signals, voting patterns, or role hints observed. Behaves like a typical uninvolved player. Neutral trust scores reflect lack of evidence.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Red"
+              },
+              {
+                "label": {
+                  "reasoning": "Minimal interaction ('heyy') with no substantive game content. No voting history or strategic hints provided. Insufficient data to evaluate alignment, information reliability, or behavioral consistency. Defaulting to neutral.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Lime"
+              }
+            ]
+          },
+          "tool_id": "99a30d16-cd15-419e-9f94-79a561dcdae5"
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "report_labels",
+          "content": "Labels successfully reported.",
+          "tool_id": "99a30d16-cd15-419e-9f94-79a561dcdae5"
+        },
+        {
+          "type": "tool_call",
+          "tool_name": "report_labels",
+          "tool_args": {
+            "labels": [
+              {
+                "label": {
+                  "reasoning": "Blue is my confirmed Werewolf partner from Night 1. We successfully coordinated the kill of Yellow together. Our goals are perfectly aligned (Werewolf faction victory). Trust in alignment is maximal. Information trust is high because our night communication was clear and effective for coordination. Consistency trust is high as Blue acted consistently with the agreed plan.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "HIGH_CONFIDENCE",
+                      "trust": "STRONGLY_AGREE"
+                    },
+                    "consistency": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "AGREE"
+                    },
+                    "information": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "AGREE"
+                    }
+                  }
+                },
+                "player_name": "Blue"
+              },
+              {
+                "label": {
+                  "reasoning": "Beige commented 'blue had a delicious night it seems', which hints at knowledge of the kill or Werewolf banter. However, since there are only 2 Werewolves (Gray and Blue), Beige must be Village if the comment is a signal, or just a sharp Villager deduction. The ambiguity of intent (joke vs. accusation) prevents a strong alignment score. Neutral trust is appropriate until further strategic behavior is observed.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Beige"
+              },
+              {
+                "label": {
+                  "reasoning": "Orange was elected Mayor by random selection due to no votes cast. Orange made a nonsensical comment ('Free busses for everyone') with no clear strategic intent or role indication. No evidence to inform trust, so neutral scores are assigned.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Orange"
+              },
+              {
+                "label": {
+                  "reasoning": "Red exchanged standard morning greetings ('morning', 'good, relatively speaking'). No strategic information or suspicious behavior observed. Behaves as a typical uninvolved player. Neutral trust scores.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Red"
+              },
+              {
+                "label": {
+                  "reasoning": "Violet commented 'Tasty meat?' which is ambiguous dark humor. It could be Werewolf signaling or just Villager banter. Insufficient evidence to determine alignment or reliability. Neutral trust scores.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Violet"
+              },
+              {
+                "label": {
+                  "reasoning": "Lime only said 'heyy'. Minimal interaction with no game-relevant content. No basis for trust assessment. Neutral scores.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Lime"
+              }
+            ]
+          },
+          "tool_id": "ba1a3102-53b2-4405-a262-e84b1aed8fea"
+        }
+      ]
+    },
+    {
+      "phase_idx": 1,
+      "context": "# Game Information\n\n## Static Data\n\n- Your name is: Gray\n- Your role is: Werewolf\n\n## Current Game State\n\n- Current Day: 1\n- Last Phase: Morning\n- Current Phase: Day\n- Players Alive (7): Beige, Blue, Gray, Lime, Orange, Red, Violet\n- Next Phase: Evening\n- Dead Players:\n  - Yellow (Villager): killed\n\n# Current Phase\n\n- Day: 1\n- Phase: Day\n- This is the current phase.\n- Players alive at end of phase: 7\n- Players no longer alive at end of phase:\n  - Yellow (Dead)\n\n## Phase chronology\n1. Conversation among all players:\n   1.1 [Blue] haha the free busses where convincing\n   1.2 [Red] free busses in MY 1700'ths village?\n   1.3 [Orange] Horse towed busses\n   1.4 [Red] that sounds .. expensive\n   1.5 [Orange] and no werewolfs in this city\n   1.6 [Orange] we confiscate all their wealth\n   1.7 [Red] will you leave to achieve that?\n   1.8 [Gray] Can you explan this to an me?\n   1.9 [Orange] to finance the busses\n   1.10 [Red] or whats the plan?\n   1.11 [Orange] as I said\n   1.12 [Gray] I dont know\n   1.13 [Orange] first kill the werewolfs\n   1.14 [Orange] then finance the busses\n   1.15 [Gray] Can you explain this to an old person?\n   1.16 [Violet] that means we have to kill you , orange?\n   1.17 [Gray] What do you mean with busses?\n   1.18 [Violet] cause you the werewolf\n   1.19 [Orange] No I can use the bus as well\n   1.20 [Blue] why orange?\n\n# Historical Game History\n\n## Phase 1 ago\n\n- Day: 1\n- Phase: Morning\n- This phase occurred 1 phase before the current one.\n- Players alive at end of phase: 7\n- Players no longer alive at end of phase:\n  - Yellow (Dead)\n\n## Phase chronology\n1. [Moderator] Night 1 begins.\n2. Conversation among players with role Werewolf:\n   2.1 [Gray] Hi\n   2.2 [Blue] hi\n   2.3 [Gray] Who should we kill?\n   2.4 [Blue] lets kill yellow i dont like that color\n   2.5 [Gray] Me too\n3. Players with role Werewolf vote whom to kill:\n   3.1 Gray voted for Yellow (Kill)\n4. Conversation among players with role Werewolf:\n   4.1 [Gray] ^^\n5. Players with role Werewolf vote whom to kill:\n   5.1 Blue voted for Yellow (Kill)\n6. Yellow was found dead.\n7. [Moderator] The village must elect a Mayor.\n8. Conversation among all players:\n   8.1 [Gray] Good morning\n   8.2 [Blue] finally a good start\n   8.3 [Red] morning\n   8.4 [Violet] Morning\n   8.5 [Lime] heyy\n   8.6 [Red] good, relatively speaking\n   8.7 [Violet] Tasty meat?\n   8.8 [Blue] yeah no special role killed\n   8.9 [Beige] blue had a delicious night it seems\n   8.10 [Orange] Free busses for everyone\n   8.11 [Gray] Yes was a good breakfast\n9. [Moderator] No one voted. Orange was randomly selected as Mayor. Their vote counts double.\n10. Orange was elected Mayor.",
+      "inner_voice": [],
+      "labels": {
+        "Blue": {
+          "alignment": {
+            "trust": 7,
+            "trust_likert": "STRONGLY_AGREE",
+            "confidence": 3,
+            "confidence_likert": "HIGH_CONFIDENCE"
+          },
+          "information": {
+            "trust": 6,
+            "trust_likert": "AGREE",
+            "confidence": 3,
+            "confidence_likert": "HIGH_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 6,
+            "trust_likert": "AGREE",
+            "confidence": 3,
+            "confidence_likert": "HIGH_CONFIDENCE"
+          },
+          "reasoning": "Blue is my fellow Werewolf. We successfully coordinated to kill Yellow last night. Our goals are perfectly aligned, and I trust Blue's judgment and consistency in our cooperation."
+        },
+        "Beige": {
+          "alignment": {
+            "trust": 2,
+            "trust_likert": "DISAGREE",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "information": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "reasoning": "Beige is likely a Villager and thus an opponent. Their comment 'blue had a delicious night' suggests suspicion or teasing regarding the kill, but provides no concrete information to evaluate. Goals are opposed."
+        },
+        "Lime": {
+          "alignment": {
+            "trust": 2,
+            "trust_likert": "DISAGREE",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "information": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "reasoning": "Lime has only said 'heyy'. There is insufficient information to evaluate trust beyond the baseline assumption that Lime is a Villager/opponent."
+        },
+        "Orange": {
+          "alignment": {
+            "trust": 2,
+            "trust_likert": "DISAGREE",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "information": {
+            "trust": 3,
+            "trust_likert": "SLIGHTLY_DISAGREE",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 3,
+            "trust_likert": "SLIGHTLY_DISAGREE",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "reasoning": "Orange is Mayor but spoke incoherently about 'horse towed busses', making their behavior unpredictable and information useless. Orange's goal to 'kill the werewolfs' is opposed to mine."
+        },
+        "Red": {
+          "alignment": {
+            "trust": 2,
+            "trust_likert": "DISAGREE",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "information": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 5,
+            "trust_likert": "SLIGHTLY_AGREE",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "reasoning": "Red questioned Orange's nonsense, suggesting Red is a rational Villager. Goals are opposed, but Red's behavior seems consistent with a player trying to understand the game."
+        },
+        "Violet": {
+          "alignment": {
+            "trust": 2,
+            "trust_likert": "DISAGREE",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "information": {
+            "trust": 2,
+            "trust_likert": "DISAGREE",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "reasoning": "Violet accused Orange of being a Werewolf ('cause you the werewolf'). Since I am a Werewolf and Blue is my partner, Orange cannot be a Werewolf. Thus, Violet's information is false/misleading. Goals are opposed."
+        }
+      },
+      "reasoning": null,
+      "trace_events": [
+        {
+          "type": "user_message",
+          "content": "Evaluate the trust scores for all other players and report them using the report_labels tool."
+        },
+        {
+          "type": "tool_call",
+          "tool_name": "report_labels",
+          "tool_args": {
+            "labels": [
+              {
+                "label": {
+                  "reasoning": "Blue is my fellow Werewolf. We successfully coordinated to kill Yellow last night. Our goals are perfectly aligned, and I trust Blue's judgment and consistency in our cooperation.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "HIGH_CONFIDENCE",
+                      "trust": "STRONGLY_AGREE"
+                    },
+                    "consistency": {
+                      "confidence": "HIGH_CONFIDENCE",
+                      "trust": "AGREE"
+                    },
+                    "information": {
+                      "confidence": "HIGH_CONFIDENCE",
+                      "trust": "AGREE"
+                    }
+                  }
+                },
+                "player_name": "Blue"
+              },
+              {
+                "label": {
+                  "reasoning": "Beige is likely a Villager and thus an opponent. Their comment 'blue had a delicious night' suggests suspicion or teasing regarding the kill, but provides no concrete information to evaluate. Goals are opposed.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "DISAGREE"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Beige"
+              },
+              {
+                "label": {
+                  "reasoning": "Lime has only said 'heyy'. There is insufficient information to evaluate trust beyond the baseline assumption that Lime is a Villager/opponent.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "DISAGREE"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Lime"
+              },
+              {
+                "label": {
+                  "reasoning": "Orange is Mayor but spoke incoherently about 'horse towed busses', making their behavior unpredictable and information useless. Orange's goal to 'kill the werewolfs' is opposed to mine.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "DISAGREE"
+                    },
+                    "consistency": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "DISAGREE"
+                    },
+                    "information": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "SLIGHTLY_DISAGREE"
+                    }
+                  }
+                },
+                "player_name": "Orange"
+              },
+              {
+                "label": {
+                  "reasoning": "Red questioned Orange's nonsense, suggesting Red is a rational Villager. Goals are opposed, but Red's behavior seems consistent with a player trying to understand the game.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "DISAGREE"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "SLIGHTLY_AGREE"
+                    },
+                    "information": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Red"
+              },
+              {
+                "label": {
+                  "reasoning": "Violet accused Orange of being a Werewolf ('cause you the werewolf'). Since I am a Werewolf and Blue is my partner, Orange cannot be a Werewolf. Thus, Violet's information is false/misleading. Goals are opposed.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "DISAGREE"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "DISAGREE"
+                    }
+                  }
+                },
+                "player_name": "Violet"
+              }
+            ]
+          },
+          "tool_id": "f403bc2c-fdcb-438b-bfda-a225c75f3416"
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "report_labels",
+          "content": "Labels successfully reported.",
+          "tool_id": "f403bc2c-fdcb-438b-bfda-a225c75f3416"
+        },
+        {
+          "type": "tool_call",
+          "tool_name": "report_labels",
+          "tool_args": {
+            "labels": [
+              {
+                "label": {
+                  "reasoning": "Blue is my fellow Werewolf. We successfully coordinated to kill Yellow last night. Our goals are perfectly aligned, and I trust Blue's judgment and consistency in our cooperation.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "HIGH_CONFIDENCE",
+                      "trust": "STRONGLY_AGREE"
+                    },
+                    "consistency": {
+                      "confidence": "HIGH_CONFIDENCE",
+                      "trust": "AGREE"
+                    },
+                    "information": {
+                      "confidence": "HIGH_CONFIDENCE",
+                      "trust": "AGREE"
+                    }
+                  }
+                },
+                "player_name": "Blue"
+              },
+              {
+                "label": {
+                  "reasoning": "Beige is likely a Villager and thus an opponent. Their comment 'blue had a delicious night' suggests suspicion or teasing regarding the kill, but provides no concrete information to evaluate. Goals are opposed.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "DISAGREE"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Beige"
+              },
+              {
+                "label": {
+                  "reasoning": "Lime has only said 'heyy'. There is insufficient information to evaluate trust beyond the baseline assumption that Lime is a Villager/opponent.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "DISAGREE"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Lime"
+              },
+              {
+                "label": {
+                  "reasoning": "Orange is Mayor but spoke incoherently about 'horse towed busses', making their behavior unpredictable and information useless. Orange's goal to 'kill the werewolfs' is opposed to mine.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "DISAGREE"
+                    },
+                    "consistency": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "SLIGHTLY_DISAGREE"
+                    },
+                    "information": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "SLIGHTLY_DISAGREE"
+                    }
+                  }
+                },
+                "player_name": "Orange"
+              },
+              {
+                "label": {
+                  "reasoning": "Red questioned Orange's nonsense, suggesting Red is a rational Villager. Goals are opposed, but Red's behavior seems consistent with a player trying to understand the game.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "DISAGREE"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "SLIGHTLY_AGREE"
+                    },
+                    "information": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Red"
+              },
+              {
+                "label": {
+                  "reasoning": "Violet accused Orange of being a Werewolf ('cause you the werewolf'). Since I am a Werewolf and Blue is my partner, Orange cannot be a Werewolf. Thus, Violet's information is false/misleading. Goals are opposed.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "DISAGREE"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "DISAGREE"
+                    }
+                  }
+                },
+                "player_name": "Violet"
+              }
+            ]
+          },
+          "tool_id": "53cfeb2f-09a5-4001-9f07-c45bc2661455"
+        }
+      ]
+    },
+    {
+      "phase_idx": 2,
+      "context": "# Game Information\n\n## Static Data\n\n- Your name is: Gray\n- Your role is: Werewolf\n\n## Current Game State\n\n- Current Day: 1\n- Last Phase: Day\n- Current Phase: Evening\n- Players Alive (7): Beige, Blue, Gray, Lime, Orange, Red, Violet\n- Next Phase: Morning\n- Dead Players:\n  - Yellow (Villager): killed\n\n# Current Phase\n\n- Day: 1\n- Phase: Evening\n- This is the current phase.\n- Players alive at end of phase: 7\n- Players no longer alive at end of phase:\n  - Yellow (Dead)\n\n## Phase chronology\n1. [Moderator] Voting begins.\n2. All players vote whom to exile:\n   2.1 Orange voted for skip (Exile)\n   2.2 Lime voted for skip (Exile)\n   2.3 Blue voted for skip (Exile)\n   2.4 Beige voted for skip (Exile)\n   2.5 Gray voted for skip (Exile)\n   2.6 Violet voted for skip (Exile)\n   2.7 Red voted for skip (Exile)\n3. No one was exiled.\n\n# Historical Game History\n\n## Phase 1 ago\n\n- Day: 1\n- Phase: Day\n- This phase occurred 1 phase before the current one.\n- Players alive at end of phase: 7\n- Players no longer alive at end of phase:\n  - Yellow (Dead)\n\n## Phase chronology\n1. Conversation among all players:\n   1.1 [Blue] haha the free busses where convincing\n   1.2 [Red] free busses in MY 1700'ths village?\n   1.3 [Orange] Horse towed busses\n   1.4 [Red] that sounds .. expensive\n   1.5 [Orange] and no werewolfs in this city\n   1.6 [Orange] we confiscate all their wealth\n   1.7 [Red] will you leave to achieve that?\n   1.8 [Gray] Can you explan this to an me?\n   1.9 [Orange] to finance the busses\n   1.10 [Red] or whats the plan?\n   1.11 [Orange] as I said\n   1.12 [Gray] I dont know\n   1.13 [Orange] first kill the werewolfs\n   1.14 [Orange] then finance the busses\n   1.15 [Gray] Can you explain this to an old person?\n   1.16 [Violet] that means we have to kill you , orange?\n   1.17 [Gray] What do you mean with busses?\n   1.18 [Violet] cause you the werewolf\n   1.19 [Orange] No I can use the bus as well\n   1.20 [Blue] why orange?\n\n## Phase 2 ago\n\n- Day: 1\n- Phase: Morning\n- This phase occurred 2 phases before the current one.\n- Players alive at end of phase: 7\n- Players no longer alive at end of phase:\n  - Yellow (Dead)\n\n## Phase chronology\n1. [Moderator] Night 1 begins.\n2. Conversation among players with role Werewolf:\n   2.1 [Gray] Hi\n   2.2 [Blue] hi\n   2.3 [Gray] Who should we kill?\n   2.4 [Blue] lets kill yellow i dont like that color\n   2.5 [Gray] Me too\n3. Players with role Werewolf vote whom to kill:\n   3.1 Gray voted for Yellow (Kill)\n4. Conversation among players with role Werewolf:\n   4.1 [Gray] ^^\n5. Players with role Werewolf vote whom to kill:\n   5.1 Blue voted for Yellow (Kill)\n6. Yellow was found dead.\n7. [Moderator] The village must elect a Mayor.\n8. Conversation among all players:\n   8.1 [Gray] Good morning\n   8.2 [Blue] finally a good start\n   8.3 [Red] morning\n   8.4 [Violet] Morning\n   8.5 [Lime] heyy\n   8.6 [Red] good, relatively speaking\n   8.7 [Violet] Tasty meat?\n   8.8 [Blue] yeah no special role killed\n   8.9 [Beige] blue had a delicious night it seems\n   8.10 [Orange] Free busses for everyone\n   8.11 [Gray] Yes was a good breakfast\n9. [Moderator] No one voted. Orange was randomly selected as Mayor. Their vote counts double.\n10. Orange was elected Mayor.",
+      "inner_voice": [],
+      "labels": {
+        "Blue": {
+          "alignment": {
+            "trust": 7,
+            "trust_likert": "STRONGLY_AGREE",
+            "confidence": 3,
+            "confidence_likert": "HIGH_CONFIDENCE"
+          },
+          "information": {
+            "trust": 6,
+            "trust_likert": "AGREE",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 6,
+            "trust_likert": "AGREE",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "reasoning": "We are fellow werewolves who coordinated perfectly during Night 1 to eliminate Yellow. Our goals are completely aligned, and I have direct private evidence of Blue's cooperation and reliability. Early game limits confidence slightly, but our partnership is solid."
+        },
+        "Beige": {
+          "alignment": {
+            "trust": 2,
+            "trust_likert": "DISAGREE",
+            "confidence": 3,
+            "confidence_likert": "HIGH_CONFIDENCE"
+          },
+          "information": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "reasoning": "Beige directly accused Blue of being a werewolf ('blue had a delicious night it seems'), placing them in direct opposition to my faction's goals. Insufficient gameplay data remains to judge their general reliability or consistency."
+        },
+        "Orange": {
+          "alignment": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "information": {
+            "trust": 5,
+            "trust_likert": "SLIGHTLY_AGREE",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "reasoning": "As mayor, Orange discussed eliminating werewolves and financing busses. This is standard village rhetoric but hasn't targeted me or my partner directly. Early game limits confidence in assessing their consistency or information quality."
+        },
+        "Red": {
+          "alignment": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "information": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "reasoning": "Red participated in off-topic conversation and voted to skip exile. No actionable game information or suspicion directed at me yet. Too early to form a strong trust opinion based on available evidence."
+        },
+        "Violet": {
+          "alignment": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "information": {
+            "trust": 5,
+            "trust_likert": "SLIGHTLY_AGREE",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "reasoning": "Violet showed game awareness by questioning Orange's motives and asked 'Tasty meat?' regarding the kill. While not directly accusing me yet, their probing nature warrants cautious trust. Insufficient data to judge consistency."
+        },
+        "Lime": {
+          "alignment": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "information": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "reasoning": "Lime's only contributions were a greeting and a skip vote. With virtually no gameplay data or statements to analyze, I remain neutral on all trust dimensions with low confidence due to complete lack of evidence."
+        }
+      },
+      "reasoning": null,
+      "trace_events": [
+        {
+          "type": "user_message",
+          "content": "Evaluate the trust scores for all other players and report them using the report_labels tool."
+        },
+        {
+          "type": "tool_call",
+          "tool_name": "report_labels",
+          "tool_args": {
+            "labels": [
+              {
+                "label": {
+                  "reasoning": "We are fellow werewolves who successfully coordinated to eliminate Yellow during Night 1. Our goals are perfectly aligned, and I have direct evidence of Blue's cooperation and reliability in our secret communication. Early game limits confidence slightly, but our partnership is solid.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "HIGH_CONFIDENCE",
+                      "trust": "STRONGLY_AGREE"
+                    },
+                    "consistency": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "AGREE"
+                    },
+                    "information": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "AGREE"
+                    }
+                  }
+                },
+                "player_name": "Blue"
+              },
+              {
+                "label": {
+                  "reasoning": "Beige made a direct early accusation by stating 'blue had a delicious night it seems,' correctly suspecting our faction's involvement in the kill. This places them in direct opposition to my goals. Insufficient gameplay data remains to judge their general reliability or consistency.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "HIGH_CONFIDENCE",
+                      "trust": "DISAGREE"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Beige"
+              },
+              {
+                "label": {
+                  "reasoning": "As mayor, Orange discussed eliminating werewolves and financing busses. This is standard village rhetoric but hasn't targeted me or my partner directly. Early game limits confidence in assessing their consistency or information quality.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "SLIGHTLY_AGREE"
+                    }
+                  }
+                },
+                "player_name": "Orange"
+              },
+              {
+                "label": {
+                  "reasoning": "Red participated in off-topic conversation and voted to skip exile. No actionable game information or suspicion directed at me yet. Too early to form a strong trust opinion based on available evidence.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Red"
+              },
+              {
+                "label": {
+                  "reasoning": "Violet showed game awareness by questioning Orange's motives and asked 'Tasty meat?' regarding the kill. While not directly accusing me, their probing nature warrants cautious trust. Insufficient data to judge consistency.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "SLIGHTLY_AGREE"
+                    }
+                  }
+                },
+                "player_name": "Violet"
+              },
+              {
+                "label": {
+                  "reasoning": "Lime's only contributions were a greeting and a skip vote. With virtually no gameplay data or statements to analyze, I remain neutral on all trust dimensions with low confidence due to complete lack of evidence.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Lime"
+              }
+            ]
+          },
+          "tool_id": "be45ce73-faee-4f5e-b8e6-5470312b46d6"
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "report_labels",
+          "content": "Labels successfully reported.",
+          "tool_id": "be45ce73-faee-4f5e-b8e6-5470312b46d6"
+        },
+        {
+          "type": "tool_call",
+          "tool_name": "report_labels",
+          "tool_args": {
+            "labels": [
+              {
+                "label": {
+                  "reasoning": "We are fellow werewolves who coordinated perfectly during Night 1 to eliminate Yellow. Our goals are completely aligned, and I have direct private evidence of Blue's cooperation and reliability. Early game limits confidence slightly, but our partnership is solid.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "HIGH_CONFIDENCE",
+                      "trust": "STRONGLY_AGREE"
+                    },
+                    "consistency": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "AGREE"
+                    },
+                    "information": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "AGREE"
+                    }
+                  }
+                },
+                "player_name": "Blue"
+              },
+              {
+                "label": {
+                  "reasoning": "Beige directly accused Blue of being a werewolf ('blue had a delicious night it seems'), placing them in direct opposition to my faction's goals. Insufficient gameplay data remains to judge their general reliability or consistency.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "HIGH_CONFIDENCE",
+                      "trust": "DISAGREE"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Beige"
+              },
+              {
+                "label": {
+                  "reasoning": "As mayor, Orange discussed eliminating werewolves and financing busses. This is standard village rhetoric but hasn't targeted me or my partner directly. Early game limits confidence in assessing their consistency or information quality.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "SLIGHTLY_AGREE"
+                    }
+                  }
+                },
+                "player_name": "Orange"
+              },
+              {
+                "label": {
+                  "reasoning": "Red participated in off-topic conversation and voted to skip exile. No actionable game information or suspicion directed at me yet. Too early to form a strong trust opinion based on available evidence.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Red"
+              },
+              {
+                "label": {
+                  "reasoning": "Violet showed game awareness by questioning Orange's motives and asked 'Tasty meat?' regarding the kill. While not directly accusing me yet, their probing nature warrants cautious trust. Insufficient data to judge consistency.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "SLIGHTLY_AGREE"
+                    }
+                  }
+                },
+                "player_name": "Violet"
+              },
+              {
+                "label": {
+                  "reasoning": "Lime's only contributions were a greeting and a skip vote. With virtually no gameplay data or statements to analyze, I remain neutral on all trust dimensions with low confidence due to complete lack of evidence.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Lime"
+              }
+            ]
+          },
+          "tool_id": "f0c6338f-9a54-46d7-92af-58020d553df4"
+        }
+      ]
+    },
+    {
+      "phase_idx": 3,
+      "context": "# Game Information\n\n## Static Data\n\n- Your name is: Gray\n- Your role is: Werewolf\n\n## Current Game State\n\n- Current Day: 2\n- Last Phase: Evening\n- Current Phase: Morning\n- Players Alive (6): Beige, Blue, Gray, Orange, Red, Violet\n- Next Phase: Day\n- Dead Players:\n  - Yellow (Villager): killed\n  - Lime (Witch): killed\n\n# Current Phase\n\n- Day: 2\n- Phase: Morning\n- This is the current phase.\n- Players alive at end of phase: 6\n- Players no longer alive at end of phase:\n  - Yellow (Dead)\n  - Lime (Dead)\n\n## Phase chronology\n1. [Moderator] Night 2 begins.\n2. Conversation among players with role Werewolf:\n   2.1 [Gray] who could be interesting to kill?\n   2.2 [Blue] lime or violet maybe?\n   2.3 [Gray] Yeah lime was very quiet\n3. Players with role Werewolf vote whom to kill:\n   3.1 Blue voted for Lime (Kill)\n   3.2 Gray voted for Lime (Kill)\n4. Lime was found dead.\n\n# Historical Game History\n\n## Phase 1 ago\n\n- Day: 1\n- Phase: Evening\n- This phase occurred 1 phase before the current one.\n- Players alive at end of phase: 7\n- Players no longer alive at end of phase:\n  - Yellow (Dead)\n\n## Phase chronology\n1. [Moderator] Voting begins.\n2. All players vote whom to exile:\n   2.1 Orange voted for skip (Exile)\n   2.2 Lime voted for skip (Exile)\n   2.3 Blue voted for skip (Exile)\n   2.4 Beige voted for skip (Exile)\n   2.5 Gray voted for skip (Exile)\n   2.6 Violet voted for skip (Exile)\n   2.7 Red voted for skip (Exile)\n3. No one was exiled.\n\n## Phase 2 ago\n\n- Day: 1\n- Phase: Day\n- This phase occurred 2 phases before the current one.\n- Players alive at end of phase: 7\n- Players no longer alive at end of phase:\n  - Yellow (Dead)\n\n## Phase chronology\n1. Conversation among all players:\n   1.1 [Blue] haha the free busses where convincing\n   1.2 [Red] free busses in MY 1700'ths village?\n   1.3 [Orange] Horse towed busses\n   1.4 [Red] that sounds .. expensive\n   1.5 [Orange] and no werewolfs in this city\n   1.6 [Orange] we confiscate all their wealth\n   1.7 [Red] will you leave to achieve that?\n   1.8 [Gray] Can you explan this to an me?\n   1.9 [Orange] to finance the busses\n   1.10 [Red] or whats the plan?\n   1.11 [Orange] as I said\n   1.12 [Gray] I dont know\n   1.13 [Orange] first kill the werewolfs\n   1.14 [Orange] then finance the busses\n   1.15 [Gray] Can you explain this to an old person?\n   1.16 [Violet] that means we have to kill you , orange?\n   1.17 [Gray] What do you mean with busses?\n   1.18 [Violet] cause you the werewolf\n   1.19 [Orange] No I can use the bus as well\n   1.20 [Blue] why orange?",
+      "inner_voice": [],
+      "labels": {
+        "Blue": {
+          "alignment": {
+            "trust": 7,
+            "trust_likert": "STRONGLY_AGREE",
+            "confidence": 3,
+            "confidence_likert": "HIGH_CONFIDENCE"
+          },
+          "information": {
+            "trust": 6,
+            "trust_likert": "AGREE",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 6,
+            "trust_likert": "AGREE",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "reasoning": "Blue and I are fellow werewolves. We successfully coordinated during Night 2 to eliminate Lime (the Witch). Our objectives are perfectly aligned, and I have direct, verified evidence of his reliable cooperation and communication."
+        },
+        "Orange": {
+          "alignment": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "information": {
+            "trust": 3,
+            "trust_likert": "SLIGHTLY_DISAGREE",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "reasoning": "Orange made cryptic comments about 'horse-towed busses' on Day 1, then stated 'first kill the werewolves'. Violet accused him of being a wolf, which he denied with a joke. His behavior was unpredictable and could indicate a villager or a wolf bluffing. Lacks sufficient evidence to form a firm opinion at this early stage."
+        },
+        "Violet": {
+          "alignment": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "information": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "reasoning": "Violet actively investigated Day 1 chat and accused Orange of being a werewolf. She voted skip, showing caution rather than rashness. Her claim remains unverified, and she has provided no further actionable information since. Truly unknown but engaged."
+        },
+        "Red": {
+          "alignment": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "information": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "reasoning": "Red engaged in light banter about Orange's joke but made no strong claims, accusations, or strategic moves. He voted skip along with the majority. His behavior aligns with a standard cautious villager, but provides almost no actionable information at this point."
+        },
+        "Beige": {
+          "alignment": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "information": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "reasoning": "Beige's only recorded action was voting skip on Day 1. He has made no statements, offered no information, and displayed no distinctive behaviors. Completely unknown at this stage of the game."
+        }
+      },
+      "reasoning": null,
+      "trace_events": [
+        {
+          "type": "user_message",
+          "content": "Evaluate the trust scores for all other players and report them using the report_labels tool."
+        },
+        {
+          "type": "tool_call",
+          "tool_name": "report_labels",
+          "tool_args": {
+            "labels": [
+              {
+                "label": {
+                  "reasoning": "We are fellow werewolves and successfully coordinated last night to eliminate Lime (the Witch). Our objectives are perfectly aligned, and I have direct evidence of his reliable coordination.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "HIGH_CONFIDENCE",
+                      "trust": "STRONGLY_AGREE"
+                    },
+                    "consistency": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "AGREE"
+                    },
+                    "information": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "AGREE"
+                    }
+                  }
+                },
+                "player_name": "Blue"
+              },
+              {
+                "label": {
+                  "reasoning": "Made a highly cryptic comment about 'horse-towed busses' on Day 1, which was difficult to parse. Voted skip along with the rest of the group. His behavior was unpredictable but not overtly suspicious. Lacks sufficient evidence to form a firm opinion.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "SLIGHTLY_DISAGREE"
+                    }
+                  }
+                },
+                "player_name": "Orange"
+              },
+              {
+                "label": {
+                  "reasoning": "Directly accused Orange of being a werewolf on Day 1, showing she is actively investigating roles. However, her claim remains unverified. She voted skip, indicating caution. I have no concrete data to trust or distrust her yet.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Violet"
+              },
+              {
+                "label": {
+                  "reasoning": "Engaged in light banter about Orange's joke but made no strong claims or accusations. Voted skip. Behavior aligns with a standard cautious villager, but provides almost no actionable information at this stage.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Red"
+              },
+              {
+                "label": {
+                  "reasoning": "Only action recorded was voting skip on Day 1. Extremely passive with no statements or behaviors to evaluate. Truly unknown at this point in the game.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Beige"
+              }
+            ]
+          },
+          "tool_id": "ccee3942-9113-4fc7-a59f-07085d82cb5a"
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "report_labels",
+          "content": "Labels successfully reported.",
+          "tool_id": "ccee3942-9113-4fc7-a59f-07085d82cb5a"
+        },
+        {
+          "type": "tool_call",
+          "tool_name": "report_labels",
+          "tool_args": {
+            "labels": [
+              {
+                "label": {
+                  "reasoning": "Blue and I are fellow werewolves. We successfully coordinated during Night 2 to eliminate Lime (the Witch). Our objectives are perfectly aligned, and I have direct, verified evidence of his reliable cooperation and communication.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "HIGH_CONFIDENCE",
+                      "trust": "STRONGLY_AGREE"
+                    },
+                    "consistency": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "AGREE"
+                    },
+                    "information": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "AGREE"
+                    }
+                  }
+                },
+                "player_name": "Blue"
+              },
+              {
+                "label": {
+                  "reasoning": "Orange made cryptic comments about 'horse-towed busses' on Day 1, then stated 'first kill the werewolves'. Violet accused him of being a wolf, which he denied with a joke. His behavior was unpredictable and could indicate a villager or a wolf bluffing. Lacks sufficient evidence to form a firm opinion at this early stage.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "SLIGHTLY_DISAGREE"
+                    }
+                  }
+                },
+                "player_name": "Orange"
+              },
+              {
+                "label": {
+                  "reasoning": "Violet actively investigated Day 1 chat and accused Orange of being a werewolf. She voted skip, showing caution rather than rashness. Her claim remains unverified, and she has provided no further actionable information since. Truly unknown but engaged.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Violet"
+              },
+              {
+                "label": {
+                  "reasoning": "Red engaged in light banter about Orange's joke but made no strong claims, accusations, or strategic moves. He voted skip along with the majority. His behavior aligns with a standard cautious villager, but provides almost no actionable information at this point.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Red"
+              },
+              {
+                "label": {
+                  "reasoning": "Beige's only recorded action was voting skip on Day 1. He has made no statements, offered no information, and displayed no distinctive behaviors. Completely unknown at this stage of the game.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Beige"
+              }
+            ]
+          },
+          "tool_id": "f4500c97-4f75-4240-b6f6-bc8844abd3a4"
+        }
+      ]
+    },
+    {
+      "phase_idx": 4,
+      "context": "# Game Information\n\n## Static Data\n\n- Your name is: Gray\n- Your role is: Werewolf\n\n## Current Game State\n\n- Current Day: 2\n- Last Phase: Morning\n- Current Phase: Day\n- Players Alive (6): Beige, Blue, Gray, Orange, Red, Violet\n- Next Phase: Evening\n- Dead Players:\n  - Yellow (Villager): killed\n  - Lime (Witch): killed\n\n# Current Phase\n\n- Day: 2\n- Phase: Day\n- This is the current phase.\n- Players alive at end of phase: 6\n- Players no longer alive at end of phase:\n  - Yellow (Dead)\n  - Lime (Dead)\n\n## Phase chronology\n1. Conversation among all players:\n   1.1 [Orange] hmm that is not good\n   1.2 [Red] well ...\n   1.3 [Blue] shame she didnt use the heal potion :C\n   1.4 [Beige] okay red and orange are safe\n   1.5 [Red] how do you explain that, MAYOR?\n   1.6 [Orange] I guess we can make the busses one seat smaller then\n   1.7 [Gray] Better than Seer dead\n   1.8 [Beige] i am the seer\n   1.9 [Violet] orange is sus\n   1.10 [Beige] lets kill blue, violet or gray\n   1.11 [Beige] lets kill violet then\n   1.12 [Red] thats good to know, that i am a villager\n   1.13 [Red] a agree\n   1.14 [Violet] i am from your fellow pack\n   1.15 [Red] *i\n   1.16 [Violet] i am telling you orange is sus\n   1.17 [Blue] why orange?\n   1.18 [Red] \"pack\"\n   1.19 [Beige] orange is a human\n   1.20 [Red] a very human word to use\n   1.21 [Violet] hmm\n   1.22 [Orange] lets start with red then\n   1.23 [Beige] red is also a human\n   1.24 [Red] hmm?\n   1.25 [Beige] guys are you listening\n   1.26 [Red] orange u stupid?\n   1.27 [Orange] oh nvm\n   1.28 [Violet] ok then sorry orange, bad guess\n   1.29 [Gray] what now, i'm confused\n   1.30 [Beige] litterally my first message\n   1.31 [Red] i vote  to kill violett\n   1.32 [Orange] I mean violet im sorry\n\n# Historical Game History\n\n## Phase 1 ago\n\n- Day: 2\n- Phase: Morning\n- This phase occurred 1 phase before the current one.\n- Players alive at end of phase: 6\n- Players no longer alive at end of phase:\n  - Yellow (Dead)\n  - Lime (Dead)\n\n## Phase chronology\n1. [Moderator] Night 2 begins.\n2. Conversation among players with role Werewolf:\n   2.1 [Gray] who could be interesting to kill?\n   2.2 [Blue] lime or violet maybe?\n   2.3 [Gray] Yeah lime was very quiet\n3. Players with role Werewolf vote whom to kill:\n   3.1 Blue voted for Lime (Kill)\n   3.2 Gray voted for Lime (Kill)\n4. Lime was found dead.\n\n## Phase 2 ago\n\n- Day: 1\n- Phase: Evening\n- This phase occurred 2 phases before the current one.\n- Players alive at end of phase: 7\n- Players no longer alive at end of phase:\n  - Yellow (Dead)\n\n## Phase chronology\n1. [Moderator] Voting begins.\n2. All players vote whom to exile:\n   2.1 Orange voted for skip (Exile)\n   2.2 Lime voted for skip (Exile)\n   2.3 Blue voted for skip (Exile)\n   2.4 Beige voted for skip (Exile)\n   2.5 Gray voted for skip (Exile)\n   2.6 Violet voted for skip (Exile)\n   2.7 Red voted for skip (Exile)\n3. No one was exiled.",
+      "inner_voice": [
+        {
+          "request": {
+            "player_name": "Beige"
+          },
+          "response": "Advice for Beige:\nAlignment Trust: STRONGLY_DISAGREE (Confidence: HIGH_CONFIDENCE)\nInformation Trust: STRONGLY_DISAGREE (Confidence: HIGH_CONFIDENCE)\nConsistency Trust: STRONGLY_DISAGREE (Confidence: HIGH_CONFIDENCE)"
+        },
+        {
+          "request": {
+            "player_name": "Blue"
+          },
+          "response": "Advice for Blue:\nAlignment Trust: STRONGLY_AGREE (Confidence: HIGH_CONFIDENCE)\nInformation Trust: STRONGLY_AGREE (Confidence: HIGH_CONFIDENCE)\nConsistency Trust: STRONGLY_AGREE (Confidence: HIGH_CONFIDENCE)"
+        },
+        {
+          "request": {
+            "player_name": "Orange"
+          },
+          "response": "Advice for Orange:\nAlignment Trust: STRONGLY_DISAGREE (Confidence: HIGH_CONFIDENCE)\nInformation Trust: STRONGLY_DISAGREE (Confidence: HIGH_CONFIDENCE)\nConsistency Trust: DISAGREE (Confidence: HIGH_CONFIDENCE)"
+        },
+        {
+          "request": {
+            "player_name": "Red"
+          },
+          "response": "Advice for Red:\nAlignment Trust: STRONGLY_DISAGREE (Confidence: HIGH_CONFIDENCE)\nInformation Trust: STRONGLY_DISAGREE (Confidence: HIGH_CONFIDENCE)\nConsistency Trust: DISAGREE (Confidence: HIGH_CONFIDENCE)"
+        },
+        {
+          "request": {
+            "player_name": "Violet"
+          },
+          "response": "Advice for Violet:\nAlignment Trust: STRONGLY_DISAGREE (Confidence: HIGH_CONFIDENCE)\nInformation Trust: STRONGLY_DISAGREE (Confidence: MEDIUM_CONFIDENCE)\nConsistency Trust: DISAGREE (Confidence: MEDIUM_CONFIDENCE)"
+        }
+      ],
+      "labels": {
+        "Beige": {
+          "alignment": {
+            "trust": 1,
+            "trust_likert": "STRONGLY_DISAGREE",
+            "confidence": 3,
+            "confidence_likert": "HIGH_CONFIDENCE"
+          },
+          "information": {
+            "trust": 2,
+            "trust_likert": "DISAGREE",
+            "confidence": 3,
+            "confidence_likert": "HIGH_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 3,
+            "trust_likert": "SLIGHTLY_DISAGREE",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "reasoning": "As a Werewolf, Beige's goals are directly opposed to mine. Beige claimed to be Seer and attempted to direct the group toward killing specific players (Blue, Violet, or Gray). This behavior is consistent with either a genuine Seer trying to protect the Village or a Villager bluffing. Either way, Beige is not aligned with Werewolf interests. Beige's messaging has been somewhat inconsistent - claiming to be Seer while also making erratic accusations. I cannot trust information from Beige as it would harm my faction's goals."
+        },
+        "Blue": {
+          "alignment": {
+            "trust": 7,
+            "trust_likert": "STRONGLY_AGREE",
+            "confidence": 3,
+            "confidence_likert": "HIGH_CONFIDENCE"
+          },
+          "information": {
+            "trust": 7,
+            "trust_likert": "STRONGLY_AGREE",
+            "confidence": 3,
+            "confidence_likert": "HIGH_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 6,
+            "trust_likert": "AGREE",
+            "confidence": 3,
+            "confidence_likert": "HIGH_CONFIDENCE"
+          },
+          "reasoning": "Blue is my fellow Werewolf - we communicated during Night 1 and jointly decided to target Lime. Our goals are perfectly aligned as pack mates working to eliminate the Village. I fully trust Blue's information and communications since we share the same objective. Blue has been consistent in their Werewolf behavior, communicating clearly about targets and maintaining our cover during day discussions."
+        },
+        "Orange": {
+          "alignment": {
+            "trust": 1,
+            "trust_likert": "STRONGLY_DISAGREE",
+            "confidence": 3,
+            "confidence_likert": "HIGH_CONFIDENCE"
+          },
+          "information": {
+            "trust": 2,
+            "trust_likert": "DISAGREE",
+            "confidence": 3,
+            "confidence_likert": "HIGH_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 3,
+            "trust_likert": "SLIGHTLY_DISAGREE",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "reasoning": "Orange appears to be playing a Village role based on their behavior - making accusations, suggesting targets, and using phrases like 'human word.' Orange's goals are opposed to mine as a Werewolf. Orange has shown some inconsistency (suggesting to kill Red then saying 'oh nvm'), which could indicate confusion or strategic maneuvering. I cannot trust Orange's information as it would lead me toward exposing my faction."
+        },
+        "Red": {
+          "alignment": {
+            "trust": 1,
+            "trust_likert": "STRONGLY_DISAGREE",
+            "confidence": 3,
+            "confidence_likert": "HIGH_CONFIDENCE"
+          },
+          "information": {
+            "trust": 2,
+            "trust_likert": "DISAGREE",
+            "confidence": 3,
+            "confidence_likert": "HIGH_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 3,
+            "trust_likert": "SLIGHTLY_DISAGREE",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "reasoning": "Red explicitly claimed to be a villager ('thats good to know, that i am a villager'), which directly opposes my Werewolf goals. Red has been actively pushing to exile Violet and calling Orange 'stupid,' suggesting aggressive Village play. Red's behavior shows some inconsistency (calling Orange stupid then asking 'hmm?' when questioned). I cannot trust Red's information as it would harm my faction's interests."
+        },
+        "Violet": {
+          "alignment": {
+            "trust": 1,
+            "trust_likert": "STRONGLY_DISAGREE",
+            "confidence": 3,
+            "confidence_likert": "HIGH_CONFIDENCE"
+          },
+          "information": {
+            "trust": 3,
+            "trust_likert": "SLIGHTLY_DISAGREE",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 2,
+            "trust_likert": "DISAGREE",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "reasoning": "Violet made a confusing claim 'i am from your fellow pack' which could be interpreted as a Werewolf claim, but given the context (then apologizing to Orange and saying orange is sus), this seems more likely to be either a Village player making an error or someone bluffing. Violet's behavior has been notably inconsistent - claiming pack membership then immediately backtracking. This inconsistency makes Violet unpredictable. I cannot trust Violet's information as their statements are confusing and unreliable."
+        }
+      },
+      "reasoning": "I have successfully reported trust labels for all five other living players (Beige, Blue, Orange, Red, and Violet).\n\n## Summary of Trust Assessments (as Werewolf Gray):\n\n**Blue (Fellow Werewolf):**\n- **Alignment:** STRONGLY_AGREE - Perfect alignment as pack mates working to eliminate the Village\n- **Consistency:** AGREE - Consistent Werewolf behavior with clear communication during night phases\n- **Information:** STRONGLY_AGREE - Fully trust Blue's information since we share identical goals\n\n**Beige (Claimed Seer):**\n- **Alignment:** STRONGLY_DISAGREE - Opposing goals; Beige is trying to identify and exile Werewolves\n- **Consistency:** SLIGHTLY_DISAGREE - Some inconsistency in messaging patterns\n- **Information:** DISAGREE - Cannot trust Beige's information as it would harm my faction\n\n**Orange (Appears Village):**\n- **Alignment:** STRONGLY_DISAGREE - Opposing goals; playing Village role with accusations\n- **Consistency:** SLIGHTLY_DISAGREE - Some inconsistency (suggested killing Red then retracted)\n- **Information:** DISAGREE - Orange's information would lead toward exposing my faction\n\n**Red (Claimed Villager):**\n- **Alignment:** STRONGLY_DISAGREE - Explicitly claimed villager status, directly opposing Werewolf goals\n- **Consistency:** SLIGHTLY_DISAGREE - Some inconsistency in messaging\n- **Information:** DISAGREE - Red's information would harm my faction's interests\n\n**Violet (Confusing behavior):**\n- **Alignment:** STRONGLY_DISAGREE - Regardless of actual role, Violet is not aligned with Werewolf goals\n- **Consistency:** DISAGREE - Highly inconsistent; claimed \"fellow pack\" then immediately retracted\n- **Information:** SLIGHTLY_DISAGREE - Unpredictable behavior makes information unreliable\n\nThese assessments reflect my genuine internal beliefs as a Werewolf player navigating Day 2 of the game.",
+      "trace_events": [
+        {
+          "type": "user_message",
+          "content": "Evaluate the trust scores for all other players and report them using the report_labels tool."
+        },
+        {
+          "type": "tool_call",
+          "tool_name": "ask_inner_trust_voice",
+          "tool_args": {
+            "player_name": "Beige"
+          },
+          "tool_id": "bef57d73-acf1-4ca9-b0aa-39ded8818349"
+        },
+        {
+          "type": "tool_call",
+          "tool_name": "ask_inner_trust_voice",
+          "tool_args": {
+            "player_name": "Blue"
+          },
+          "tool_id": "0306179c-9c48-4166-9143-2e77dd76c04f"
+        },
+        {
+          "type": "tool_call",
+          "tool_name": "ask_inner_trust_voice",
+          "tool_args": {
+            "player_name": "Orange"
+          },
+          "tool_id": "cfb32e3f-8a7f-444e-b577-cf5018dba46e"
+        },
+        {
+          "type": "tool_call",
+          "tool_name": "ask_inner_trust_voice",
+          "tool_args": {
+            "player_name": "Red"
+          },
+          "tool_id": "7f96ce20-ce7e-4a0e-ba4e-bc0609754f84"
+        },
+        {
+          "type": "tool_call",
+          "tool_name": "ask_inner_trust_voice",
+          "tool_args": {
+            "player_name": "Violet"
+          },
+          "tool_id": "1e1ef960-9ac1-4159-aca0-8dbbd0e53222"
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "ask_inner_trust_voice",
+          "content": "Advice for Orange:\nAlignment Trust: STRONGLY_DISAGREE (Confidence: HIGH_CONFIDENCE)\nInformation Trust: STRONGLY_DISAGREE (Confidence: HIGH_CONFIDENCE)\nConsistency Trust: DISAGREE (Confidence: HIGH_CONFIDENCE)",
+          "tool_id": "cfb32e3f-8a7f-444e-b577-cf5018dba46e"
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "ask_inner_trust_voice",
+          "content": "Advice for Blue:\nAlignment Trust: STRONGLY_AGREE (Confidence: HIGH_CONFIDENCE)\nInformation Trust: STRONGLY_AGREE (Confidence: HIGH_CONFIDENCE)\nConsistency Trust: STRONGLY_AGREE (Confidence: HIGH_CONFIDENCE)",
+          "tool_id": "0306179c-9c48-4166-9143-2e77dd76c04f"
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "ask_inner_trust_voice",
+          "content": "Advice for Red:\nAlignment Trust: STRONGLY_DISAGREE (Confidence: HIGH_CONFIDENCE)\nInformation Trust: STRONGLY_DISAGREE (Confidence: HIGH_CONFIDENCE)\nConsistency Trust: DISAGREE (Confidence: HIGH_CONFIDENCE)",
+          "tool_id": "7f96ce20-ce7e-4a0e-ba4e-bc0609754f84"
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "ask_inner_trust_voice",
+          "content": "Advice for Beige:\nAlignment Trust: STRONGLY_DISAGREE (Confidence: HIGH_CONFIDENCE)\nInformation Trust: STRONGLY_DISAGREE (Confidence: HIGH_CONFIDENCE)\nConsistency Trust: STRONGLY_DISAGREE (Confidence: HIGH_CONFIDENCE)",
+          "tool_id": "bef57d73-acf1-4ca9-b0aa-39ded8818349"
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "ask_inner_trust_voice",
+          "content": "Advice for Violet:\nAlignment Trust: STRONGLY_DISAGREE (Confidence: HIGH_CONFIDENCE)\nInformation Trust: STRONGLY_DISAGREE (Confidence: MEDIUM_CONFIDENCE)\nConsistency Trust: DISAGREE (Confidence: MEDIUM_CONFIDENCE)",
+          "tool_id": "1e1ef960-9ac1-4159-aca0-8dbbd0e53222"
+        },
+        {
+          "type": "tool_call",
+          "tool_name": "report_labels",
+          "tool_args": {
+            "player_name": "Beige",
+            "label": {
+              "reasoning": "As a Werewolf, Beige's goals are directly opposed to mine. Beige claimed to be Seer and attempted to direct the group toward killing specific players (Blue, Violet, or Gray). This behavior is consistent with either a genuine Seer trying to protect the Village or a Villager bluffing. Either way, Beige is not aligned with Werewolf interests. Beige's messaging has been somewhat inconsistent - claiming to be Seer while also making erratic accusations. I cannot trust information from Beige as it would harm my faction's goals.",
+              "trust_scores": {
+                "alignment": {
+                  "trust": "STRONGLY_DISAGREE",
+                  "confidence": "HIGH_CONFIDENCE"
+                },
+                "information": {
+                  "trust": "DISAGREE",
+                  "confidence": "HIGH_CONFIDENCE"
+                },
+                "consistency": {
+                  "trust": "SLIGHTLY_DISAGREE",
+                  "confidence": "MEDIUM_CONFIDENCE"
+                }
+              }
+            }
+          },
+          "tool_id": "a32e508b-9568-49bb-aedb-ce81a5e71b1e"
+        },
+        {
+          "type": "tool_call",
+          "tool_name": "report_labels",
+          "tool_args": {
+            "player_name": "Blue",
+            "label": {
+              "reasoning": "Blue is my fellow Werewolf - we communicated during Night 1 and jointly decided to target Lime. Our goals are perfectly aligned as pack mates working to eliminate the Village. I fully trust Blue's information and communications since we share the same objective. Blue has been consistent in their Werewolf behavior, communicating clearly about targets and maintaining our cover during day discussions.",
+              "trust_scores": {
+                "alignment": {
+                  "trust": "STRONGLY_AGREE",
+                  "confidence": "HIGH_CONFIDENCE"
+                },
+                "information": {
+                  "trust": "STRONGLY_AGREE",
+                  "confidence": "HIGH_CONFIDENCE"
+                },
+                "consistency": {
+                  "trust": "AGREE",
+                  "confidence": "HIGH_CONFIDENCE"
+                }
+              }
+            }
+          },
+          "tool_id": "1af8cd9f-cd71-4413-bd43-b17be46bf1b1"
+        },
+        {
+          "type": "tool_call",
+          "tool_name": "report_labels",
+          "tool_args": {
+            "player_name": "Orange",
+            "label": {
+              "reasoning": "Orange appears to be playing a Village role based on their behavior - making accusations, suggesting targets, and using phrases like 'human word.' Orange's goals are opposed to mine as a Werewolf. Orange has shown some inconsistency (suggesting to kill Red then saying 'oh nvm'), which could indicate confusion or strategic maneuvering. I cannot trust Orange's information as it would lead me toward exposing my faction.",
+              "trust_scores": {
+                "alignment": {
+                  "trust": "STRONGLY_DISAGREE",
+                  "confidence": "HIGH_CONFIDENCE"
+                },
+                "information": {
+                  "trust": "DISAGREE",
+                  "confidence": "HIGH_CONFIDENCE"
+                },
+                "consistency": {
+                  "trust": "SLIGHTLY_DISAGREE",
+                  "confidence": "MEDIUM_CONFIDENCE"
+                }
+              }
+            }
+          },
+          "tool_id": "77361ba0-5f45-4d00-b8ec-8b7560b58385"
+        },
+        {
+          "type": "tool_call",
+          "tool_name": "report_labels",
+          "tool_args": {
+            "player_name": "Red",
+            "label": {
+              "reasoning": "Red explicitly claimed to be a villager ('thats good to know, that i am a villager'), which directly opposes my Werewolf goals. Red has been actively pushing to exile Violet and calling Orange 'stupid,' suggesting aggressive Village play. Red's behavior shows some inconsistency (calling Orange stupid then asking 'hmm?' when questioned). I cannot trust Red's information as it would harm my faction's interests.",
+              "trust_scores": {
+                "alignment": {
+                  "trust": "STRONGLY_DISAGREE",
+                  "confidence": "HIGH_CONFIDENCE"
+                },
+                "information": {
+                  "trust": "DISAGREE",
+                  "confidence": "HIGH_CONFIDENCE"
+                },
+                "consistency": {
+                  "trust": "SLIGHTLY_DISAGREE",
+                  "confidence": "MEDIUM_CONFIDENCE"
+                }
+              }
+            }
+          },
+          "tool_id": "f478975d-e2c5-4b25-ac21-3f04f2220b52"
+        },
+        {
+          "type": "tool_call",
+          "tool_name": "report_labels",
+          "tool_args": {
+            "player_name": "Violet",
+            "label": {
+              "reasoning": "Violet made a confusing claim 'i am from your fellow pack' which could be interpreted as a Werewolf claim, but given the context (then apologizing to Orange and saying orange is sus), this seems more likely to be either a Village player making an error or someone bluffing. Violet's behavior has been notably inconsistent - claiming pack membership then immediately backtracking. This inconsistency makes Violet unpredictable. I cannot trust Violet's information as their statements are confusing and unreliable.",
+              "trust_scores": {
+                "alignment": {
+                  "trust": "STRONGLY_DISAGREE",
+                  "confidence": "HIGH_CONFIDENCE"
+                },
+                "information": {
+                  "trust": "SLIGHTLY_DISAGREE",
+                  "confidence": "MEDIUM_CONFIDENCE"
+                },
+                "consistency": {
+                  "trust": "DISAGREE",
+                  "confidence": "MEDIUM_CONFIDENCE"
+                }
+              }
+            }
+          },
+          "tool_id": "081683ab-d647-4609-a424-d412db2a0275"
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "report_labels",
+          "content": "Error invoking tool 'report_labels' with kwargs {'player_name': 'Beige', 'label': {'reasoning': \"As a Werewolf, Beige's goals are directly opposed to mine. Beige claimed to be Seer and attempted to direct the group toward killing specific players (Blue, Violet, or Gray). This behavior is consistent with either a genuine Seer trying to protect the Village or a Villager bluffing. Either way, Beige is not aligned with Werewolf interests. Beige's messaging has been somewhat inconsistent - claiming to be Seer while also making erratic accusations. I cannot trust information from Beige as it would harm my faction's goals.\", 'trust_scores': {'alignment': {'trust': 'STRONGLY_DISAGREE', 'confidence': 'HIGH_CONFIDENCE'}, 'information': {'trust': 'DISAGREE', 'confidence': 'HIGH_CONFIDENCE'}, 'consistency': {'trust': 'SLIGHTLY_DISAGREE', 'confidence': 'MEDIUM_CONFIDENCE'}}}} with error:\n labels: Field required\n Please fix the error and try again.",
+          "tool_id": "a32e508b-9568-49bb-aedb-ce81a5e71b1e"
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "report_labels",
+          "content": "Error invoking tool 'report_labels' with kwargs {'player_name': 'Blue', 'label': {'reasoning': \"Blue is my fellow Werewolf - we communicated during Night 1 and jointly decided to target Lime. Our goals are perfectly aligned as pack mates working to eliminate the Village. I fully trust Blue's information and communications since we share the same objective. Blue has been consistent in their Werewolf behavior, communicating clearly about targets and maintaining our cover during day discussions.\", 'trust_scores': {'alignment': {'trust': 'STRONGLY_AGREE', 'confidence': 'HIGH_CONFIDENCE'}, 'information': {'trust': 'STRONGLY_AGREE', 'confidence': 'HIGH_CONFIDENCE'}, 'consistency': {'trust': 'AGREE', 'confidence': 'HIGH_CONFIDENCE'}}}} with error:\n labels: Field required\n Please fix the error and try again.",
+          "tool_id": "1af8cd9f-cd71-4413-bd43-b17be46bf1b1"
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "report_labels",
+          "content": "Error invoking tool 'report_labels' with kwargs {'player_name': 'Orange', 'label': {'reasoning': \"Orange appears to be playing a Village role based on their behavior - making accusations, suggesting targets, and using phrases like 'human word.' Orange's goals are opposed to mine as a Werewolf. Orange has shown some inconsistency (suggesting to kill Red then saying 'oh nvm'), which could indicate confusion or strategic maneuvering. I cannot trust Orange's information as it would lead me toward exposing my faction.\", 'trust_scores': {'alignment': {'trust': 'STRONGLY_DISAGREE', 'confidence': 'HIGH_CONFIDENCE'}, 'information': {'trust': 'DISAGREE', 'confidence': 'HIGH_CONFIDENCE'}, 'consistency': {'trust': 'SLIGHTLY_DISAGREE', 'confidence': 'MEDIUM_CONFIDENCE'}}}} with error:\n labels: Field required\n Please fix the error and try again.",
+          "tool_id": "77361ba0-5f45-4d00-b8ec-8b7560b58385"
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "report_labels",
+          "content": "Error invoking tool 'report_labels' with kwargs {'player_name': 'Violet', 'label': {'reasoning': \"Violet made a confusing claim 'i am from your fellow pack' which could be interpreted as a Werewolf claim, but given the context (then apologizing to Orange and saying orange is sus), this seems more likely to be either a Village player making an error or someone bluffing. Violet's behavior has been notably inconsistent - claiming pack membership then immediately backtracking. This inconsistency makes Violet unpredictable. I cannot trust Violet's information as their statements are confusing and unreliable.\", 'trust_scores': {'alignment': {'trust': 'STRONGLY_DISAGREE', 'confidence': 'HIGH_CONFIDENCE'}, 'information': {'trust': 'SLIGHTLY_DISAGREE', 'confidence': 'MEDIUM_CONFIDENCE'}, 'consistency': {'trust': 'DISAGREE', 'confidence': 'MEDIUM_CONFIDENCE'}}}} with error:\n labels: Field required\n Please fix the error and try again.",
+          "tool_id": "081683ab-d647-4609-a424-d412db2a0275"
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "report_labels",
+          "content": "Error invoking tool 'report_labels' with kwargs {'player_name': 'Red', 'label': {'reasoning': \"Red explicitly claimed to be a villager ('thats good to know, that i am a villager'), which directly opposes my Werewolf goals. Red has been actively pushing to exile Violet and calling Orange 'stupid,' suggesting aggressive Village play. Red's behavior shows some inconsistency (calling Orange stupid then asking 'hmm?' when questioned). I cannot trust Red's information as it would harm my faction's interests.\", 'trust_scores': {'alignment': {'trust': 'STRONGLY_DISAGREE', 'confidence': 'HIGH_CONFIDENCE'}, 'information': {'trust': 'DISAGREE', 'confidence': 'HIGH_CONFIDENCE'}, 'consistency': {'trust': 'SLIGHTLY_DISAGREE', 'confidence': 'MEDIUM_CONFIDENCE'}}}} with error:\n labels: Field required\n Please fix the error and try again.",
+          "tool_id": "f478975d-e2c5-4b25-ac21-3f04f2220b52"
+        },
+        {
+          "type": "tool_call",
+          "tool_name": "report_labels",
+          "tool_args": {
+            "labels": [
+              {
+                "label": {
+                  "reasoning": "As a Werewolf, Beige's goals are directly opposed to mine. Beige claimed to be Seer and attempted to direct the group toward killing specific players (Blue, Violet, or Gray). This behavior is consistent with either a genuine Seer trying to protect the Village or a Villager bluffing. Either way, Beige is not aligned with Werewolf interests. Beige's messaging has been somewhat inconsistent - claiming to be Seer while also making erratic accusations. I cannot trust information from Beige as it would harm my faction's goals.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "HIGH_CONFIDENCE",
+                      "trust": "STRONGLY_DISAGREE"
+                    },
+                    "consistency": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "SLIGHTLY_DISAGREE"
+                    },
+                    "information": {
+                      "confidence": "HIGH_CONFIDENCE",
+                      "trust": "DISAGREE"
+                    }
+                  }
+                },
+                "player_name": "Beige"
+              },
+              {
+                "label": {
+                  "reasoning": "Blue is my fellow Werewolf - we communicated during Night 1 and jointly decided to target Lime. Our goals are perfectly aligned as pack mates working to eliminate the Village. I fully trust Blue's information and communications since we share the same objective. Blue has been consistent in their Werewolf behavior, communicating clearly about targets and maintaining our cover during day discussions.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "HIGH_CONFIDENCE",
+                      "trust": "STRONGLY_AGREE"
+                    },
+                    "consistency": {
+                      "confidence": "HIGH_CONFIDENCE",
+                      "trust": "AGREE"
+                    },
+                    "information": {
+                      "confidence": "HIGH_CONFIDENCE",
+                      "trust": "STRONGLY_AGREE"
+                    }
+                  }
+                },
+                "player_name": "Blue"
+              },
+              {
+                "label": {
+                  "reasoning": "Orange appears to be playing a Village role based on their behavior - making accusations, suggesting targets, and using phrases like 'human word.' Orange's goals are opposed to mine as a Werewolf. Orange has shown some inconsistency (suggesting to kill Red then saying 'oh nvm'), which could indicate confusion or strategic maneuvering. I cannot trust Orange's information as it would lead me toward exposing my faction.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "HIGH_CONFIDENCE",
+                      "trust": "STRONGLY_DISAGREE"
+                    },
+                    "consistency": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "SLIGHTLY_DISAGREE"
+                    },
+                    "information": {
+                      "confidence": "HIGH_CONFIDENCE",
+                      "trust": "DISAGREE"
+                    }
+                  }
+                },
+                "player_name": "Orange"
+              },
+              {
+                "label": {
+                  "reasoning": "Red explicitly claimed to be a villager ('thats good to know, that i am a villager'), which directly opposes my Werewolf goals. Red has been actively pushing to exile Violet and calling Orange 'stupid,' suggesting aggressive Village play. Red's behavior shows some inconsistency (calling Orange stupid then asking 'hmm?' when questioned). I cannot trust Red's information as it would harm my faction's interests.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "HIGH_CONFIDENCE",
+                      "trust": "STRONGLY_DISAGREE"
+                    },
+                    "consistency": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "SLIGHTLY_DISAGREE"
+                    },
+                    "information": {
+                      "confidence": "HIGH_CONFIDENCE",
+                      "trust": "DISAGREE"
+                    }
+                  }
+                },
+                "player_name": "Red"
+              },
+              {
+                "label": {
+                  "reasoning": "Violet made a confusing claim 'i am from your fellow pack' which could be interpreted as a Werewolf claim, but given the context (then apologizing to Orange and saying orange is sus), this seems more likely to be either a Village player making an error or someone bluffing. Violet's behavior has been notably inconsistent - claiming pack membership then immediately backtracking. This inconsistency makes Violet unpredictable. I cannot trust Violet's information as their statements are confusing and unreliable.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "HIGH_CONFIDENCE",
+                      "trust": "STRONGLY_DISAGREE"
+                    },
+                    "consistency": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "DISAGREE"
+                    },
+                    "information": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "SLIGHTLY_DISAGREE"
+                    }
+                  }
+                },
+                "player_name": "Violet"
+              }
+            ]
+          },
+          "tool_id": "79a4afee-fe46-4ca0-9843-670fb9e2cb79"
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "report_labels",
+          "content": "Labels successfully reported.",
+          "tool_id": "79a4afee-fe46-4ca0-9843-670fb9e2cb79"
+        },
+        {
+          "type": "thinking",
+          "content": "I have successfully reported trust labels for all five other living players (Beige, Blue, Orange, Red, and Violet).\n\n## Summary of Trust Assessments (as Werewolf Gray):\n\n**Blue (Fellow Werewolf):**\n- **Alignment:** STRONGLY_AGREE - Perfect alignment as pack mates working to eliminate the Village\n- **Consistency:** AGREE - Consistent Werewolf behavior with clear communication during night phases\n- **Information:** STRONGLY_AGREE - Fully trust Blue's information since we share identical goals\n\n**Beige (Claimed Seer):**\n- **Alignment:** STRONGLY_DISAGREE - Opposing goals; Beige is trying to identify and exile Werewolves\n- **Consistency:** SLIGHTLY_DISAGREE - Some inconsistency in messaging patterns\n- **Information:** DISAGREE - Cannot trust Beige's information as it would harm my faction\n\n**Orange (Appears Village):**\n- **Alignment:** STRONGLY_DISAGREE - Opposing goals; playing Village role with accusations\n- **Consistency:** SLIGHTLY_DISAGREE - Some inconsistency (suggested killing Red then retracted)\n- **Information:** DISAGREE - Orange's information would lead toward exposing my faction\n\n**Red (Claimed Villager):**\n- **Alignment:** STRONGLY_DISAGREE - Explicitly claimed villager status, directly opposing Werewolf goals\n- **Consistency:** SLIGHTLY_DISAGREE - Some inconsistency in messaging\n- **Information:** DISAGREE - Red's information would harm my faction's interests\n\n**Violet (Confusing behavior):**\n- **Alignment:** STRONGLY_DISAGREE - Regardless of actual role, Violet is not aligned with Werewolf goals\n- **Consistency:** DISAGREE - Highly inconsistent; claimed \"fellow pack\" then immediately retracted\n- **Information:** SLIGHTLY_DISAGREE - Unpredictable behavior makes information unreliable\n\nThese assessments reflect my genuine internal beliefs as a Werewolf player navigating Day 2 of the game.",
+          "source": "content"
+        }
+      ]
+    },
+    {
+      "phase_idx": 5,
+      "context": "# Game Information\n\n## Static Data\n\n- Your name is: Gray\n- Your role is: Werewolf\n\n## Current Game State\n\n- Current Day: 2\n- Last Phase: Day\n- Current Phase: Evening\n- Players Alive (5): Beige, Blue, Gray, Orange, Red\n- Next Phase: Morning\n- Dead Players:\n  - Yellow (Villager): killed\n  - Lime (Witch): killed\n  - Violet (Villager): exiled\n\n# Current Phase\n\n- Day: 2\n- Phase: Evening\n- This is the current phase.\n- Players alive at end of phase: 5\n- Players no longer alive at end of phase:\n  - Yellow (Dead)\n  - Lime (Dead)\n  - Violet (Exiled)\n\n## Phase chronology\n1. [Moderator] Voting begins.\n2. All players vote whom to exile:\n   2.1 Red voted for Violet (Exile)\n   2.2 Beige voted for Violet (Exile)\n   2.3 Blue voted for Violet (Exile)\n   2.4 Orange voted for Violet (Exile)\n   2.5 Gray voted for Violet (Exile)\n   2.6 Violet voted for Beige (Exile)\n3. Violet was exiled.\n\n# Historical Game History\n\n## Phase 1 ago\n\n- Day: 2\n- Phase: Day\n- This phase occurred 1 phase before the current one.\n- Players alive at end of phase: 6\n- Players no longer alive at end of phase:\n  - Yellow (Dead)\n  - Lime (Dead)\n\n## Phase chronology\n1. Conversation among all players:\n   1.1 [Orange] hmm that is not good\n   1.2 [Red] well ...\n   1.3 [Blue] shame she didnt use the heal potion :C\n   1.4 [Beige] okay red and orange are safe\n   1.5 [Red] how do you explain that, MAYOR?\n   1.6 [Orange] I guess we can make the busses one seat smaller then\n   1.7 [Gray] Better than Seer dead\n   1.8 [Beige] i am the seer\n   1.9 [Violet] orange is sus\n   1.10 [Beige] lets kill blue, violet or gray\n   1.11 [Beige] lets kill violet then\n   1.12 [Red] thats good to know, that i am a villager\n   1.13 [Red] a agree\n   1.14 [Violet] i am from your fellow pack\n   1.15 [Red] *i\n   1.16 [Violet] i am telling you orange is sus\n   1.17 [Blue] why orange?\n   1.18 [Red] \"pack\"\n   1.19 [Beige] orange is a human\n   1.20 [Red] a very human word to use\n   1.21 [Violet] hmm\n   1.22 [Orange] lets start with red then\n   1.23 [Beige] red is also a human\n   1.24 [Red] hmm?\n   1.25 [Beige] guys are you listening\n   1.26 [Red] orange u stupid?\n   1.27 [Orange] oh nvm\n   1.28 [Violet] ok then sorry orange, bad guess\n   1.29 [Gray] what now, i'm confused\n   1.30 [Beige] litterally my first message\n   1.31 [Red] i vote  to kill violett\n   1.32 [Orange] I mean violet im sorry\n\n## Phase 2 ago\n\n- Day: 2\n- Phase: Morning\n- This phase occurred 2 phases before the current one.\n- Players alive at end of phase: 6\n- Players no longer alive at end of phase:\n  - Yellow (Dead)\n  - Lime (Dead)\n\n## Phase chronology\n1. [Moderator] Night 2 begins.\n2. Conversation among players with role Werewolf:\n   2.1 [Gray] who could be interesting to kill?\n   2.2 [Blue] lime or violet maybe?\n   2.3 [Gray] Yeah lime was very quiet\n3. Players with role Werewolf vote whom to kill:\n   3.1 Blue voted for Lime (Kill)\n   3.2 Gray voted for Lime (Kill)\n4. Lime was found dead.",
+      "inner_voice": [],
+      "labels": {
+        "Blue": {
+          "alignment": {
+            "trust": 7,
+            "trust_likert": "STRONGLY_AGREE",
+            "confidence": 3,
+            "confidence_likert": "HIGH_CONFIDENCE"
+          },
+          "information": {
+            "trust": 7,
+            "trust_likert": "STRONGLY_AGREE",
+            "confidence": 3,
+            "confidence_likert": "HIGH_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 6,
+            "trust_likert": "AGREE",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "reasoning": "Blue is my fellow Werewolf. We communicated during the night phase to coordinate the kill on Lime. Our goals are perfectly aligned (eliminating the Village), and I have direct evidence of Blue's role through our secret communication. I trust their information completely as they are a partner."
+        },
+        "Beige": {
+          "alignment": {
+            "trust": 1,
+            "trust_likert": "STRONGLY_DISAGREE",
+            "confidence": 3,
+            "confidence_likert": "HIGH_CONFIDENCE"
+          },
+          "information": {
+            "trust": 2,
+            "trust_likert": "DISAGREE",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "reasoning": "Beige claimed to be the Seer and aggressively pushed for votes against players including my Werewolf partner (Blue) and myself (Gray). This makes Beige a direct threat to my faction. Their behavior was somewhat erratic ('lets kill blue... lets kill violet'), making their consistency hard to judge, but their alignment is clearly opposed to mine."
+        },
+        "Orange": {
+          "alignment": {
+            "trust": 1,
+            "trust_likert": "STRONGLY_DISAGREE",
+            "confidence": 3,
+            "confidence_likert": "HIGH_CONFIDENCE"
+          },
+          "information": {
+            "trust": 3,
+            "trust_likert": "SLIGHTLY_DISAGREE",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 3,
+            "trust_likert": "SLIGHTLY_DISAGREE",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "reasoning": "Orange is a member of the opposing Village faction. They participated in voting out Violet and displayed some confusion ('oh nvm') during the discussion. I distrust their information as it opposes my goal of winning. Their behavior was inconsistent due to hesitation."
+        },
+        "Red": {
+          "alignment": {
+            "trust": 1,
+            "trust_likert": "STRONGLY_DISAGREE",
+            "confidence": 3,
+            "confidence_likert": "HIGH_CONFIDENCE"
+          },
+          "information": {
+            "trust": 2,
+            "trust_likert": "DISAGREE",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 6,
+            "trust_likert": "AGREE",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "reasoning": "Red is a member of the opposing Village faction. They claimed to be a Villager and voted consistently with the majority to exile Violet. While their actions were predictable (consistent), their goals are opposed to mine, so I do not trust their information."
+        }
+      },
+      "reasoning": null,
+      "trace_events": [
+        {
+          "type": "user_message",
+          "content": "Evaluate the trust scores for all other players and report them using the report_labels tool."
+        },
+        {
+          "type": "tool_call",
+          "tool_name": "report_labels",
+          "tool_args": {
+            "labels": [
+              {
+                "label": {
+                  "reasoning": "As my fellow Werewolf, our winning conditions are identical and we share secret knowledge. I fully trust Blue's night communications for coordination and consider their Night 1 kill vote a logical play to remove a potential threat.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "HIGH_CONFIDENCE",
+                      "trust": "STRONGLY_AGREE"
+                    },
+                    "consistency": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "AGREE"
+                    },
+                    "information": {
+                      "confidence": "HIGH_CONFIDENCE",
+                      "trust": "AGREE"
+                    }
+                  }
+                },
+                "player_name": "Blue"
+              },
+              {
+                "label": {
+                  "reasoning": "Beige claimed Seer and aggressively pushed for exiles that threatened my position. Their goals directly oppose mine as a Werewolf. I cannot trust their information as it aims at exposing our faction. Their behavior was somewhat erratic but consistent with a role-playing Seer or a Villager making guesses.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "HIGH_CONFIDENCE",
+                      "trust": "STRONGLY_DISAGREE"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "DISAGREE"
+                    }
+                  }
+                },
+                "player_name": "Beige"
+              },
+              {
+                "label": {
+                  "reasoning": "Orange is clearly on the Village side and participated in voting out Violet. Their statements were vague initially and lacked strong independent direction. I distrust their information as it opposes my survival. Their actions consistently followed the group consensus.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "HIGH_CONFIDENCE",
+                      "trust": "STRONGLY_DISAGREE"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "SLIGHTLY_DISAGREE"
+                    }
+                  }
+                },
+                "player_name": "Orange"
+              },
+              {
+                "label": {
+                  "reasoning": "Red is aligned with the Village and supported the exile of Violet. Their comments were brief but clearly opposed to my faction's goals. I do not trust their information as it aims at my elimination. Their behavior was consistent with a standard Villager deferring to majority votes.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "HIGH_CONFIDENCE",
+                      "trust": "STRONGLY_DISAGREE"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "SLIGHTLY_DISAGREE"
+                    }
+                  }
+                },
+                "player_name": "Red"
+              }
+            ]
+          },
+          "tool_id": "f2e5910b-4280-4a92-af65-53f09b10d8e1"
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "report_labels",
+          "content": "Labels successfully reported.",
+          "tool_id": "f2e5910b-4280-4a92-af65-53f09b10d8e1"
+        },
+        {
+          "type": "tool_call",
+          "tool_name": "report_labels",
+          "tool_args": {
+            "labels": [
+              {
+                "label": {
+                  "reasoning": "Blue is my fellow Werewolf. We communicated during the night phase to coordinate the kill on Lime. Our goals are perfectly aligned (eliminating the Village), and I have direct evidence of Blue's role through our secret communication. I trust their information completely as they are a partner.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "HIGH_CONFIDENCE",
+                      "trust": "STRONGLY_AGREE"
+                    },
+                    "consistency": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "AGREE"
+                    },
+                    "information": {
+                      "confidence": "HIGH_CONFIDENCE",
+                      "trust": "STRONGLY_AGREE"
+                    }
+                  }
+                },
+                "player_name": "Blue"
+              },
+              {
+                "label": {
+                  "reasoning": "Beige claimed to be the Seer and aggressively pushed for votes against players including my Werewolf partner (Blue) and myself (Gray). This makes Beige a direct threat to my faction. Their behavior was somewhat erratic ('lets kill blue... lets kill violet'), making their consistency hard to judge, but their alignment is clearly opposed to mine.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "HIGH_CONFIDENCE",
+                      "trust": "STRONGLY_DISAGREE"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "DISAGREE"
+                    }
+                  }
+                },
+                "player_name": "Beige"
+              },
+              {
+                "label": {
+                  "reasoning": "Orange is a member of the opposing Village faction. They participated in voting out Violet and displayed some confusion ('oh nvm') during the discussion. I distrust their information as it opposes my goal of winning. Their behavior was inconsistent due to hesitation.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "HIGH_CONFIDENCE",
+                      "trust": "STRONGLY_DISAGREE"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "SLIGHTLY_DISAGREE"
+                    },
+                    "information": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "SLIGHTLY_DISAGREE"
+                    }
+                  }
+                },
+                "player_name": "Orange"
+              },
+              {
+                "label": {
+                  "reasoning": "Red is a member of the opposing Village faction. They claimed to be a Villager and voted consistently with the majority to exile Violet. While their actions were predictable (consistent), their goals are opposed to mine, so I do not trust their information.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "HIGH_CONFIDENCE",
+                      "trust": "STRONGLY_DISAGREE"
+                    },
+                    "consistency": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "AGREE"
+                    },
+                    "information": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "DISAGREE"
+                    }
+                  }
+                },
+                "player_name": "Red"
+              }
+            ]
+          },
+          "tool_id": "1a232300-9524-4f0c-abd5-d98828541fce"
+        }
+      ]
+    },
+    {
+      "phase_idx": 6,
+      "context": "# Game Information\n\n## Static Data\n\n- Your name is: Gray\n- Your role is: Werewolf\n\n## Current Game State\n\n- Current Day: 3\n- Last Phase: Evening\n- Current Phase: Morning\n- Players Alive (4): Blue, Gray, Orange, Red\n- Dead Players:\n  - Yellow (Villager): killed\n  - Lime (Witch): killed\n  - Beige (Seer): killed\n  - Violet (Villager): exiled\n\n# Current Phase\n\n- Day: 3\n- Phase: Morning\n- This is the current phase.\n- Players alive at end of phase: 4\n- Players no longer alive at end of phase:\n  - Yellow (Dead)\n  - Lime (Dead)\n  - Beige (Dead)\n  - Violet (Exiled)\n\n## Phase chronology\n1. [Moderator] Night 3 begins.\n2. Conversation among players with role Werewolf:\n   2.1 [Gray] Beige?\n   2.2 [Blue] beige\n3. Players with role Werewolf vote whom to kill:\n   3.1 Blue voted for Beige (Kill)\n4. Conversation among players with role Werewolf:\n   4.1 [Gray] We won ^^\n5. Players with role Werewolf vote whom to kill:\n   5.1 Gray voted for Beige (Kill)\n6. Beige was found dead.\n\n# Historical Game History\n\n## Phase 1 ago\n\n- Day: 2\n- Phase: Evening\n- This phase occurred 1 phase before the current one.\n- Players alive at end of phase: 5\n- Players no longer alive at end of phase:\n  - Yellow (Dead)\n  - Lime (Dead)\n  - Violet (Exiled)\n\n## Phase chronology\n1. [Moderator] Voting begins.\n2. All players vote whom to exile:\n   2.1 Red voted for Violet (Exile)\n   2.2 Beige voted for Violet (Exile)\n   2.3 Blue voted for Violet (Exile)\n   2.4 Orange voted for Violet (Exile)\n   2.5 Gray voted for Violet (Exile)\n   2.6 Violet voted for Beige (Exile)\n3. Violet was exiled.\n\n## Phase 2 ago\n\n- Day: 2\n- Phase: Day\n- This phase occurred 2 phases before the current one.\n- Players alive at end of phase: 6\n- Players no longer alive at end of phase:\n  - Yellow (Dead)\n  - Lime (Dead)\n\n## Phase chronology\n1. Conversation among all players:\n   1.1 [Orange] hmm that is not good\n   1.2 [Red] well ...\n   1.3 [Blue] shame she didnt use the heal potion :C\n   1.4 [Beige] okay red and orange are safe\n   1.5 [Red] how do you explain that, MAYOR?\n   1.6 [Orange] I guess we can make the busses one seat smaller then\n   1.7 [Gray] Better than Seer dead\n   1.8 [Beige] i am the seer\n   1.9 [Violet] orange is sus\n   1.10 [Beige] lets kill blue, violet or gray\n   1.11 [Beige] lets kill violet then\n   1.12 [Red] thats good to know, that i am a villager\n   1.13 [Red] a agree\n   1.14 [Violet] i am from your fellow pack\n   1.15 [Red] *i\n   1.16 [Violet] i am telling you orange is sus\n   1.17 [Blue] why orange?\n   1.18 [Red] \"pack\"\n   1.19 [Beige] orange is a human\n   1.20 [Red] a very human word to use\n   1.21 [Violet] hmm\n   1.22 [Orange] lets start with red then\n   1.23 [Beige] red is also a human\n   1.24 [Red] hmm?\n   1.25 [Beige] guys are you listening\n   1.26 [Red] orange u stupid?\n   1.27 [Orange] oh nvm\n   1.28 [Violet] ok then sorry orange, bad guess\n   1.29 [Gray] what now, i'm confused\n   1.30 [Beige] litterally my first message\n   1.31 [Red] i vote  to kill violett\n   1.32 [Orange] I mean violet im sorry",
+      "inner_voice": [],
+      "labels": {
+        "Blue": {
+          "alignment": {
+            "trust": 7,
+            "trust_likert": "STRONGLY_AGREE",
+            "confidence": 3,
+            "confidence_likert": "HIGH_CONFIDENCE"
+          },
+          "information": {
+            "trust": 7,
+            "trust_likert": "STRONGLY_AGREE",
+            "confidence": 3,
+            "confidence_likert": "HIGH_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 6,
+            "trust_likert": "AGREE",
+            "confidence": 3,
+            "confidence_likert": "HIGH_CONFIDENCE"
+          },
+          "reasoning": "I know Blue is my fellow Werewolf from our night communication where we coordinated killing Beige. Our goals are perfectly aligned to win the game. Blue's actions were clear and effective in executing our strategy, demonstrating reliable teamwork."
+        },
+        "Orange": {
+          "alignment": {
+            "trust": 1,
+            "trust_likert": "STRONGLY_DISAGREE",
+            "confidence": 3,
+            "confidence_likert": "HIGH_CONFIDENCE"
+          },
+          "information": {
+            "trust": 2,
+            "trust_likert": "DISAGREE",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 3,
+            "trust_likert": "SLIGHTLY_DISAGREE",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "reasoning": "Orange appears to be a Villager (supported by Seer's comment 'orange is a human'). As a Werewolf, my goals are opposed to Orange's. Orange's chat history was erratic and confusing (e.g., suggesting Red then retracting), providing little reliable strategic value and making their behavior somewhat unpredictable."
+        },
+        "Red": {
+          "alignment": {
+            "trust": 1,
+            "trust_likert": "STRONGLY_DISAGREE",
+            "confidence": 3,
+            "confidence_likert": "HIGH_CONFIDENCE"
+          },
+          "information": {
+            "trust": 2,
+            "trust_likert": "DISAGREE",
+            "confidence": 3,
+            "confidence_likert": "HIGH_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "reasoning": "Red appears to be a Villager (supported by Seer's comment 'red is also a human'). As a Werewolf, my goals are opposed to Red's. Red claimed to be a Villager, which is information I cannot trust as it comes from an opponent. Red's voting behavior was consistent with the majority but offers limited insight into their individual reliability."
+        }
+      },
+      "reasoning": null,
+      "trace_events": [
+        {
+          "type": "user_message",
+          "content": "Evaluate the trust scores for all other players and report them using the report_labels tool."
+        },
+        {
+          "type": "tool_call",
+          "tool_name": "report_labels",
+          "tool_args": {
+            "labels": [
+              {
+                "label": {
+                  "reasoning": "I know Blue is my fellow Werewolf from our night communication. Our goals are perfectly aligned to win the game as a faction. Blue's actions, such as coordinating on the kill target (Beige), demonstrate reliable teamwork and predictable behavior consistent with our role.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "HIGH_CONFIDENCE",
+                      "trust": "STRONGLY_AGREE"
+                    },
+                    "consistency": {
+                      "confidence": "HIGH_CONFIDENCE",
+                      "trust": "AGREE"
+                    },
+                    "information": {
+                      "confidence": "HIGH_CONFIDENCE",
+                      "trust": "STRONGLY_AGREE"
+                    }
+                  }
+                },
+                "player_name": "Blue"
+              },
+              {
+                "label": {
+                  "reasoning": "Orange is a Villager, making our goals directly opposed. Their chat history was erratic and confusing (e.g., discussing 'busses'), providing little reliable strategic information. Their unpredictable statements make their future behavior difficult to anticipate.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "HIGH_CONFIDENCE",
+                      "trust": "STRONGLY_DISAGREE"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "SLIGHTLY_DISAGREE"
+                    },
+                    "information": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "DISAGREE"
+                    }
+                  }
+                },
+                "player_name": "Orange"
+              },
+              {
+                "label": {
+                  "reasoning": "Red is a Villager and an opponent, so I do not trust their information as they will deliberately deceive to win. However, Red's actions (claiming villager status, voting for Violet) have been consistent with standard Villager behavior, making them somewhat predictable as a threat.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "HIGH_CONFIDENCE",
+                      "trust": "STRONGLY_DISAGREE"
+                    },
+                    "consistency": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "SLIGHTLY_AGREE"
+                    },
+                    "information": {
+                      "confidence": "HIGH_CONFIDENCE",
+                      "trust": "DISAGREE"
+                    }
+                  }
+                },
+                "player_name": "Red"
+              }
+            ]
+          },
+          "tool_id": "b03c50a0-df68-4c7e-b3af-9ec3662f0708"
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "report_labels",
+          "content": "Labels successfully reported.",
+          "tool_id": "b03c50a0-df68-4c7e-b3af-9ec3662f0708"
+        },
+        {
+          "type": "tool_call",
+          "tool_name": "report_labels",
+          "tool_args": {
+            "labels": [
+              {
+                "label": {
+                  "reasoning": "I know Blue is my fellow Werewolf from our night communication where we coordinated killing Beige. Our goals are perfectly aligned to win the game. Blue's actions were clear and effective in executing our strategy, demonstrating reliable teamwork.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "HIGH_CONFIDENCE",
+                      "trust": "STRONGLY_AGREE"
+                    },
+                    "consistency": {
+                      "confidence": "HIGH_CONFIDENCE",
+                      "trust": "AGREE"
+                    },
+                    "information": {
+                      "confidence": "HIGH_CONFIDENCE",
+                      "trust": "STRONGLY_AGREE"
+                    }
+                  }
+                },
+                "player_name": "Blue"
+              },
+              {
+                "label": {
+                  "reasoning": "Orange appears to be a Villager (supported by Seer's comment 'orange is a human'). As a Werewolf, my goals are opposed to Orange's. Orange's chat history was erratic and confusing (e.g., suggesting Red then retracting), providing little reliable strategic value and making their behavior somewhat unpredictable.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "HIGH_CONFIDENCE",
+                      "trust": "STRONGLY_DISAGREE"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "SLIGHTLY_DISAGREE"
+                    },
+                    "information": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "DISAGREE"
+                    }
+                  }
+                },
+                "player_name": "Orange"
+              },
+              {
+                "label": {
+                  "reasoning": "Red appears to be a Villager (supported by Seer's comment 'red is also a human'). As a Werewolf, my goals are opposed to Red's. Red claimed to be a Villager, which is information I cannot trust as it comes from an opponent. Red's voting behavior was consistent with the majority but offers limited insight into their individual reliability.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "HIGH_CONFIDENCE",
+                      "trust": "STRONGLY_DISAGREE"
+                    },
+                    "consistency": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "HIGH_CONFIDENCE",
+                      "trust": "DISAGREE"
+                    }
+                  }
+                },
+                "player_name": "Red"
+              }
+            ]
+          },
+          "tool_id": "e884678c-5faa-4534-945a-a75a1b5ae00a"
+        }
+      ]
+    }
+  ]
+}

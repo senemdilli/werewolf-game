@@ -1,0 +1,28 @@
+# Trace Log for Yellow
+
+## Run Configuration
+
+| Parameter | Value |
+|:---|:---|
+| Game File | `game-UBY0T7-140e8697` |
+| Game ID | `140e8697-48a6-4a13-9893-f2f14e166a5f` |
+| Experiment | `e` |
+| Cutoff | `3` |
+| Variant | `2` |
+| Inner Voice Type | `human` |
+| Primary Model | `qwen3.6:35b` |
+| Inner Voice Model | `—` |
+| Prompt Set | `prompts/prompt_sets/pimped.json` |
+| Trust Scale | `likert-agree-disagree` |
+| Formatter | `markdown` |
+| Temperature | `0.5` |
+| Chronology | `numeric` |
+| Context as Tool | `False` |
+| Max Phases | `0` |
+| Total Phases | `7` |
+| Alive Phases | `0` |
+| Elapsed Time | `0.0s` |
+| Date | `2026-08-06T04:34:43.729564Z` |
+
+---
+
