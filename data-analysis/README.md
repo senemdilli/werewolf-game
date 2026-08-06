@@ -10,7 +10,7 @@ analysis tools to an LLM orchestrator the user can query in natural language.
 
 ## Setup
 
-Requires [uv](https://docs.astral.sh/uv/) (Python 3.12 is fetched automatically) as well as a [.env](/data-analysis/.env) file with an Ollama API key(see [.env.example](data-analysis/.env.example)).
+Requires [uv](https://docs.astral.sh/uv/) (Python 3.12 is fetched automatically) as well as a [.env](/.env) file with an Ollama API key(see [.env.example](/.env.example)).
 
 ```bash
 cd data-analysis
