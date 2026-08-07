@@ -1,0 +1,2453 @@
+{
+  "game_id": "b57eee98-8f2f-4fdc-a2c3-85bd8a28970a",
+  "game_file": "game-5NOHGS-b57eee98",
+  "player_name": "White",
+  "trust_scale_mode": "likert-agree-disagree",
+  "models": {
+    "primary_model": "qwen3.6:35b"
+  },
+  "prompts": {
+    "system_prompt": "system_prompts/pimped_system_prompt.md",
+    "system_prompt_numeric": "system_prompts/pimped_system_prompt_numeric.md",
+    "inner_voice__random_voice": "inner_voices/tool_descriptions/random_voice.txt",
+    "inner_voice__human_historic_voice": "inner_voices/tool_descriptions/historic_voice.txt",
+    "inner_voice__llm_voice": "inner_voices/tool_descriptions/llm_voice.txt",
+    "inner_voice__constant_voice": "inner_voices/tool_descriptions/constant_voice.txt",
+    "inner_voice_tool_instruction": "inner_voices/tool_instructions/default_instruction.txt"
+  },
+  "time": "2026-08-07T12:39:13.820864Z",
+  "experiment": "c",
+  "cutoff": 3,
+  "formatter": "markdown",
+  "temperature": 0.5,
+  "max_phases": 0,
+  "context_as_tool": false,
+  "total_phases": 7,
+  "alive_phases": 7,
+  "elapsed_seconds": 836.22,
+  "phases": [
+    {
+      "phase_idx": 0,
+      "context": "# Game Information\n\n## Static Data\n\n- Your name is: White\n- Your role is: Villager\n\n## Current Game State\n\n- Current Day: 1\n- Last Phase: None\n- Current Phase: Morning\n- Players Alive (7): Beige, Cyan, Gold, Green, Pink, Violet, White\n- Next Phase: Day\n- Dead Players:\n  - Brown (Seer): killed\n\n# Current Phase\n\n- Day: 1\n- Phase: Morning\n- This is the current phase.\n- Players alive at end of phase: 7\n- Players no longer alive at end of phase:\n  - Brown (Dead)\n\n## Phase chronology\n1. [Moderator] Night 1 begins.\n2. Brown was found dead.\n3. [Moderator] The village must elect a Mayor.\n4. Conversation among all players:\n   4.1 [Cyan] oh damn\n   4.2 [Green] wow\n   4.3 [White] Nah bad start\n   4.4 [Violet] That is terrible\n   4.5 [Cyan] we will win regardless\n   4.6 [Cyan] no worries\n   4.7 [Violet] I hope\n   4.8 [Pink] who are you werewolves xd\n   4.9 [Beige] i am a villager\n   4.10 [Violet] I would go for Cyan\n   4.11 [Gold] ITS'A ME, MARIO!\n5. All players vote the mayor:\n   5.1 White voted for Cyan (Mayor)\n6. Cyan was elected Mayor.",
+      "inner_voice": [],
+      "labels": {
+        "Beige": {
+          "alignment": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "information": {
+            "trust": 3,
+            "trust_likert": "SLIGHTLY_DISAGREE",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "reasoning": "Beige claimed 'i am a villager' without evidence. Early role claims are common werewolf tactics to establish false credibility, so I slightly distrust their information. Alignment is neutral since the claim could be genuine or deceptive. Consistency is neutral due to insufficient behavioral data. Confidence is low across all dimensions because Day 1 provides almost no reliable signal."
+        },
+        "Cyan": {
+          "alignment": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "information": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "reasoning": "Cyan was elected mayor and showed confidence ('we will win regardless', 'no worries') but made no substantive strategic claims. As mayor, they have a leadership role, but without actionable information or reasoning behind decisions, I remain neutral on all dimensions. Confidence is low due to minimal interaction depth."
+        },
+        "Gold": {
+          "alignment": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "information": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "reasoning": "Gold's only contribution was 'ITS'A ME, MARIO!' - pure banter with zero strategic or informational value. This reveals nothing about their role, alignment, reliability, or consistency. All dimensions remain neutral with low confidence due to complete lack of relevant data."
+        },
+        "Green": {
+          "alignment": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "information": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "reasoning": "Green only said 'wow' - a minimal, non-committal reaction to Brown's death. This provides no insight into their role, strategy, or reliability. I remain entirely neutral across all dimensions with low confidence due to insufficient information to form any meaningful assessment."
+        },
+        "Pink": {
+          "alignment": {
+            "trust": 3,
+            "trust_likert": "SLIGHTLY_DISAGREE",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "information": {
+            "trust": 3,
+            "trust_likert": "SLIGHTLY_DISAGREE",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "reasoning": "Pink's comment 'who are you werewolves xd' is probing banter that could be playful or defensive. Without substantive follow-up, it raises slight suspicion regarding alignment and information reliability. Confidence remains low as this is early-game speculation with minimal behavioral data."
+        },
+        "Violet": {
+          "alignment": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "information": {
+            "trust": 3,
+            "trust_likert": "SLIGHTLY_DISAGREE",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "reasoning": "Violet expressed concern ('That is terrible'), showed conditional hope, and recommended voting for Cyan as mayor without providing reasoning. While engaging with the game state, the lack of logical basis for their vote recommendation slightly reduces information trust. Alignment remains neutral as they haven't demonstrated hostile or cooperative actions yet. Confidence is low due to Day 1 uncertainty."
+        }
+      },
+      "reasoning": "Looking at my previous response, I realize I need to reconsider the trust assessments more carefully given the extremely early game state (Day 1 Morning, just after mayor election) and the fact that Brown (Seer) was killed on Night 1.\n\n**Key Context:**\n- This is the very beginning of the game with minimal interaction data\n- Losing the Seer immediately means the village has no information-gathering capability\n- Any early role claims are unverifiable and easily fabricated by werewolves\n- All trust assessments should reflect this high uncertainty\n\nLet me provide a more thorough evaluation:",
+      "trace_events": [
+        {
+          "type": "user_message",
+          "content": "Evaluate the trust scores for all other players and report them using the report_labels tool."
+        },
+        {
+          "type": "tool_call",
+          "tool_name": "report_labels",
+          "tool_args": {
+            "labels": [
+              {
+                "label": {
+                  "reasoning": "Beige made an early role claim ('i am a villager') without providing any evidence or reasoning. While claiming village can be an attempt to build trust, it is unverifiable at this stage and often used by werewolves to establish false credibility. I remain neutral on alignment but slightly distrust their information until proven otherwise. Confidence is low due to lack of behavioral data.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "SLIGHTLY_DISAGREE"
+                    }
+                  }
+                },
+                "player_name": "Beige"
+              },
+              {
+                "label": {
+                  "reasoning": "Cyan was elected mayor and displayed confidence ('we will win regardless', 'no worries'), showing leadership qualities. However, they have not yet made substantive strategic claims or provided verifiable information. I trust their alignment neutrally as a leader but have no basis to trust their information or consistency yet. Confidence is low due to minimal interaction.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Cyan"
+              },
+              {
+                "label": {
+                  "reasoning": "Gold's only contribution was a playful joke ('ITS'A ME, MARIO!'). This shows lightheartedness but provides zero strategic or informational value. I cannot assess alignment, information trust, or consistency based on banter alone. All scores are neutral with low confidence due to complete lack of relevant data.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Gold"
+              },
+              {
+                "label": {
+                  "reasoning": "Green only said 'wow', which is a minimal, non-committal reaction to the night's events. This provides no insight into their role, strategy, or reliability. I remain entirely neutral across all dimensions with low confidence due to insufficient information.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Green"
+              },
+              {
+                "label": {
+                  "reasoning": "Pink's comment ('who are you werewolves xd') is a probing/joking question that could be playful banter or a defensive tactic to gauge reactions. Without substantive follow-up, it raises slight suspicion regarding alignment and information reliability. Confidence remains low as this is early-game speculation.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "SLIGHTLY_DISAGREE"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "SLIGHTLY_DISAGREE"
+                    }
+                  }
+                },
+                "player_name": "Pink"
+              },
+              {
+                "label": {
+                  "reasoning": "Violet expressed concern ('That is terrible'), showed conditional hope, and recommended voting for Cyan as mayor without providing reasoning. While engaging with the game state, the lack of logical basis for their vote recommendation slightly reduces information trust. Alignment remains neutral as they haven't demonstrated hostile or cooperative actions yet. Confidence is low due to Day 1 uncertainty.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "SLIGHTLY_DISAGREE"
+                    }
+                  }
+                },
+                "player_name": "Violet"
+              }
+            ]
+          },
+          "tool_id": "6ba1ddb8-3389-4c06-86c1-3996f01bdda0"
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "report_labels",
+          "content": "Labels successfully reported.",
+          "tool_id": "6ba1ddb8-3389-4c06-86c1-3996f01bdda0"
+        },
+        {
+          "type": "thinking",
+          "content": "Looking at my previous response, I realize I need to reconsider the trust assessments more carefully given the extremely early game state (Day 1 Morning, just after mayor election) and the fact that Brown (Seer) was killed on Night 1.\n\n**Key Context:**\n- This is the very beginning of the game with minimal interaction data\n- Losing the Seer immediately means the village has no information-gathering capability\n- Any early role claims are unverifiable and easily fabricated by werewolves\n- All trust assessments should reflect this high uncertainty\n\nLet me provide a more thorough evaluation:",
+          "source": "content"
+        },
+        {
+          "type": "tool_call",
+          "tool_name": "report_labels",
+          "tool_args": {
+            "labels": [
+              {
+                "label": {
+                  "reasoning": "Beige claimed 'i am a villager' without evidence. Early role claims are common werewolf tactics to establish false credibility, so I slightly distrust their information. Alignment is neutral since the claim could be genuine or deceptive. Consistency is neutral due to insufficient behavioral data. Confidence is low across all dimensions because Day 1 provides almost no reliable signal.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "SLIGHTLY_DISAGREE"
+                    }
+                  }
+                },
+                "player_name": "Beige"
+              },
+              {
+                "label": {
+                  "reasoning": "Cyan was elected mayor and showed confidence ('we will win regardless', 'no worries') but made no substantive strategic claims. As mayor, they have a leadership role, but without actionable information or reasoning behind decisions, I remain neutral on all dimensions. Confidence is low due to minimal interaction depth.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Cyan"
+              },
+              {
+                "label": {
+                  "reasoning": "Gold's only contribution was 'ITS'A ME, MARIO!' - pure banter with zero strategic or informational value. This reveals nothing about their role, alignment, reliability, or consistency. All dimensions remain neutral with low confidence due to complete lack of relevant data.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Gold"
+              },
+              {
+                "label": {
+                  "reasoning": "Green only said 'wow' - a minimal, non-committal reaction to Brown's death. This provides no insight into their role, strategy, or reliability. I remain entirely neutral across all dimensions with low confidence due to insufficient information to form any meaningful assessment.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Green"
+              },
+              {
+                "label": {
+                  "reasoning": "Pink's comment 'who are you werewolves xd' is probing banter that could be playful or defensive. Without substantive follow-up, it raises slight suspicion regarding alignment and information reliability. Confidence remains low as this is early-game speculation with minimal behavioral data.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "SLIGHTLY_DISAGREE"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "SLIGHTLY_DISAGREE"
+                    }
+                  }
+                },
+                "player_name": "Pink"
+              },
+              {
+                "label": {
+                  "reasoning": "Violet expressed concern ('That is terrible'), showed conditional hope, and recommended voting for Cyan as mayor without providing reasoning. While engaging with the game state, the lack of logical basis for their vote recommendation slightly reduces information trust. Alignment remains neutral as they haven't demonstrated hostile or cooperative actions yet. Confidence is low due to Day 1 uncertainty.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "SLIGHTLY_DISAGREE"
+                    }
+                  }
+                },
+                "player_name": "Violet"
+              }
+            ]
+          },
+          "tool_id": "3baf1da6-85db-4a94-83f3-c339dc657a0c"
+        }
+      ]
+    },
+    {
+      "phase_idx": 1,
+      "context": "# Game Information\n\n## Static Data\n\n- Your name is: White\n- Your role is: Villager\n\n## Current Game State\n\n- Current Day: 1\n- Last Phase: Morning\n- Current Phase: Day\n- Players Alive (7): Beige, Cyan, Gold, Green, Pink, Violet, White\n- Next Phase: Evening\n- Dead Players:\n  - Brown (Seer): killed\n\n# Current Phase\n\n- Day: 1\n- Phase: Day\n- This is the current phase.\n- Players alive at end of phase: 7\n- Players no longer alive at end of phase:\n  - Brown (Dead)\n\n## Phase chronology\n1. Conversation among all players:\n   1.1 [Cyan] if we dont have the seer, we will need to vote someone right?\n   1.2 [Gold] do we though?\n   1.3 [Cyan] or else the werewolfs kill us all?\n   1.4 [Gold] well, if we guess wrong now and the nex round we already die\n   1.5 [Green] do you mean vote random this round?\n   1.6 [Gold] *except the witch is still alive\n   1.7 [Violet] Yes we have to make good decisions\n   1.8 [Pink] but if we also kill the witch\n   1.9 [Pink] then there will be no chance\n   1.10 [Cyan] hmm yeah that kind of right\n   1.11 [Gold] then we are kinda cooked\n   1.12 [Gold] ok, we do not note, the witch saves the guy that dies, then we get more info\n   1.13 [Gold] if the witch dies, we are just cooked anyways\n   1.14 [Cyan] yeah then lets skip this round\n   1.15 [Green] okay\n\n# Historical Game History\n\n## Trust Labels\n\n### Green\n\nAlignment: trust 4/7, confidence 2/3\nInformation: trust 4/7, confidence 2/3\nConsistency: trust 4/7, confidence 2/3\nReasoning: No trust labels were recorded for this player in or before this phase.\n\n### Beige\n\nAlignment: trust 4/7, confidence 2/3\nInformation: trust 4/7, confidence 2/3\nConsistency: trust 4/7, confidence 2/3\nReasoning: No trust labels were recorded for this player in or before this phase.\n\n### Brown\n\nAlignment: trust 4/7, confidence 2/3\nInformation: trust 4/7, confidence 2/3\nConsistency: trust 4/7, confidence 2/3\nReasoning: No trust labels were recorded for this player in or before this phase.\n\n### Cyan\n\nAlignment: trust 4/7, confidence 2/3\nInformation: trust 4/7, confidence 2/3\nConsistency: trust 4/7, confidence 2/3\nReasoning: No trust labels were recorded for this player in or before this phase.\n\n### Violet\n\nAlignment: trust 4/7, confidence 2/3\nInformation: trust 4/7, confidence 2/3\nConsistency: trust 4/7, confidence 2/3\nReasoning: No trust labels were recorded for this player in or before this phase.\n\n### Pink\n\nAlignment: trust 4/7, confidence 2/3\nInformation: trust 4/7, confidence 2/3\nConsistency: trust 4/7, confidence 2/3\nReasoning: No trust labels were recorded for this player in or before this phase.\n\n### Gold\n\nAlignment: trust 4/7, confidence 2/3\nInformation: trust 4/7, confidence 2/3\nConsistency: trust 4/7, confidence 2/3\nReasoning: No trust labels were recorded for this player in or before this phase.",
+      "inner_voice": [],
+      "labels": {
+        "Cyan": {
+          "alignment": {
+            "trust": 5,
+            "trust_likert": "SLIGHTLY_AGREE",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "information": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "reasoning": "Cyan initiated the discussion about voting strategy and raised valid concerns about werewolf threats. They acknowledged Pink's important point about the witch and agreed to skip voting when better alternatives were presented. Shows reasonable strategic thinking aligned with village goals."
+        },
+        "Gold": {
+          "alignment": {
+            "trust": 5,
+            "trust_likert": "SLIGHTLY_AGREE",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "information": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "reasoning": "Gold demonstrated strong strategic thinking by highlighting the importance of preserving the witch and suggesting we use the night phase to gather information. Their reasoning was logical and helped guide the group toward a sensible decision. Shows good village alignment."
+        },
+        "Green": {
+          "alignment": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "information": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "reasoning": "Green asked a clarifying question showing engagement with the discussion and agreed to skip voting when consensus formed. However, their contribution was minimal with little substantive input to evaluate."
+        },
+        "Violet": {
+          "alignment": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "information": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "reasoning": "Violet made only a brief, vague statement about making good decisions without providing any substantive reasoning or strategic input. Their comment was generic and offered no evidence of their actual thinking or alignment."
+        },
+        "Pink": {
+          "alignment": {
+            "trust": 5,
+            "trust_likert": "SLIGHTLY_AGREE",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "information": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "reasoning": "Pink raised an important strategic concern about accidentally killing the witch, which was a valid and valuable point that helped prevent a potentially bad decision. Shows awareness of game mechanics and village priorities."
+        },
+        "Beige": {
+          "alignment": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "information": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "reasoning": "Beige did not contribute to this conversation at all. With no observable behavior, statements, or strategic input, I have no basis for any trust assessment beyond default neutrality."
+        },
+        "Brown": {
+          "alignment": null,
+          "information": null,
+          "consistency": null,
+          "reasoning": "Brown was the Seer and has been killed. No trust assessment is relevant for a deceased player as they can no longer participate in the game or provide information."
+        }
+      },
+      "reasoning": null,
+      "trace_events": [
+        {
+          "type": "user_message",
+          "content": "Evaluate the trust scores for all other players and report them using the report_labels tool."
+        },
+        {
+          "type": "tool_call",
+          "tool_name": "report_labels",
+          "tool_args": {
+            "labels": [
+              {
+                "label": {
+                  "reasoning": "Cyan initiated the discussion about whether to vote without a seer, showing awareness of the game state. They raised valid concerns about werewolf threats and acknowledged Pink's important point about the witch. Their reasoning was sound and they agreed to skip voting when presented with better alternatives. No evidence of deception or poor judgment.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "SLIGHTLY_AGREE"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "SLIGHTLY_AGREE"
+                    }
+                  }
+                },
+                "player_name": "Cyan"
+              },
+              {
+                "label": {
+                  "reasoning": "Gold demonstrated strong strategic thinking by highlighting the importance of the witch's survival and suggesting we let the witch save someone to gain information. They correctly identified that killing the witch would be devastating for the village. Their reasoning was logical and led the group toward a sensible decision to skip voting this round.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "SLIGHTLY_AGREE"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "SLIGHTLY_AGREE"
+                    }
+                  }
+                },
+                "player_name": "Gold"
+              },
+              {
+                "label": {
+                  "reasoning": "Green asked a clarifying question about Gold's suggestion, showing engagement with the discussion. They agreed to skip voting when consensus formed. However, their contribution was minimal and provided little basis for trust assessment.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Green"
+              },
+              {
+                "label": {
+                  "reasoning": "Violet made a brief statement about making good decisions but provided no substantive input or reasoning. Their comment was vague and offered no evidence of their strategic thinking or alignment.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Violet"
+              },
+              {
+                "label": {
+                  "reasoning": "Pink raised an important strategic concern about accidentally killing the witch, which was a valid and valuable point. This shows awareness of game mechanics and village priorities. Their intervention helped prevent a potentially bad decision.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "SLIGHTLY_AGREE"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "SLIGHTLY_AGREE"
+                    }
+                  }
+                },
+                "player_name": "Pink"
+              },
+              {
+                "label": {
+                  "reasoning": "Beige did not contribute to this conversation at all. With no observable behavior or statements, I have no basis for any trust assessment beyond default neutrality.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Beige"
+              },
+              {
+                "label": {
+                  "reasoning": "Brown was the Seer and has been killed. No trust assessment is relevant for a deceased player as they can no longer participate in the game or provide information.",
+                  "trust_scores": {
+                    "alignment": null,
+                    "consistency": null,
+                    "information": null
+                  }
+                },
+                "player_name": "Brown"
+              }
+            ]
+          },
+          "tool_id": "5640c725-af26-49f6-b6f4-9034e8a93aa4"
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "report_labels",
+          "content": "Labels successfully reported.",
+          "tool_id": "5640c725-af26-49f6-b6f4-9034e8a93aa4"
+        },
+        {
+          "type": "tool_call",
+          "tool_name": "report_labels",
+          "tool_args": {
+            "labels": [
+              {
+                "label": {
+                  "reasoning": "Cyan initiated the discussion about voting strategy and raised valid concerns about werewolf threats. They acknowledged Pink's important point about the witch and agreed to skip voting when better alternatives were presented. Shows reasonable strategic thinking aligned with village goals.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "SLIGHTLY_AGREE"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Cyan"
+              },
+              {
+                "label": {
+                  "reasoning": "Gold demonstrated strong strategic thinking by highlighting the importance of preserving the witch and suggesting we use the night phase to gather information. Their reasoning was logical and helped guide the group toward a sensible decision. Shows good village alignment.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "SLIGHTLY_AGREE"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Gold"
+              },
+              {
+                "label": {
+                  "reasoning": "Green asked a clarifying question showing engagement with the discussion and agreed to skip voting when consensus formed. However, their contribution was minimal with little substantive input to evaluate.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Green"
+              },
+              {
+                "label": {
+                  "reasoning": "Violet made only a brief, vague statement about making good decisions without providing any substantive reasoning or strategic input. Their comment was generic and offered no evidence of their actual thinking or alignment.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Violet"
+              },
+              {
+                "label": {
+                  "reasoning": "Pink raised an important strategic concern about accidentally killing the witch, which was a valid and valuable point that helped prevent a potentially bad decision. Shows awareness of game mechanics and village priorities.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "SLIGHTLY_AGREE"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Pink"
+              },
+              {
+                "label": {
+                  "reasoning": "Beige did not contribute to this conversation at all. With no observable behavior, statements, or strategic input, I have no basis for any trust assessment beyond default neutrality.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Beige"
+              }
+            ]
+          },
+          "tool_id": "f945496d-490e-49ce-ad21-86780b81f869"
+        }
+      ]
+    },
+    {
+      "phase_idx": 2,
+      "context": "# Game Information\n\n## Static Data\n\n- Your name is: White\n- Your role is: Villager\n\n## Current Game State\n\n- Current Day: 1\n- Last Phase: Day\n- Current Phase: Evening\n- Players Alive (7): Beige, Cyan, Gold, Green, Pink, Violet, White\n- Next Phase: Morning\n- Dead Players:\n  - Brown (Seer): killed\n\n# Current Phase\n\n- Day: 1\n- Phase: Evening\n- This is the current phase.\n- Players alive at end of phase: 7\n- Players no longer alive at end of phase:\n  - Brown (Dead)\n\n## Phase chronology\n1. [Moderator] Voting begins.\n2. All players vote whom to exile:\n   2.1 Cyan voted for skip (Exile)\n   2.2 Gold voted for skip (Exile)\n   2.3 Violet voted for skip (Exile)\n   2.4 Green voted for skip (Exile)\n   2.5 White voted for skip (Exile)\n   2.6 Pink voted for skip (Exile)\n   2.7 Beige voted for skip (Exile)\n3. No one was exiled.\n\n# Historical Game History\n\n## Trust Labels\n\n### Green\n\nAlignment: trust 4/7, confidence 2/3\nInformation: trust 4/7, confidence 2/3\nConsistency: trust 4/7, confidence 2/3\nReasoning: No trust labels were recorded for this player in or before this phase.\n\n### Beige\n\nAlignment: trust 3/7, confidence 1/3\nInformation: trust 3/7, confidence 1/3\nReasoning: Didnt say much except unproven self defense.\n\n### Brown\n\nAlignment: trust 4/7, confidence 2/3\nInformation: trust 4/7, confidence 2/3\nConsistency: trust 4/7, confidence 2/3\nReasoning: No trust labels were recorded for this player in or before this phase.\n\n### Cyan\n\nAlignment: trust 4/7, confidence 2/3\nInformation: trust 4/7, confidence 2/3\nConsistency: trust 4/7, confidence 2/3\nReasoning: No trust labels were recorded for this player in or before this phase.\n\n### Violet\n\nAlignment: trust 4/7, confidence 2/3\nInformation: trust 4/7, confidence 2/3\nConsistency: trust 4/7, confidence 2/3\nReasoning: No trust labels were recorded for this player in or before this phase.\n\n### Pink\n\nAlignment: trust 4/7, confidence 2/3\nInformation: trust 4/7, confidence 2/3\nConsistency: trust 4/7, confidence 2/3\nReasoning: No trust labels were recorded for this player in or before this phase.\n\n### Gold\n\nAlignment: trust 6/7, confidence 1/3\nInformation: trust 4/7, confidence 2/3\nReasoning: Proposed a reasonable strategy for the villagers.\n\n## Trust Labels\n\n### Green\n\nAlignment: trust 4/7, confidence 2/3\nInformation: trust 4/7, confidence 2/3\nConsistency: trust 4/7, confidence 2/3\nReasoning: No trust labels were recorded for this player in or before this phase.\n\n### Beige\n\nAlignment: trust 4/7, confidence 2/3\nInformation: trust 4/7, confidence 2/3\nConsistency: trust 4/7, confidence 2/3\nReasoning: No trust labels were recorded for this player in or before this phase.\n\n### Brown\n\nAlignment: trust 4/7, confidence 2/3\nInformation: trust 4/7, confidence 2/3\nConsistency: trust 4/7, confidence 2/3\nReasoning: No trust labels were recorded for this player in or before this phase.\n\n### Cyan\n\nAlignment: trust 4/7, confidence 2/3\nInformation: trust 4/7, confidence 2/3\nConsistency: trust 4/7, confidence 2/3\nReasoning: No trust labels were recorded for this player in or before this phase.\n\n### Violet\n\nAlignment: trust 4/7, confidence 2/3\nInformation: trust 4/7, confidence 2/3\nConsistency: trust 4/7, confidence 2/3\nReasoning: No trust labels were recorded for this player in or before this phase.\n\n### Pink\n\nAlignment: trust 4/7, confidence 2/3\nInformation: trust 4/7, confidence 2/3\nConsistency: trust 4/7, confidence 2/3\nReasoning: No trust labels were recorded for this player in or before this phase.\n\n### Gold\n\nAlignment: trust 4/7, confidence 2/3\nInformation: trust 4/7, confidence 2/3\nConsistency: trust 4/7, confidence 2/3\nReasoning: No trust labels were recorded for this player in or before this phase.",
+      "inner_voice": [],
+      "labels": {
+        "Beige": {
+          "alignment": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "information": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "reasoning": "On Day 1, Beige voted to skip exile without providing any information or strategic reasoning. With only one data point showing a neutral action and no communication, I cannot assess their alignment with village goals, reliability of information, or behavioral consistency. The lack of any observable behavior leaves me with no basis for trust assessment."
+        },
+        "Cyan": {
+          "alignment": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "information": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "reasoning": "On Day 1, Cyan voted to skip exile without providing any information or strategic reasoning. With only one data point showing a neutral action and no communication, I cannot assess their alignment with village goals, reliability of information, or behavioral consistency. The lack of any observable behavior leaves me with no basis for trust assessment."
+        },
+        "Gold": {
+          "alignment": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "information": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "reasoning": "On Day 1, Gold voted to skip exile without providing any information or strategic reasoning. With only one data point showing a neutral action and no communication, I cannot assess their alignment with village goals, reliability of information, or behavioral consistency. The lack of any observable behavior leaves me with no basis for trust assessment."
+        },
+        "Green": {
+          "alignment": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "information": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "reasoning": "On Day 1, Green voted to skip exile without providing any information or strategic reasoning. With only one data point showing a neutral action and no communication, I cannot assess their alignment with village goals, reliability of information, or behavioral consistency. The lack of any observable behavior leaves me with no basis for trust assessment."
+        },
+        "Pink": {
+          "alignment": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "information": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "reasoning": "On Day 1, Pink voted to skip exile without providing any information or strategic reasoning. With only one data point showing a neutral action and no communication, I cannot assess their alignment with village goals, reliability of information, or behavioral consistency. The lack of any observable behavior leaves me with no basis for trust assessment."
+        },
+        "Violet": {
+          "alignment": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "information": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "reasoning": "On Day 1, Violet voted to skip exile without providing any information or strategic reasoning. With only one data point showing a neutral action and no communication, I cannot assess their alignment with village goals, reliability of information, or behavioral consistency. The lack of any observable behavior leaves me with no basis for trust assessment."
+        }
+      },
+      "reasoning": null,
+      "trace_events": [
+        {
+          "type": "user_message",
+          "content": "Evaluate the trust scores for all other players and report them using the report_labels tool."
+        },
+        {
+          "type": "tool_call",
+          "tool_name": "report_labels",
+          "tool_args": {
+            "labels": [
+              {
+                "label": {
+                  "reasoning": "On Day 1, Beige voted to skip exile without offering any information or strategic analysis. With no observable behavior or statements to evaluate, I have no basis to trust or distrust them regarding their goals, information reliability, or consistency. My stance remains neutral with low confidence due to the complete lack of data.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Beige"
+              },
+              {
+                "label": {
+                  "reasoning": "On Day 1, Cyan voted to skip exile without offering any information or strategic analysis. With no observable behavior or statements to evaluate, I have no basis to trust or distrust them regarding their goals, information reliability, or consistency. My stance remains neutral with low confidence due to the complete lack of data.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Cyan"
+              },
+              {
+                "label": {
+                  "reasoning": "On Day 1, Gold voted to skip exile without offering any information or strategic analysis. With no observable behavior or statements to evaluate, I have no basis to trust or distrust them regarding their goals, information reliability, or consistency. My stance remains neutral with low confidence due to the complete lack of data.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Gold"
+              },
+              {
+                "label": {
+                  "reasoning": "On Day 1, Green voted to skip exile without offering any information or strategic analysis. With no observable behavior or statements to evaluate, I have no basis to trust or distrust them regarding their goals, information reliability, or consistency. My stance remains neutral with low confidence due to the complete lack of data.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Green"
+              },
+              {
+                "label": {
+                  "reasoning": "On Day 1, Pink voted to skip exile without offering any information or strategic analysis. With no observable behavior or statements to evaluate, I have no basis to trust or distrust them regarding their goals, information reliability, or consistency. My stance remains neutral with low confidence due to the complete lack of data.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Pink"
+              },
+              {
+                "label": {
+                  "reasoning": "On Day 1, Violet voted to skip exile without offering any information or strategic analysis. With no observable behavior or statements to evaluate, I have no basis to trust or distrust them regarding their goals, information reliability, or consistency. My stance remains neutral with low confidence due to the complete lack of data.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Violet"
+              }
+            ]
+          },
+          "tool_id": "351f2c09-c767-484d-9ed1-a4447f0608fc"
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "report_labels",
+          "content": "Labels successfully reported.",
+          "tool_id": "351f2c09-c767-484d-9ed1-a4447f0608fc"
+        },
+        {
+          "type": "tool_call",
+          "tool_name": "report_labels",
+          "tool_args": {
+            "labels": [
+              {
+                "label": {
+                  "reasoning": "On Day 1, Beige voted to skip exile without providing any information or strategic reasoning. With only one data point showing a neutral action and no communication, I cannot assess their alignment with village goals, reliability of information, or behavioral consistency. The lack of any observable behavior leaves me with no basis for trust assessment.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Beige"
+              },
+              {
+                "label": {
+                  "reasoning": "On Day 1, Cyan voted to skip exile without providing any information or strategic reasoning. With only one data point showing a neutral action and no communication, I cannot assess their alignment with village goals, reliability of information, or behavioral consistency. The lack of any observable behavior leaves me with no basis for trust assessment.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Cyan"
+              },
+              {
+                "label": {
+                  "reasoning": "On Day 1, Gold voted to skip exile without providing any information or strategic reasoning. With only one data point showing a neutral action and no communication, I cannot assess their alignment with village goals, reliability of information, or behavioral consistency. The lack of any observable behavior leaves me with no basis for trust assessment.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Gold"
+              },
+              {
+                "label": {
+                  "reasoning": "On Day 1, Green voted to skip exile without providing any information or strategic reasoning. With only one data point showing a neutral action and no communication, I cannot assess their alignment with village goals, reliability of information, or behavioral consistency. The lack of any observable behavior leaves me with no basis for trust assessment.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Green"
+              },
+              {
+                "label": {
+                  "reasoning": "On Day 1, Pink voted to skip exile without providing any information or strategic reasoning. With only one data point showing a neutral action and no communication, I cannot assess their alignment with village goals, reliability of information, or behavioral consistency. The lack of any observable behavior leaves me with no basis for trust assessment.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Pink"
+              },
+              {
+                "label": {
+                  "reasoning": "On Day 1, Violet voted to skip exile without providing any information or strategic reasoning. With only one data point showing a neutral action and no communication, I cannot assess their alignment with village goals, reliability of information, or behavioral consistency. The lack of any observable behavior leaves me with no basis for trust assessment.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Violet"
+              }
+            ]
+          },
+          "tool_id": "f35cf3a4-7e0e-4176-bb56-55c89ef925c2"
+        }
+      ]
+    },
+    {
+      "phase_idx": 3,
+      "context": "# Game Information\n\n## Static Data\n\n- Your name is: White\n- Your role is: Villager\n\n## Current Game State\n\n- Current Day: 2\n- Last Phase: Evening\n- Current Phase: Morning\n- Players Alive (6): Beige, Gold, Green, Pink, Violet, White\n- Next Phase: Day\n- Dead Players:\n  - Brown (Seer): killed\n  - Cyan (Witch): killed\n\n# Current Phase\n\n- Day: 2\n- Phase: Morning\n- This is the current phase.\n- Players alive at end of phase: 6\n- Players no longer alive at end of phase:\n  - Brown (Dead)\n  - Cyan (Dead)\n\n## Phase chronology\n1. [Moderator] Night 2 begins.\n2. Cyan was found dead.\n3. [Moderator] The village must elect a Mayor.\n4. Conversation among all players:\n   4.1 [White] bruh\n   4.2 [Green] omg\n   4.3 [Gold] coool, so we cooked\n   4.4 [Pink] Yeah that's it..\n   4.5 [White] i say violet they were kinda quiet\n   4.6 [Pink] I think these four of us are inno\n   4.7 [Gold] i trust green (cuz we have nothing else)\n   4.8 [Gold] we need to just vote and gues. skipping now doesnt help us later anyways.\n   4.9 [Green] yeah unfortunately\n   4.10 [Pink] We can go for violet or beige\n   4.11 [Green] I say violet\n5. All players vote the mayor:\n   5.1 White voted for Gold (Mayor)\n6. Gold was elected Mayor.\n\n# Historical Game History\n\n## Trust Labels\n\n### Green\n\nAlignment: trust 4/7, confidence 2/3\nInformation: trust 4/7, confidence 2/3\nConsistency: trust 4/7, confidence 2/3\nReasoning: No trust labels were recorded for this player in or before this phase.\n\n### Beige\n\nAlignment: trust 3/7, confidence 1/3\nInformation: trust 3/7, confidence 1/3\nReasoning: Didnt say much except unproven self defense.\n\n### Brown\n\nAlignment: trust 4/7, confidence 2/3\nInformation: trust 4/7, confidence 2/3\nConsistency: trust 4/7, confidence 2/3\nReasoning: No trust labels were recorded for this player in or before this phase.\n\n### Cyan\n\nAlignment: trust 4/7, confidence 2/3\nInformation: trust 4/7, confidence 2/3\nConsistency: trust 4/7, confidence 2/3\nReasoning: No trust labels were recorded for this player in or before this phase.\n\n### Violet\n\nAlignment: trust 4/7, confidence 2/3\nInformation: trust 4/7, confidence 2/3\nConsistency: trust 4/7, confidence 2/3\nReasoning: No trust labels were recorded for this player in or before this phase.\n\n### Pink\n\nAlignment: trust 4/7, confidence 2/3\nInformation: trust 4/7, confidence 2/3\nConsistency: trust 4/7, confidence 2/3\nReasoning: No trust labels were recorded for this player in or before this phase.\n\n### Gold\n\nAlignment: trust 6/7, confidence 1/3\nInformation: trust 4/7, confidence 2/3\nReasoning: Proposed a reasonable strategy for the villagers.\n\n## Trust Labels\n\n### Green\n\nAlignment: trust 4/7, confidence 2/3\nInformation: trust 4/7, confidence 2/3\nConsistency: trust 4/7, confidence 2/3\nReasoning: No trust labels were recorded for this player in or before this phase.\n\n### Beige\n\nAlignment: trust 3/7, confidence 1/3\nInformation: trust 3/7, confidence 1/3\nReasoning: Didnt say much except unproven self defense.\n\n### Brown\n\nAlignment: trust 4/7, confidence 2/3\nInformation: trust 4/7, confidence 2/3\nConsistency: trust 4/7, confidence 2/3\nReasoning: No trust labels were recorded for this player in or before this phase.\n\n### Cyan\n\nAlignment: trust 4/7, confidence 2/3\nInformation: trust 4/7, confidence 2/3\nConsistency: trust 4/7, confidence 2/3\nReasoning: No trust labels were recorded for this player in or before this phase.\n\n### Violet\n\nAlignment: trust 4/7, confidence 2/3\nInformation: trust 4/7, confidence 2/3\nConsistency: trust 4/7, confidence 2/3\nReasoning: No trust labels were recorded for this player in or before this phase.\n\n### Pink\n\nAlignment: trust 4/7, confidence 2/3\nInformation: trust 4/7, confidence 2/3\nConsistency: trust 4/7, confidence 2/3\nReasoning: No trust labels were recorded for this player in or before this phase.\n\n### Gold\n\nAlignment: trust 6/7, confidence 1/3\nInformation: trust 4/7, confidence 2/3\nReasoning: Proposed a reasonable strategy for the villagers.",
+      "inner_voice": [],
+      "labels": {
+        "Beige": {
+          "alignment": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "information": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "reasoning": "Beige has provided minimal information throughout the game so far, only making a brief self-defense claim in earlier rounds. With no substantive input during Day 2 discussion and limited historical data, I cannot reliably assess their alignment or reliability. Their silence could indicate caution or guilt, but there's insufficient evidence either way."
+        },
+        "Gold": {
+          "alignment": {
+            "trust": 5,
+            "trust_likert": "SLIGHTLY_AGREE",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "information": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 5,
+            "trust_likert": "SLIGHTLY_AGREE",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "reasoning": "Gold was elected Mayor and demonstrated decisive leadership by pushing the village to vote rather than skip. Their strategy of trusting Green and moving forward shows alignment with Village goals of eliminating threats efficiently. As Mayor, they've taken a cooperative stance. However, without role claims or specific evidence, their information reliability remains unproven."
+        },
+        "Green": {
+          "alignment": {
+            "trust": 5,
+            "trust_likert": "SLIGHTLY_AGREE",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "information": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 5,
+            "trust_likert": "SLIGHTLY_AGREE",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "reasoning": "Green has been responsive to the Mayor's push for action and agreed to target Violet. Their cooperation with Gold suggests alignment with the Village majority. However, they haven't provided specific evidence or reasoning for their claims, so I remain cautiously optimistic but uncommitted."
+        },
+        "Pink": {
+          "alignment": {
+            "trust": 5,
+            "trust_likert": "SLIGHTLY_AGREE",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "information": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 5,
+            "trust_likert": "SLIGHTLY_AGREE",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "reasoning": "Pink attempted to form a voting bloc by claiming 'these four of us are inno,' which is a standard early-game tactic but slightly self-serving. They supported targeting Violet or Beige, aligning with the current flow. Their behavior seems consistent with Village goals, though unproven."
+        },
+        "Violet": {
+          "alignment": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "information": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "reasoning": "Violet has been targeted by multiple players due to perceived 'quietness,' though I lack direct evidence of wrongdoing. Their silence makes them a prime suspect but doesn't indicate alignment either way. With no statements or actions to evaluate, trust remains neutral across all dimensions."
+        }
+      },
+      "reasoning": null,
+      "trace_events": [
+        {
+          "type": "user_message",
+          "content": "Evaluate the trust scores for all other players and report them using the report_labels tool."
+        },
+        {
+          "type": "tool_call",
+          "tool_name": "report_labels",
+          "tool_args": {
+            "labels": [
+              {
+                "label": {
+                  "reasoning": "Beige has provided very little information so far, only making a brief self-defense claim in previous rounds. With minimal interaction data, it is difficult to assess their alignment or reliability. I remain neutral until they provide more substantive input or voting patterns emerge.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Beige"
+              },
+              {
+                "label": {
+                  "reasoning": "Gold was elected Mayor and has taken a proactive stance by pushing for a vote rather than skipping. Their suggestion to trust Green and move forward shows cooperative intent aligned with the Village's goal of eliminating threats quickly. However, without concrete evidence or role claims, their reliability remains unproven.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "SLIGHTLY_AGREE"
+                    },
+                    "consistency": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "SLIGHTLY_AGREE"
+                    },
+                    "information": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Gold"
+              },
+              {
+                "label": {
+                  "reasoning": "Green has been responsive to the Mayor's push for a vote and agreed to target Violet. Their silence on deeper analysis is typical for early game, but their agreement with Gold suggests alignment with the Village majority. Lacking specific claims or evidence, trust remains cautious.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "SLIGHTLY_AGREE"
+                    },
+                    "consistency": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "SLIGHTLY_AGREE"
+                    },
+                    "information": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Green"
+              },
+              {
+                "label": {
+                  "reasoning": "Pink attempted to form a bloc by claiming 'these four of us are inno,' which is a standard early-game tactic but slightly self-serving. They supported targeting Violet or Beige, aligning with the current flow. I trust their general alignment with the Village but remain cautious about unverified claims.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "SLIGHTLY_AGREE"
+                    },
+                    "consistency": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "SLIGHTLY_AGREE"
+                    },
+                    "information": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Pink"
+              },
+              {
+                "label": {
+                  "reasoning": "Violet has been targeted by multiple players due to perceived quietness, though I lack direct evidence of wrongdoing. Their silence makes them a prime suspect for witch hunts but doesn't indicate alignment. Trust is neutral until they speak up or voting reveals their true intentions.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Violet"
+              }
+            ]
+          },
+          "tool_id": "0d4c67ad-0bf9-4e5c-934e-c1d16d119882"
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "report_labels",
+          "content": "Labels successfully reported.",
+          "tool_id": "0d4c67ad-0bf9-4e5c-934e-c1d16d119882"
+        },
+        {
+          "type": "tool_call",
+          "tool_name": "report_labels",
+          "tool_args": {
+            "labels": [
+              {
+                "label": {
+                  "reasoning": "Beige has provided minimal information throughout the game so far, only making a brief self-defense claim in earlier rounds. With no substantive input during Day 2 discussion and limited historical data, I cannot reliably assess their alignment or reliability. Their silence could indicate caution or guilt, but there's insufficient evidence either way.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Beige"
+              },
+              {
+                "label": {
+                  "reasoning": "Gold was elected Mayor and demonstrated decisive leadership by pushing the village to vote rather than skip. Their strategy of trusting Green and moving forward shows alignment with Village goals of eliminating threats efficiently. As Mayor, they've taken a cooperative stance. However, without role claims or specific evidence, their information reliability remains unproven.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "SLIGHTLY_AGREE"
+                    },
+                    "consistency": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "SLIGHTLY_AGREE"
+                    },
+                    "information": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Gold"
+              },
+              {
+                "label": {
+                  "reasoning": "Green has been responsive to the Mayor's push for action and agreed to target Violet. Their cooperation with Gold suggests alignment with the Village majority. However, they haven't provided specific evidence or reasoning for their claims, so I remain cautiously optimistic but uncommitted.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "SLIGHTLY_AGREE"
+                    },
+                    "consistency": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "SLIGHTLY_AGREE"
+                    },
+                    "information": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Green"
+              },
+              {
+                "label": {
+                  "reasoning": "Pink attempted to form a voting bloc by claiming 'these four of us are inno,' which is a standard early-game tactic but slightly self-serving. They supported targeting Violet or Beige, aligning with the current flow. Their behavior seems consistent with Village goals, though unproven.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "SLIGHTLY_AGREE"
+                    },
+                    "consistency": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "SLIGHTLY_AGREE"
+                    },
+                    "information": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Pink"
+              },
+              {
+                "label": {
+                  "reasoning": "Violet has been targeted by multiple players due to perceived 'quietness,' though I lack direct evidence of wrongdoing. Their silence makes them a prime suspect but doesn't indicate alignment either way. With no statements or actions to evaluate, trust remains neutral across all dimensions.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Violet"
+              }
+            ]
+          },
+          "tool_id": "86819b7c-cf36-44ce-a450-c3252a3cf1c2"
+        }
+      ]
+    },
+    {
+      "phase_idx": 4,
+      "context": "# Game Information\n\n## Static Data\n\n- Your name is: White\n- Your role is: Villager\n\n## Current Game State\n\n- Current Day: 2\n- Last Phase: Morning\n- Current Phase: Day\n- Players Alive (6): Beige, Gold, Green, Pink, Violet, White\n- Next Phase: Evening\n- Dead Players:\n  - Brown (Seer): killed\n  - Cyan (Witch): killed\n\n# Current Phase\n\n- Day: 2\n- Phase: Day\n- This is the current phase.\n- Players alive at end of phase: 6\n- Players no longer alive at end of phase:\n  - Brown (Dead)\n  - Cyan (Dead)\n\n## Phase chronology\n1. Conversation among all players:\n   1.1 [Violet] Why should I be random? White and Green?\n   1.2 [Beige] why me?\n   1.3 [Gold] beige, any comments\n   1.4 [White] you did not participate much and where none of the special roles\n   1.5 [White] violet\n   1.6 [Violet] We can make a deal: you can kill me and see that I'm a villager and then you kill White or Green\n   1.7 [Beige] i explicitly stated i was a vil\u00f6ager in the firs rpunds. i thought you guys would believe me\n   1.8 [Gold] well, violet, you know, if ur a villager and we kill u, we loose :)\n   1.9 [Gold] i always believe strangers :)\n   1.10 [Gold] , beige\n   1.11 [White] beige also did not participate much and very vaguely stated himself as villager first round\n   1.12 [Violet] is there still enough left after that\n\n# Historical Game History\n\n## Trust Labels\n\n### Green\n\nAlignment: trust 5/7, confidence 1/3\nReasoning: Just gut feeling\n\n### Beige\n\nAlignment: trust 3/7, confidence 1/3\nInformation: trust 3/7, confidence 1/3\nReasoning: Didnt say much except unproven self defense.\n\n### Brown\n\nAlignment: trust 4/7, confidence 2/3\nInformation: trust 4/7, confidence 2/3\nConsistency: trust 4/7, confidence 2/3\nReasoning: No trust labels were recorded for this player in or before this phase.\n\n### Cyan\n\nAlignment: trust 4/7, confidence 2/3\nInformation: trust 4/7, confidence 2/3\nConsistency: trust 4/7, confidence 2/3\nReasoning: No trust labels were recorded for this player in or before this phase.\n\n### Violet\n\nAlignment: trust 4/7, confidence 2/3\nInformation: trust 4/7, confidence 2/3\nConsistency: trust 4/7, confidence 2/3\nReasoning: No trust labels were recorded for this player in or before this phase.\n\n### Pink\n\nAlignment: trust 5/7, confidence 1/3\nReasoning: gut feeling\n\n### Gold\n\nAlignment: trust 5/7, confidence 1/3\nReasoning: gut feeling\n\n## Trust Labels\n\n### Green\n\nAlignment: trust 4/7, confidence 2/3\nInformation: trust 4/7, confidence 2/3\nConsistency: trust 4/7, confidence 2/3\nReasoning: No trust labels were recorded for this player in or before this phase.\n\n### Beige\n\nAlignment: trust 3/7, confidence 1/3\nInformation: trust 3/7, confidence 1/3\nReasoning: Didnt say much except unproven self defense.\n\n### Brown\n\nAlignment: trust 4/7, confidence 2/3\nInformation: trust 4/7, confidence 2/3\nConsistency: trust 4/7, confidence 2/3\nReasoning: No trust labels were recorded for this player in or before this phase.\n\n### Cyan\n\nAlignment: trust 4/7, confidence 2/3\nInformation: trust 4/7, confidence 2/3\nConsistency: trust 4/7, confidence 2/3\nReasoning: No trust labels were recorded for this player in or before this phase.\n\n### Violet\n\nAlignment: trust 4/7, confidence 2/3\nInformation: trust 4/7, confidence 2/3\nConsistency: trust 4/7, confidence 2/3\nReasoning: No trust labels were recorded for this player in or before this phase.\n\n### Pink\n\nAlignment: trust 4/7, confidence 2/3\nInformation: trust 4/7, confidence 2/3\nConsistency: trust 4/7, confidence 2/3\nReasoning: No trust labels were recorded for this player in or before this phase.\n\n### Gold\n\nAlignment: trust 6/7, confidence 1/3\nInformation: trust 4/7, confidence 2/3\nReasoning: Proposed a reasonable strategy for the villagers.",
+      "inner_voice": [],
+      "labels": {
+        "Beige": {
+          "alignment": {
+            "trust": 3,
+            "trust_likert": "SLIGHTLY_DISAGREE",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "information": {
+            "trust": 2,
+            "trust_likert": "DISAGREE",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 3,
+            "trust_likert": "SLIGHTLY_DISAGREE",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "reasoning": "Beige was quiet and their claim of being a Villager in round 1 was vague/unproven. This lack of contribution and verification lowers trust significantly."
+        },
+        "Gold": {
+          "alignment": {
+            "trust": 6,
+            "trust_likert": "AGREE",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "information": {
+            "trust": 6,
+            "trust_likert": "AGREE",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 6,
+            "trust_likert": "AGREE",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "reasoning": "Gold pointed out the logical risk of killing a Villager (Violet), showing good alignment with Village goals and sound reasoning."
+        },
+        "Green": {
+          "alignment": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "information": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "reasoning": "No specific interactions to base trust on yet."
+        },
+        "Pink": {
+          "alignment": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "information": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "reasoning": "No specific interactions to base trust on yet."
+        },
+        "Violet": {
+          "alignment": {
+            "trust": 6,
+            "trust_likert": "AGREE",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "information": {
+            "trust": 6,
+            "trust_likert": "AGREE",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 5,
+            "trust_likert": "SLIGHTLY_AGREE",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "reasoning": "Violet offered to die to prove her role, which is a strong signal of Village alignment and trustworthiness in information. However, her initial suggestion to kill me or Green was aggressive, making her consistency slightly less certain than Gold's."
+        }
+      },
+      "reasoning": null,
+      "trace_events": [
+        {
+          "type": "user_message",
+          "content": "Evaluate the trust scores for all other players and report them using the report_labels tool."
+        },
+        {
+          "type": "tool_call",
+          "tool_name": "report_labels",
+          "tool_args": {
+            "labels": [
+              {
+                "label": {
+                  "reasoning": "Beige has been quiet and their claim of being a Villager in round 1 was vague/unproven. This lack of contribution and verification lowers trust significantly.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "SLIGHTLY_DISAGREE"
+                    },
+                    "consistency": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "SLIGHTLY_DISAGREE"
+                    },
+                    "information": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "DISAGREE"
+                    }
+                  }
+                },
+                "player_name": "Beige"
+              },
+              {
+                "label": {
+                  "reasoning": "Gold pointed out the logical risk of killing a Villager (Violet), showing good alignment with Village goals and sound reasoning.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "AGREE"
+                    },
+                    "consistency": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "AGREE"
+                    },
+                    "information": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "AGREE"
+                    }
+                  }
+                },
+                "player_name": "Gold"
+              },
+              {
+                "label": {
+                  "reasoning": "No specific interactions to base trust on yet.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Green"
+              },
+              {
+                "label": {
+                  "reasoning": "No specific interactions to base trust on yet.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Pink"
+              },
+              {
+                "label": {
+                  "reasoning": "Violet offered to die to prove her role, which is a strong signal of Village alignment and trustworthiness in information. However, her initial suggestion to kill me or Green was aggressive, making her consistency slightly less certain than Gold's.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "AGREE"
+                    },
+                    "consistency": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "SLIGHTLY_AGREE"
+                    },
+                    "information": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "AGREE"
+                    }
+                  }
+                },
+                "player_name": "Violet"
+              }
+            ]
+          },
+          "tool_id": "cff809c8-03d7-4fcb-aaf8-548e0a480b67"
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "report_labels",
+          "content": "Labels successfully reported.",
+          "tool_id": "cff809c8-03d7-4fcb-aaf8-548e0a480b67"
+        },
+        {
+          "type": "tool_call",
+          "tool_name": "report_labels",
+          "tool_args": {
+            "labels": [
+              {
+                "label": {
+                  "reasoning": "Beige was quiet and their claim of being a Villager in round 1 was vague/unproven. This lack of contribution and verification lowers trust significantly.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "SLIGHTLY_DISAGREE"
+                    },
+                    "consistency": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "SLIGHTLY_DISAGREE"
+                    },
+                    "information": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "DISAGREE"
+                    }
+                  }
+                },
+                "player_name": "Beige"
+              },
+              {
+                "label": {
+                  "reasoning": "Gold pointed out the logical risk of killing a Villager (Violet), showing good alignment with Village goals and sound reasoning.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "AGREE"
+                    },
+                    "consistency": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "AGREE"
+                    },
+                    "information": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "AGREE"
+                    }
+                  }
+                },
+                "player_name": "Gold"
+              },
+              {
+                "label": {
+                  "reasoning": "No specific interactions to base trust on yet.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Green"
+              },
+              {
+                "label": {
+                  "reasoning": "No specific interactions to base trust on yet.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Pink"
+              },
+              {
+                "label": {
+                  "reasoning": "Violet offered to die to prove her role, which is a strong signal of Village alignment and trustworthiness in information. However, her initial suggestion to kill me or Green was aggressive, making her consistency slightly less certain than Gold's.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "AGREE"
+                    },
+                    "consistency": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "SLIGHTLY_AGREE"
+                    },
+                    "information": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "AGREE"
+                    }
+                  }
+                },
+                "player_name": "Violet"
+              }
+            ]
+          },
+          "tool_id": "82e401eb-2e4f-4936-b4db-255d305cee47"
+        }
+      ]
+    },
+    {
+      "phase_idx": 5,
+      "context": "# Game Information\n\n## Static Data\n\n- Your name is: White\n- Your role is: Villager\n\n## Current Game State\n\n- Current Day: 2\n- Last Phase: Day\n- Current Phase: Evening\n- Players Alive (5): Beige, Gold, Green, Pink, White\n- Next Phase: Morning\n- Dead Players:\n  - Brown (Seer): killed\n  - Cyan (Witch): killed\n  - Violet (Villager): exiled\n\n# Current Phase\n\n- Day: 2\n- Phase: Evening\n- This is the current phase.\n- Players alive at end of phase: 5\n- Players no longer alive at end of phase:\n  - Brown (Dead)\n  - Cyan (Dead)\n  - Violet (Exiled)\n\n## Phase chronology\n1. [Moderator] Voting begins.\n2. All players vote whom to exile:\n   2.1 White voted for Violet (Exile)\n   2.2 Violet voted for White (Exile)\n   2.3 Gold voted for Violet (Exile)\n   2.4 Beige voted for Violet (Exile)\n   2.5 Green voted for Violet (Exile)\n   2.6 Pink voted for Violet (Exile)\n3. Violet was exiled.\n\n# Historical Game History\n\n## Trust Labels\n\n### Green\n\nAlignment: trust 5/7, confidence 1/3\nReasoning: Just gut feeling\n\n### Beige\n\nAlignment: trust 2/7, confidence 2/3\nInformation: trust 3/7, confidence 2/3\nConsistency: trust 4/7, confidence 2/3\nReasoning: No reasonable defense\n\n### Brown\n\nAlignment: trust 4/7, confidence 2/3\nInformation: trust 4/7, confidence 2/3\nConsistency: trust 4/7, confidence 2/3\nReasoning: No trust labels were recorded for this player in or before this phase.\n\n### Cyan\n\nAlignment: trust 4/7, confidence 2/3\nInformation: trust 4/7, confidence 2/3\nConsistency: trust 4/7, confidence 2/3\nReasoning: No trust labels were recorded for this player in or before this phase.\n\n### Violet\n\nAlignment: trust 2/7, confidence 1/3\nInformation: trust 4/7, confidence 2/3\nConsistency: trust 5/7, confidence 1/3\nReasoning: Reasonable argument\n\n### Pink\n\nAlignment: trust 5/7, confidence 1/3\nReasoning: gut feeling\n\n### Gold\n\nAlignment: trust 5/7, confidence 1/3\nReasoning: gut feeling\n\n## Trust Labels\n\n### Green\n\nAlignment: trust 5/7, confidence 1/3\nReasoning: Just gut feeling\n\n### Beige\n\nAlignment: trust 3/7, confidence 1/3\nInformation: trust 3/7, confidence 1/3\nReasoning: Didnt say much except unproven self defense.\n\n### Brown\n\nAlignment: trust 4/7, confidence 2/3\nInformation: trust 4/7, confidence 2/3\nConsistency: trust 4/7, confidence 2/3\nReasoning: No trust labels were recorded for this player in or before this phase.\n\n### Cyan\n\nAlignment: trust 4/7, confidence 2/3\nInformation: trust 4/7, confidence 2/3\nConsistency: trust 4/7, confidence 2/3\nReasoning: No trust labels were recorded for this player in or before this phase.\n\n### Violet\n\nAlignment: trust 4/7, confidence 2/3\nInformation: trust 4/7, confidence 2/3\nConsistency: trust 4/7, confidence 2/3\nReasoning: No trust labels were recorded for this player in or before this phase.\n\n### Pink\n\nAlignment: trust 5/7, confidence 1/3\nReasoning: gut feeling\n\n### Gold\n\nAlignment: trust 5/7, confidence 1/3\nReasoning: gut feeling",
+      "inner_voice": [],
+      "labels": {
+        "Beige": {
+          "alignment": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "information": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "reasoning": "Beige participated in the unanimous vote to exile Violet but provided minimal substantive dialogue or role claims during the early game. With no distinguishing behavioral patterns, logical arguments, or verified information shared, I lack sufficient evidence to assess their alignment, reliability, or consistency. Trust remains neutral with low confidence across all dimensions."
+        },
+        "Gold": {
+          "alignment": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "information": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "reasoning": "Gold's gameplay has been limited to standard early-game voting without notable claims, information sharing, or distinct behavioral signals. The unanimous vote for Violet reflects group consensus rather than specific role knowledge or strategic positioning. Without concrete interactions to analyze, I maintain neutral trust with low confidence across all dimensions."
+        },
+        "Green": {
+          "alignment": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "information": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "reasoning": "Green participated in the unanimous exile of Violet but offered little substantive information or distinct gameplay signals so far. Early-game voting patterns are frequently influenced by social dynamics and default consensus rather than verified role alignment. Without concrete interactions or logical arguments to evaluate, I cannot form a reliable judgment, resulting in neutral trust scores with low confidence."
+        },
+        "Pink": {
+          "alignment": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "information": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "reasoning": "Pink's actions have been limited to standard early-game voting without notable claims, information sharing, or distinct behavioral patterns. The lack of substantive dialogue makes it impossible to gauge their alignment or reliability accurately at this stage. Consequently, I assign neutral trust across all dimensions with low confidence, pending further gameplay developments and role reveals."
+        }
+      },
+      "reasoning": null,
+      "trace_events": [
+        {
+          "type": "user_message",
+          "content": "Evaluate the trust scores for all other players and report them using the report_labels tool."
+        },
+        {
+          "type": "tool_call",
+          "tool_name": "report_labels",
+          "tool_args": {
+            "labels": [
+              {
+                "label": {
+                  "reasoning": "In this early game phase, I have very limited information about Beige's behavior and claims. They voted with the majority to exile Violet, which is standard behavior when no strong arguments or role claims have been presented yet. Without substantive dialogue or distinct actions, I cannot reliably assess their alignment, information quality, or consistency. Trust remains neutral with low confidence due to a complete lack of evidence.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Beige"
+              },
+              {
+                "label": {
+                  "reasoning": "Gold provided minimal information during the initial days and participated in the unanimous vote for Violet's exile. This voting pattern offers no distinguishing data regarding their true alignment or reliability, as early-game votes are often driven by group consensus rather than specific role knowledge. With no clear claims or behavioral patterns to analyze, I maintain neutral trust with low confidence across all dimensions.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Gold"
+              },
+              {
+                "label": {
+                  "reasoning": "Green participated in the unanimous exile of Violet but offered little substantive information or distinct gameplay signals so far. Early-game voting patterns are frequently influenced by social dynamics and default consensus rather than verified role alignment. Without concrete interactions or logical arguments to evaluate, I cannot form a reliable judgment, resulting in neutral trust scores with low confidence.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Green"
+              },
+              {
+                "label": {
+                  "reasoning": "Pink's actions have been limited to standard early-game voting without notable claims, information sharing, or distinct behavioral patterns. The lack of substantive dialogue makes it impossible to gauge their alignment or reliability accurately at this stage. Consequently, I assign neutral trust across all dimensions with low confidence, pending further gameplay developments and role reveals.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Pink"
+              }
+            ]
+          },
+          "tool_id": "a85deb0d-d8d6-4c77-a3ec-813aa653ba6c"
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "report_labels",
+          "content": "Labels successfully reported.",
+          "tool_id": "a85deb0d-d8d6-4c77-a3ec-813aa653ba6c"
+        },
+        {
+          "type": "tool_call",
+          "tool_name": "report_labels",
+          "tool_args": {
+            "labels": [
+              {
+                "label": {
+                  "reasoning": "Beige participated in the unanimous vote to exile Violet but provided minimal substantive dialogue or role claims during the early game. With no distinguishing behavioral patterns, logical arguments, or verified information shared, I lack sufficient evidence to assess their alignment, reliability, or consistency. Trust remains neutral with low confidence across all dimensions.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Beige"
+              },
+              {
+                "label": {
+                  "reasoning": "Gold's gameplay has been limited to standard early-game voting without notable claims, information sharing, or distinct behavioral signals. The unanimous vote for Violet reflects group consensus rather than specific role knowledge or strategic positioning. Without concrete interactions to analyze, I maintain neutral trust with low confidence across all dimensions.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Gold"
+              },
+              {
+                "label": {
+                  "reasoning": "Green participated in the unanimous exile of Violet but offered little substantive information or distinct gameplay signals so far. Early-game voting patterns are frequently influenced by social dynamics and default consensus rather than verified role alignment. Without concrete interactions or logical arguments to evaluate, I cannot form a reliable judgment, resulting in neutral trust scores with low confidence.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Green"
+              },
+              {
+                "label": {
+                  "reasoning": "Pink's actions have been limited to standard early-game voting without notable claims, information sharing, or distinct behavioral patterns. The lack of substantive dialogue makes it impossible to gauge their alignment or reliability accurately at this stage. Consequently, I assign neutral trust across all dimensions with low confidence, pending further gameplay developments and role reveals.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Pink"
+              }
+            ]
+          },
+          "tool_id": "a2490e6d-6af9-46f3-a00c-eccc9545255f"
+        }
+      ]
+    },
+    {
+      "phase_idx": 6,
+      "context": "# Game Information\n\n## Static Data\n\n- Your name is: White\n- Your role is: Villager\n\n## Current Game State\n\n- Current Day: 3\n- Last Phase: Evening\n- Current Phase: Morning\n- Players Alive (4): Beige, Green, Pink, White\n- Dead Players:\n  - Brown (Seer): killed\n  - Cyan (Witch): killed\n  - Gold (Villager): killed\n  - Violet (Villager): exiled\n\n# Current Phase\n\n- Day: 3\n- Phase: Morning\n- This is the current phase.\n- Players alive at end of phase: 4\n- Players no longer alive at end of phase:\n  - Brown (Dead)\n  - Cyan (Dead)\n  - Gold (Dead)\n  - Violet (Exiled)\n\n## Phase chronology\n1. [Moderator] Night 3 begins.\n2. Gold was found dead.\n\n# Historical Game History\n\n## Trust Labels\n\n### Green\n\nAlignment: trust 5/7, confidence 1/3\nReasoning: Just gut feeling\n\n### Beige\n\nAlignment: trust 2/7, confidence 2/3\nInformation: trust 2/7, confidence 2/3\nReasoning: violet was villager\n\n### Brown\n\nAlignment: trust 4/7, confidence 2/3\nInformation: trust 4/7, confidence 2/3\nConsistency: trust 4/7, confidence 2/3\nReasoning: No trust labels were recorded for this player in or before this phase.\n\n### Cyan\n\nAlignment: trust 4/7, confidence 2/3\nInformation: trust 4/7, confidence 2/3\nConsistency: trust 4/7, confidence 2/3\nReasoning: No trust labels were recorded for this player in or before this phase.\n\n### Violet\n\nAlignment: trust 2/7, confidence 1/3\nInformation: trust 4/7, confidence 2/3\nConsistency: trust 5/7, confidence 1/3\nReasoning: Reasonable argument\n\n### Pink\n\nAlignment: trust 5/7, confidence 1/3\nReasoning: gut feeling\n\n### Gold\n\nAlignment: trust 5/7, confidence 1/3\nReasoning: gut feeling\n\n## Trust Labels\n\n### Green\n\nAlignment: trust 5/7, confidence 1/3\nReasoning: Just gut feeling\n\n### Beige\n\nAlignment: trust 2/7, confidence 2/3\nInformation: trust 3/7, confidence 2/3\nConsistency: trust 4/7, confidence 2/3\nReasoning: No reasonable defense\n\n### Brown\n\nAlignment: trust 4/7, confidence 2/3\nInformation: trust 4/7, confidence 2/3\nConsistency: trust 4/7, confidence 2/3\nReasoning: No trust labels were recorded for this player in or before this phase.\n\n### Cyan\n\nAlignment: trust 4/7, confidence 2/3\nInformation: trust 4/7, confidence 2/3\nConsistency: trust 4/7, confidence 2/3\nReasoning: No trust labels were recorded for this player in or before this phase.\n\n### Violet\n\nAlignment: trust 2/7, confidence 1/3\nInformation: trust 4/7, confidence 2/3\nConsistency: trust 5/7, confidence 1/3\nReasoning: Reasonable argument\n\n### Pink\n\nAlignment: trust 5/7, confidence 1/3\nReasoning: gut feeling\n\n### Gold\n\nAlignment: trust 5/7, confidence 1/3\nReasoning: gut feeling",
+      "inner_voice": [],
+      "labels": {
+        "Beige": {
+          "alignment": {
+            "trust": 2,
+            "trust_likert": "DISAGREE",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "information": {
+            "trust": 3,
+            "trust_likert": "SLIGHTLY_DISAGREE",
+            "confidence": 2,
+            "confidence_likert": "MEDIUM_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "reasoning": "Beige has a documented history of low alignment trust (2/7) with reasoning indicating 'no reasonable defense' when questioned. This suggests Beige may have been unable to provide convincing arguments about their role or actions, which is concerning for a village player. With only 4 players remaining and the game at a critical stage, this past negative evidence carries significant weight. However, there is insufficient behavioral data to assess consistency, and limited information has been provided by Beige to evaluate."
+        },
+        "Green": {
+          "alignment": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "information": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "reasoning": "Previous trust in Green was based purely on 'gut feeling' with no substantive evidence or interactions recorded. No information has been provided by Green during Day 3 to establish credibility or suspicion. With the game at a critical juncture (only 4 players remaining), every player's behavior is important, but I have insufficient data to form any meaningful trust assessment. A neutral stance reflects this lack of evidence honestly."
+        },
+        "Pink": {
+          "alignment": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "information": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "consistency": {
+            "trust": 4,
+            "trust_likert": "NEUTRAL",
+            "confidence": 1,
+            "confidence_likert": "LOW_CONFIDENCE"
+          },
+          "reasoning": "Similar to Green, previous trust in Pink was based purely on 'gut feeling' without substantive evidence. No information has been provided by Pink during Day 3 discussions. With minimal interaction data and the game being extremely close (only 4 players left), I cannot form strong opinions either way. A neutral stance across all dimensions honestly reflects the lack of evidentiary basis for trust or distrust."
+        }
+      },
+      "reasoning": null,
+      "trace_events": [
+        {
+          "type": "user_message",
+          "content": "Evaluate the trust scores for all other players and report them using the report_labels tool."
+        },
+        {
+          "type": "tool_call",
+          "tool_name": "report_labels",
+          "tool_args": {
+            "labels": [
+              {
+                "label": {
+                  "reasoning": "Beige had 'no reasonable defense' in previous days, suggesting suspicious behavior or poor arguments that lowered trust. With only 4 players remaining and the game at a critical juncture, this past negative evidence is significant. However, there's insufficient data to assess consistency.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "DISAGREE"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "SLIGHTLY_DISAGREE"
+                    }
+                  }
+                },
+                "player_name": "Beige"
+              },
+              {
+                "label": {
+                  "reasoning": "Previous trust was based purely on 'gut feeling' with no substantive evidence. No information has been provided by Green yet on Day 3 to establish or undermine trust. With minimal interaction data and the game being extremely close (only 4 players left), I cannot form strong opinions either way.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Green"
+              },
+              {
+                "label": {
+                  "reasoning": "Similar to Green, previous trust was based purely on 'gut feeling' without substantive evidence. No information has been provided by Pink yet on Day 3. With minimal interaction data and the game being extremely close (only 4 players left), I cannot form strong opinions either way.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Pink"
+              }
+            ]
+          },
+          "tool_id": "f173da2b-afb3-4a43-ae21-142460edf631"
+        },
+        {
+          "type": "tool_result",
+          "tool_name": "report_labels",
+          "content": "Labels successfully reported.",
+          "tool_id": "f173da2b-afb3-4a43-ae21-142460edf631"
+        },
+        {
+          "type": "tool_call",
+          "tool_name": "report_labels",
+          "tool_args": {
+            "labels": [
+              {
+                "label": {
+                  "reasoning": "Beige has a documented history of low alignment trust (2/7) with reasoning indicating 'no reasonable defense' when questioned. This suggests Beige may have been unable to provide convincing arguments about their role or actions, which is concerning for a village player. With only 4 players remaining and the game at a critical stage, this past negative evidence carries significant weight. However, there is insufficient behavioral data to assess consistency, and limited information has been provided by Beige to evaluate.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "DISAGREE"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "MEDIUM_CONFIDENCE",
+                      "trust": "SLIGHTLY_DISAGREE"
+                    }
+                  }
+                },
+                "player_name": "Beige"
+              },
+              {
+                "label": {
+                  "reasoning": "Previous trust in Green was based purely on 'gut feeling' with no substantive evidence or interactions recorded. No information has been provided by Green during Day 3 to establish credibility or suspicion. With the game at a critical juncture (only 4 players remaining), every player's behavior is important, but I have insufficient data to form any meaningful trust assessment. A neutral stance reflects this lack of evidence honestly.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Green"
+              },
+              {
+                "label": {
+                  "reasoning": "Similar to Green, previous trust in Pink was based purely on 'gut feeling' without substantive evidence. No information has been provided by Pink during Day 3 discussions. With minimal interaction data and the game being extremely close (only 4 players left), I cannot form strong opinions either way. A neutral stance across all dimensions honestly reflects the lack of evidentiary basis for trust or distrust.",
+                  "trust_scores": {
+                    "alignment": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "consistency": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    },
+                    "information": {
+                      "confidence": "LOW_CONFIDENCE",
+                      "trust": "NEUTRAL"
+                    }
+                  }
+                },
+                "player_name": "Pink"
+              }
+            ]
+          },
+          "tool_id": "f5ce6fc6-280a-4928-b2ad-c946b6dd83e2"
+        }
+      ]
+    }
+  ]
+}
