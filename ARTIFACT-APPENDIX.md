@@ -1,248 +1,190 @@
 # Artifact Appendix
-
+ 
 Paper title: **AI Agents Playing a Trust Game**
-
-These instructions are written for someone who wants to reproduce or reuse the
-artifact in the future, not only for an artifact reviewer.
-
+ 
 ## Description
-
-This artifact accompanies the paper *AI Agents Playing a Trust Game* (IoSL
-Project Group 7, TU Berlin, 2026; C. Mosler, T. Ax, M. Reich, S. Dilli,
-T. Baumann, I. Yilmaz, N. N. Fickel, A. Gelecek, C. U. Jhurree). It is the
-project mono-repository and contains the complete, runnable research pipeline
-together with the collected data, so the paper can be reproduced end to end.
-
-The artifact is organized into the three software modules described in
-Section 3 of the paper, plus the data:
-
-- `werewolf-game/`: the Next.js/TypeScript web platform on which the human games
-  were played and trust-labeled, including the WebSocket game server, the
-  in-game labeling UI, and the Admin Research Panel used to export game records.
-- `llm-labeling/`: the LLM Labeling Engine (record parser, compositional context
-  providers, prompt sets, inner voice, and the labeling runner), the six
-  experiment definitions A to F, and the archived experiment outputs under
-  `llm-labeling/results/`.
-- `data-analysis/`: the Data Analysis Agent, comprising the unified human/LLM
-  dataset builder, the filter vocabulary, the analysis tools (compare, plot,
-  delta, correlation), and the LLM orchestrator over them.
-- `results/game-records/`: the pseudonymized human dataset, i.e. per-game event
-  exports (CSV and JSON) and human trust labels (JSON) for the 31 recorded
-  games. Games with incomplete voting data are prefixed `MISSING_VOTING_` and
-  are excluded from analysis.
-- `design/` and `docs/`: design documents (rules, trust-label taxonomy) and the
-  export-format reference.
-
-The artifact is hosted at
-<https://git.tu-berlin.de/snet-internal/wolf-iosl-2026>. A central `README`
-links to a dedicated `README` for each module.
-
+ 
+This artifact appendix guides the user to run and reuse the project later.
+ 
+The repository has three code folders and the data:
+ 
+- `werewolf-game/`: the web platform where people play Werewolf and label trust
+  during the game (Next.js 16, React 19, Prisma 7 on PostgreSQL, Redis, and
+  Socket.IO). It includes the in-game labeling panel and the admin panel that
+  exports each game.
+- `llm-labeling/`: the Python engine that replays a recorded game and asks an
+  LLM for trust labels. It contains the record parser, the context builder, the
+  prompt sets, the inner voice, the runner, and three small scripts that print
+  the tables used in the paper (`compute_alignment_trust.py`,
+  `compute_alignment_confidence.py`, `count_inner_voice_usage.py`).
+- `data-analysis/`: a Python package (managed with `uv`) that loads the human
+  and LLM labels into one table and answers questions through analysis tools and
+  an LLM agent.
+- `results/`: the data. `results/game-records/` has the 31 recorded games (one
+  CSV and one JSON of events plus one JSON of human labels each).
+  `results/llm-labeling/` has the LLM label outputs behind the paper's tables,
+  sorted by experiment, game, and model.
+- `design/` and `docs/`: the game rules and the export-format documentation.
+The repository is at <https://git.tu-berlin.de/snet-internal/wolf-iosl-2026>.
+The top-level `README` links to a `README` in each folder.
+ 
 ### Security/Privacy Issues and Ethical Concerns
-
-The artifact poses no security risk to the evaluator's machine: it disables no
-security mechanism (no firewall or ASLR changes) and ships no exploit, malware,
-or vulnerable code. Two points warrant care. First, the dataset consists of real
-play-session data (chat messages, votes, and trust judgments); it is
-pseudonymized to randomized color display names (for example `Blue`, `Lime`),
-and the mapping to real identities is not part of the artifact. Second, the game
-platform reads secrets from environment variables: the Admin Research Panel is
-gated by `ADMIN_SECRET`, and the default `ADMIN_SECRET` in
-`werewolf-game/docker-compose.yml` must be changed for any non-local deployment.
-The optional voice input streams audio to a third-party service (Deepgram) only
-when a player chooses to use it; it is not needed for reproduction.
-
+ 
+Running the artifact is safe for the evaluator's machine. It does not turn off
+any security feature and contains no exploit or malware. Two things are worth
+knowing. First, the data comes from real games, but players appear only under
+random color names (for example `Blue`, `Lime`); there is no file in the
+repository that maps these names to real people. Second, secrets are read from a
+`.env` file. The admin panel is protected by `ADMIN_SECRET`, and
+`werewolf-game/docker-compose.yml` ships a default value that should be changed
+before any shared deployment. The voice input is optional and only sends audio
+to Deepgram when a player chooses to use it; it is not needed to reproduce
+anything.
+ 
 ## Basic Requirements
-
+ 
 ### Hardware Requirements
-
-1. Minimal requirements: the Werewolf game platform and the data analysis can
-   run on a laptop (no special hardware requirements). Re-running the LLM
-   labeling experiments additionally requires access to an LLM inference
-   endpoint: either an Ollama server able to serve the paper's models (up to
-   `mistral-large:123b`, i.e. a GPU server-class machine), or any
-   OpenAI-compatible endpoint (for example LM Studio) with a smaller local model
-   for functional testing. The paper's runs used the TU Berlin SNET Ollama GPU
-   server (`gpu.snet.tu-berlin.de/echelon/ollama`), access to which is
-   restricted to TU Berlin.
-2. Hardware used in the paper: all experiments (including those archived in the
-   results folder) were orchestrated from a Windows 11 PC (Intel i9-11900K CPU,
-   32 GB RAM, 2 TB storage). Model inference itself ran on the SNET inference
-   server (TU Berlin).
-
+ 
+1. Minimal: the game platform and the data analysis run on a normal laptop.
+   Generating LLM labels needs access to an inference endpoint. This is an
+   Ollama server that can serve the models used in the paper, up to
+   `mistral-large:123b`, so a GPU server (or any OpenAI-compatible endpoint with
+   a smaller model).
+2. All runs were started from a normal PC. The models themselves ran on the TU
+   Berlin SNET Ollama server, which is only reachable from inside TU Berlin's
+   servers.
 ### Software Requirements
-
-1. OS: development and the reported runs used Windows 11; the stack is
-   OS-independent and also runs on Linux (for example Ubuntu 24.04) and macOS.
-   There are no OS-specific code paths.
-2. OS packages: `git`; Docker (>= 24) with Docker Compose; for the Python
-   modules, `uv` (which fetches Python 3.12 automatically) and a Python >= 3.14
-   interpreter with `pip`.
-3. Artifact packaging: the game platform is containerized with Docker Compose
-   using three services, an application service (`node:20-alpine` base image),
-   `postgres:16-alpine`, and `redis:7-alpine`.
-4. Interpreters: LLM Labeling Engine requires Python >= 3.14; the Data Analysis
-   Agent uses Python 3.12 (pinned via `data-analysis/.python-version`, managed by
-   `uv`).
-5. Packages: labeling-engine dependencies are listed in
-   `llm-labeling/requirements.txt` (and `llm-labeling/pyproject.toml`); analysis
-   dependencies are pinned in `data-analysis/uv.lock` (pandas, SciPy, matplotlib,
-   pyarrow, LangChain/LangGraph, pydantic); the game platform's Node dependencies
-   are pinned in `werewolf-game/package-lock.json`.
-6. ML models: the labeling runs used the Ollama-served open-weight models
-   `gemma4:31b`, `qwen3.6:35b`, and `mistral-large:123b`, with `gemma4:12b` for
-   local smoke testing. The comprehension benchmark (Section 5.2) used
-   `gemma4:31b` as the answer model and
-   `mistral-large:123b-instruct-2411-q6_K` as the judge. The analysis agent
-   defaults to `gemma4:26b` (`MODEL_NAME` in `data-analysis/.env`). Any
-   tool-calling chat model works as a dummy for functional evaluation.
-7. Datasets: fully contained in the artifact under `results/game-records/`
-   (31 recorded games). JSON Schemas for the three file types (game events, human
-   labels, LLM label output) are provided in `llm-labeling/schemas/`, and
-   synthetic fixtures demonstrating the formats are in
-   `data-analysis/tests/fixtures/`.
-
+ 
+1. OS: the stack runs on Windows, Linux, and macOS. Nothing in the
+   code depends on a specific OS.
+2. OS packages: `git`; Docker with Docker Compose; `uv`; and a Python 3.14
+   interpreter with `pip` for the labeling engine.
+3. Packaging: the game platform runs through Docker Compose with three services,
+   the app (`node:20-alpine`), `postgres:16-alpine`, and `redis:7-alpine`.
+4. Interpreters: the labeling engine needs Python 3.14 or newer. The analysis
+   package uses Python 3.12, which `uv` installs automatically.
+5. Packages: the labeling engine lists its packages in
+   `llm-labeling/requirements.txt` (and `llm-labeling/pyproject.toml`); the
+   analysis package pins its packages in `data-analysis/uv.lock` (pandas, SciPy,
+   matplotlib, LangChain, LangGraph, pydantic); the game platform pins its Node
+   packages in `werewolf-game/package-lock.json`.
+6. Models: the labeling runs used `gemma4:31b`, `qwen3.6:35b`, and
+   `mistral-large:123b`, with `gemma4:12b` for local checks. The analysis agent
+   uses `gemma4:26b` by default (`MODEL_NAME` in `data-analysis/.env`).
+7. Datasets: the games are already in `results/game-records/` (31 games). JSON
+   Schemas for the file formats are in `llm-labeling/schemas/`
+   (`game_events_schema.json`, `human_game_labels_schema.json`,
+   `label_output_schema.json`).
 ### Estimated Time and Storage Consumption
-
-- Environment setup: about 20 human-minutes.
-- A full functional pass (Experiments 1 to 3 below): about 30 human-minutes plus
-  20 to 90 compute-minutes, dominated by the LLM endpoint.
-- Reproducing a single labeling run (one game, one experiment, all 8 player
-  perspectives) takes 20 to 90 compute-minutes depending on the model:
-  `mistral-large:123b` is slowest, while `gemma4:31b` and `qwen3.6:35b` run in
-  20 to 50 minutes. One game yields on the order of 50 to 80+ LLM inferences
-  (roughly 4-5 alive phases per player, times 8 players, times at least 2 calls),
-  and more with Inner Voice Variant 2.
-- Building the dataset and reproducing the tables (Experiment 2) runs in under
-  5 compute-minutes.
-- Total artifact disk footprint, including all archived results, is under 1 GB.
-
+ 
+- Setup: cloning and installing dependencies.
+- Generating one labeling run (one game, one experiment, all 8 players): about
+  20 to 90 minutes of compute, depending on the model. Mistral is the slowest;
+  Gemma and Qwen finish in about 20 to 50 minutes.
+- Printing a table from the committed results: a few seconds.
+- Asking the analysis agent one question: a short wait, depending on the model
+  and endpoint.
+- The whole repository, including the committed results, is under 1 GB.
 ## Environment
-
+ 
 ### Set up the environment
-
-Clone the repository and set up the three modules. The game platform and each
-Python module are independent; you only need the module(s) for the experiments
-you want to run.
-
+ 
 ```bash
 git clone https://git.tu-berlin.de/snet-internal/wolf-iosl-2026.git
 cd wolf-iosl-2026
-
-# 1) Werewolf game platform (Docker); app served on http://localhost:3001
+ 
+# 1) Game platform. With Docker it runs on http://localhost:3001.
+#    The admin password is ADMIN_SECRET in docker-compose.yml; change it.
 cd werewolf-game
-# ADMIN_SECRET has a default in docker-compose.yml; override it for any shared
-# deployment. DEEPGRAM_API_KEY is optional and only enables voice input.
-ADMIN_SECRET=change-me docker compose up --build -d
-
-# 2) LLM Labeling Engine (Python >= 3.14)
+docker compose up --build
+ 
+# 2) LLM Labeling Engine (Python 3.14+)
 cd ../llm-labeling
-python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
+python -m venv .venv && source .venv/bin/activate    # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-printf "OLLAMA_API_KEY=<your key>\n" > .env
-
-# 3) Data Analysis Agent (uv installs Python 3.12 automatically)
+cp .env.example .env        # set OLLAMA_API_KEY (and OLLAMA_API_URL)
+ 
+# 3) Data Analysis Agent (uv installs Python 3.12)
 cd ../data-analysis
-make install           # = uv sync --extra dev
-cp .env.example .env    # set OLLAMA_API_KEY; MODEL_NAME defaults to gemma4:26b
+make install                # runs: uv sync --extra dev
+cp .env.example .env        # set OLLAMA_API_KEY
 ```
-
-Expected result: the game platform is reachable at <http://localhost:3001>; the
-two Python environments install without errors.
-
+ 
+To run the game platform without Docker, use `cp .env.example .env`, then
+`npm install`, `npm run db:push`, and `npm run dev` (it then runs on
+`http://localhost:3000`); this needs a running PostgreSQL and Redis.
+ 
 ### Testing the Environment
-
-Three quick checks confirm the three modules are set up correctly.
-
-Game platform: open <http://localhost:3001>; the landing page loads and a room
-can be created (use Sandbox Mode with bots to advance a game without eight human
-players).
-
-Analysis package: from `data-analysis/`, run the test suite (unit tests plus
-integration tests against the real exports in `results/game-records/`); all tests
-must pass.
-
+ 
+Game platform: open <http://localhost:3001>, create a room, and turn on Sandbox
+Mode so bots fill the empty seats. This lets one person walk through a full game.
+ 
+Analysis package: from `data-analysis/`, run the tests. They include unit tests
+and integration tests against the real exports in `results/game-records/`.
+ 
 ```bash
 uv run pytest
 ```
-
-Labeling engine: a one-phase dry run against any endpoint exercises the full
-record-parsing, context, and LLM loop.
-
+ 
+Labeling engine: run a one-phase dry run for a single player. This exercises the
+full parse, context, and LLM path.
+ 
 ```bash
+cd llm-labeling
 python ./src/wolf_llm_labeling/main.py \
   ../results/game-records/game-44UT6Y-d59e923e-labels.json \
   ../results/game-records/game-44UT6Y-d59e923e.csv \
-  --primary-model any --ollama-url <ENDPOINT> \
-  --experiment a --player-name Blue --max-phases 1
+  --primary-model <model> --ollama-url <ENDPOINT> \
+  --experiment a --cutoff 3 --player-name Blue --max-phases 1
 ```
-
-Expected output: one result JSON and one Markdown trace under
+ 
+We get one result JSON and one Markdown trace under
 `results/llm-labeling/a/game-44UT6Y-.../`.
-
+ 
 ## Artifact Evaluation
-
+ 
 ### Main Results and Claims
-
-#### Main Result 1: LLM trust tracks human phase trends but is model-dependent
-
-On matched games, the per-phase mean alignment-trust of the LLMs follows the
-human phase trend, but the level is biased by model and size: Gemma trusts
-others less, Mistral trusts almost everyone highly, and Qwen is closest to the
-human values in `game-5NOHGS`; in `game-UBY0T7` Gemma is closer to the (lower)
-human values than Qwen. Independent variables: model (and phase); dependent
-variable: mean alignment-trust. This is reported in Section 5.1, Table 2
-(`game-5NOHGS`) and Table 3 (`game-UBY0T7`). Reproducible via
-[Experiment 1](#experiment-1-generate-llm-trust-labels) followed by
-[Experiment 2](#experiment-2-build-the-unified-dataset-and-reproduce-the-tables).
-
-#### Main Result 2: Adding own previous trust scores stabilizes and calibrates labels
-
-Providing the player's own previous trust scores (Experiment B, memory cutoff 3)
-compared to chat logs only (Experiment A, cutoff 0) reduces phase-to-phase
-fluctuation, moves the LLM means slightly closer to the human mean in nearly all
-cases, and makes the LLMs more confident. Independent variable: context
-condition (Experiment A versus B); dependent variables: mean alignment-trust and
-mean confidence. Reported in Section 5.1 (Tables 2 and 3) and Appendix D.1
-(confidence, Tables 9 and 10). Reproducible via
-[Experiment 1](#experiment-1-generate-llm-trust-labels) and
-[Experiment 2](#experiment-2-build-the-unified-dataset-and-reproduce-the-tables).
-
+ 
+#### Main Result 1: LLM trust level depends on the model
+ 
+For a given game, the per-phase average alignment trust of the LLMs follows the
+human pattern, but the level depends on the model. Gemma tends to trust less,
+Mistral trusts almost everyone highly, and Qwen sits closest to the human values
+in game-5NOHGS. Independent variables: model and phase; dependent variable:
+average alignment trust. This is shown by the alignment-trust tables for
+game-5NOHGS and game-UBY0T7 (Section 5 and Appendix D). Reproduced by
+[Experiment 2](#experiment-2-reproduce-the-paper-tables).
+ 
+#### Main Result 2: Giving the model its own previous scores raises confidence
+ 
+When the model also receives the player's own previous trust scores (Experiment
+B, cutoff 3), its confidence is higher than with chat logs only (Experiment A,
+cutoff 0). Independent variable: Experiment A versus B; dependent variable:
+average confidence. Shown by the confidence tables in Appendix D.1. Reproduced by
+[Experiment 2](#experiment-2-reproduce-the-paper-tables).
+ 
 #### Main Result 3: The Human Historic Inner Voice moves labels toward human values
-
-In Experiments D to F (Variant 2, the inner voice exposed as a tool), the Human
-Historic Inner Voice tends to pull alignment-trust closer to the human values,
-most clearly for Experiment D versus A; the number of inner-voice tool calls
-varies by model and experiment (Qwen calls more often than Gemma, and calls are
-most frequent in Experiment D). Independent variables: inner-voice experiment
-(D, E, F) and model; dependent variables: mean alignment-trust and tool-call
-count. Reported in Section 5.1 (Table 4) and Appendix D.3 (Table 12).
-Reproducible via [Experiment 1](#experiment-1-generate-llm-trust-labels) (the
-D to F runs) and
-[Experiment 2](#experiment-2-build-the-unified-dataset-and-reproduce-the-tables).
-
-#### Main Result 4: Low sampling temperature induces reasoning loops
-
-At temperature 0.0 the labeling models spend longer on reasoning and can enter
-repetitive reasoning loops that exceed the context or token limit and disrupt
-labeling; the effect is far less frequent at higher temperatures, so all
-reported results use temperature 0.5. Independent variable: sampling
-temperature; dependent variables: reasoning length and loop occurrence. Reported
-in Section 5.1. Reproducible via
-[Experiment 1](#experiment-1-generate-llm-trust-labels) run at 0.0 versus 0.5.
-
+ 
+In Experiments D to F, where the model can ask a Human Historic Inner Voice, the
+alignment trust moves closer to the human values, and the models call the voice
+at different rates (Qwen calls it more often than Gemma, and most often in
+Experiment D). Independent variables: experiment (D, E, F) and model; dependent
+variables: average alignment trust and number of tool calls. Shown in
+Appendix D.3. Reproduced by
+[Experiment 2](#experiment-2-reproduce-the-paper-tables).
+ 
 ### Experiments
-
+ 
 #### Experiment 1: Generate LLM trust labels
-
-- Time: about 5 human-minutes + 20 to 90 compute-minutes per (game, experiment,
-  model).
+ 
+- Time: about 5 minutes of work plus 20 to 90 minutes of compute per game,
+  experiment, and model.
 - Storage: under 100 MB.
-
-From `llm-labeling/`, run the engine for a recorded game and experiment variant.
-Examples for Experiment A (chat only, cutoff 0), Experiment B (chat plus own
-previous scores, cutoff 3), and Experiment D (chat plus Human Historic Inner
-Voice as a tool):
-
+Run the engine from `llm-labeling/`. The first positional argument is the human
+labels file, the second is the events CSV. Below are Experiment A (chat only,
+cutoff 0), Experiment B (chat plus own previous scores, cutoff 3), and Experiment
+D (chat plus the Human Historic Inner Voice as a tool).
+ 
 ```bash
 # Experiment A
 python ./src/wolf_llm_labeling/main.py \
@@ -251,7 +193,7 @@ python ./src/wolf_llm_labeling/main.py \
   --primary-model gemma4:31b --ollama-url <ENDPOINT> \
   --experiment a --prompt-set prompts/prompt_sets/pimped.json \
   --cutoff 0 --temperature 0.5 --parallel 4
-
+ 
 # Experiment B
 python ./src/wolf_llm_labeling/main.py \
   ../results/game-records/game-5NOHGS-b57eee98-labels.json \
@@ -259,8 +201,8 @@ python ./src/wolf_llm_labeling/main.py \
   --primary-model gemma4:31b --ollama-url <ENDPOINT> \
   --experiment b --prompt-set prompts/prompt_sets/pimped.json \
   --cutoff 3 --temperature 0.5 --parallel 4
-
-# Experiment D (inner voice as tool, Human Historic voice, cutoff 3)
+ 
+# Experiment D (inner voice as a tool, Human Historic voice, cutoff 3)
 python ./src/wolf_llm_labeling/main.py \
   ../results/game-records/game-UBY0T7-140e8697-labels.json \
   ../results/game-records/game-UBY0T7-140e8697.csv \
@@ -269,100 +211,92 @@ python ./src/wolf_llm_labeling/main.py \
   --cutoff 3 --prompt-set prompts/prompt_sets/pimped.json \
   --temperature 0.5 --parallel 4
 ```
-
-Expected result: one JSON result and one Markdown trace per player under
-`results/llm-labeling/<experiment>/<game>/<model>/`, schema-identical to the
-archived runs. To reproduce Main Result 4, additionally run one configuration
-with `--temperature 0.0` and inspect the trace for elongated or looping
-reasoning. Full-matrix reproduction is available via `python run_all.py` or the
-config-driven `src/wolf_llm_labeling/batch_runner.py`. Note that hosted LLM
-outputs at temperature above 0 are not bit-reproducible; phase-mean scores are
-expected to vary by a few tenths of a point. Supports Main Results 1 to 4.
-
-#### Experiment 2: Build the unified dataset and reproduce the tables
-
-- Time: about 5 human-minutes + under 5 compute-minutes.
-- Storage: negligible.
-
-From `data-analysis/`, load the human exports together with the archived (or
-freshly generated) LLM runs into the unified table and aggregate per-phase
-alignment-trust means per experiment. Filter by `room_code` for a specific game
-(for example `5NOHGS` for Table 2, `UBY0T7` for Table 3); use `confidence_raw`
-instead of `score_raw` to reproduce the confidence tables in Appendix D.1.
-
+ 
+Each run writes one result JSON and one Markdown trace per player under
+`results/llm-labeling/<experiment>/<game>/<model>/`, in the same format as the
+files already in the repository. `--experiment` is required; the models are not
+deterministic at temperature above 0, so the numbers vary a little between runs.
+This experiment supports Main Results 1 to 3.
+ 
+#### Experiment 2: Reproduce the paper tables
+ 
+- Time: about 5 minutes of work plus under 5 minutes of compute.
+- Storage: none beyond the repository.
+The tables in the paper are printed by three scripts in `llm-labeling/`, which
+read the committed results in `results/llm-labeling/`. Run them from the
+`llm-labeling/` folder.
+ 
 ```bash
-uv run python - <<'PY'
-from data.dataset import build_dataset
-df = build_dataset("../results/game-records",
-                   "../llm-labeling/results/llm-labeling")
-g = df[(df.room_code == "5NOHGS") & (df.trust_type == "alignment")]
-piv = g.pivot_table(index="phase_idx",
-                    columns=["source", "experiment"],
-                    values="score_raw", aggfunc="mean")
-print(piv.round(2))
-PY
+# Alignment-trust averages, per phase, Experiments A and B (Section 5 / Appendix D)
+python compute_alignment_trust.py 5NOHGS -e a b
+python compute_alignment_trust.py UBY0T7 -e a b
+ 
+# Experiment C alignment-trust averages (Appendix D.2)
+python compute_alignment_trust.py 5NOHGS -e c
+ 
+# Information and Consistency dimensions (Appendix D.4)
+python compute_alignment_trust.py UBY0T7 -d information -e a b
+python compute_alignment_trust.py UBY0T7 -d consistency -e a b
+ 
+# Confidence tables (Appendix D.1)
+python compute_alignment_confidence.py 5NOHGS -e a b
+python compute_alignment_confidence.py UBY0T7 -e a b
+ 
+# Inner Voice tool-call counts (Appendix D.3)
+python count_inner_voice_usage.py --game UBY0T7
 ```
-
-Expected result: a per-phase table of mean alignment-trust for the human source
-and for each LLM experiment, matching the values in Tables 2 and 3 of the paper
-(and the confidence values in Tables 9 and 10 when using `confidence_raw`). The
-same unified table underlies the delta and correlation tools. Supports Main
-Results 1 to 3.
-
+ 
+Each script prints a per-phase table to the terminal. For example,
+`compute_alignment_trust.py 5NOHGS -e a b` prints the human column together with
+Gemma, Qwen, and Mistral for Experiments A and B, which matches the alignment
+table for game-5NOHGS in the paper. This experiment supports Main Results 1 to 3.
+ 
 #### Experiment 3: Query the Data Analysis Agent
-
-- Time: about 5 human-minutes + 1 to 2 compute-minutes per question.
-- Storage: negligible.
-
-From `data-analysis/`, ask the analysis agent a natural-language question; it
-answers by orchestrating the analysis tools over the unified dataset.
-
+ 
+- Time: about 5 minutes of work plus 1 to 2 minutes of compute per question.
+- Storage: none beyond the repository.
+From `data-analysis/`, ask the agent a question in plain English. It loads the
+same human and LLM labels and answers by calling its analysis tools.
+ 
 ```bash
-uv run python main.py agent \
-  "How does human trust in werewolves evolve across phases?" \
-  --game-records ../results/game-records \
-  --llm-results ../llm-labeling/results/llm-labeling
-# equivalently: make run
+uv run python main.py agent "How does human trust in werewolves evolve across phases?"
 ```
-
-Expected result: the agent answers in natural language after several tool calls
-(about 30 to 60 seconds); any plots it produces are written to the analysis
-output directory. Demonstrates the Data Analysis Agent contribution.
-
+ 
+We can also run a single tool directly, for example a comparison between human
+and LLM labels for one game:
+ 
+```bash
+uv run python main.py tool compare_data --params '{
+  "filters_a": {"sources": ["human"], "room_codes": ["5NOHGS"]},
+  "filters_b": {"sources": ["llm"],   "room_codes": ["5NOHGS"]}}'
+```
+ 
+The agent answers in the terminal after a few tool calls; plots it makes are
+written to the analysis output folder. This experiment shows the Data Analysis
+Agent contribution.
+ 
 ## Limitations
-
-The human data collection itself (real eight-player play sessions) is not
-reproducible from the artifact; the platform is provided so that new sessions can
-be run, but the paper's dataset of 31 games is fixed. Exact LLM labels are not
-bit-reproducible, because the hosted open-weight models are sampled at
-temperature 0.5; the archived result JSONs, prompts, and Markdown traces make the
-paper's concrete numbers verifiable, and fresh runs reproduce the results
-qualitatively (phase trends, the A-versus-B stabilization, and the inner-voice
-effect), typically within a few tenths of a point per phase mean. The
-comprehension benchmark of Section 5.2 (objective 87.5 percent, speculative
-70.8 percent) was produced with an ad hoc leave-one-phase-out setup and does not
-ship as a standalone script, so its exact numbers are not reproducible from a
-single command, although the underlying labeling engine and game records are
-provided. The SNET GPU server is restricted to TU Berlin; evaluators without
-access substitute any Ollama or OpenAI-compatible endpoint, which changes only
-runtimes and the specific model. Because of the long inference times, several
-evaluation tables report a subset of games (primarily `game-5NOHGS`,
-`game-44UT6Y`, and `game-UBY0T7`) rather than all 31; these are illustrative, and
-the artifact should still be evaluated for functional and reproducible badges,
-since every reported cell is regenerable with the commands above.
-
+ 
+The human games themselves cannot be reproduced from the artifact. The platform
+is included so new games can be played, but the 31 games in the paper are fixed.
+The exact LLM labels are also not reproducible bit for bit, because the models
+run at temperature 0.5 and are hosted. The committed results, prompts, and traces
+make the reported numbers checkable, and fresh runs reproduce the same trends,
+usually within a few tenths of a point per phase. Access to the SNET server is limited to
+TU Berlin; anyone outside can point the engine at another Ollama or
+OpenAI-compatible endpoint, which only changes the runtime and the model.
+ 
 ## Notes on Reusability
-
-The pipeline is modular and reusable beyond this paper. The game platform can
-record new human datasets (Classic or the stricter Arena mode, configurable
-timers, witch self-heal, sandbox bots) without code changes and exports them in
-the documented CSV/JSON formats. The LLM Labeling Engine is game-record-driven:
-new experiments are single Python files under `llm-labeling/src/experiments/`;
-prompts, tool descriptions, and response formats are swappable via prompt-set
-JSONs and the `--prompt-set` flag; the context depth is tuned with `--cutoff`;
-any Ollama- or OpenAI-compatible model can be plugged in with `--primary-model`
-and `--ollama-url`; and new inner voices only need to implement the predefined
-Python interface. The Data Analysis Agent ingests any files matching the
-published JSON Schemas, exposes a single declarative filter vocabulary that new
-tools reuse, and registers new analysis tools through its tool registry, so the
-natural-language agent can drive them without further changes.
+ 
+The game platform, the labeling engine, and the analysis package are each meant
+to be reused on their own. The game platform can record
+new games (Classic or Arena mode, timers, witch self-heal, sandbox bots) and
+export them in the same CSV and JSON format. The labeling engine is driven by the
+game records: a new experiment is one Python file under
+`llm-labeling/src/experiments/`, prompts and tool text are swapped through
+prompt-set JSON files and the `--prompt-set` flag, the context depth is set with
+`--cutoff`, any Ollama or OpenAI-compatible model can be used through
+`--primary-model` and `--ollama-url`, and a new inner voice only has to follow
+the existing Python interface. The analysis package reads any files that match
+the JSON Schemas, shares one set of filters across all its tools, and lets new
+tools be added to the same agent.
