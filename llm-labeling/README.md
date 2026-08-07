@@ -222,17 +222,17 @@ The labeling engine supports multiple inner voice providers to analyze decision-
 Main Labeling Agent / Decider (primary_model)
 └── [Exposed Tool] ask_inner_trust_voice
     └── [Calls] Inner Voice Provider
-        ├── Option 1: llm        ──> Independent Inner Voice Model (inner_voice_model) / Self-Ask
-        ├── Option 2: human      ──> Historic Human Ratings (Human Labels JSON Loader)
-        ├── Option 3: random     ──> Random Control Baseline
-        └── Option 4: constant   ──> Configured Constant Scores Baseline
+        ├── Option 1: llm        -> Independent Inner Voice Model (inner_voice_model) or same LLM
+        ├── Option 2: human      -> Historic Human Ratings (Human Labels JSON Loader)
+        ├── Option 3: random     -> Random Control Baseline
+        └── Option 4: constant   -> Configured Constant Scores Baseline
 ```
 
-This architecture allows studying whether a primary agent (e.g., `gemma3:31b`) "listens" to a different inner voice model (e.g., `qwen3.6:35b`), human player history, or control baselines when making trust evaluations:
+This architecture allows studying whether a primary agent (e.g.: `gemma4:31b`) "listens" to a different inner voice model (e.g.: `qwen3.6:35b`), human player history, or control baselines when making trust evaluations:
 
-```bash
-# Example: Primary model gemma3:31b using a different inner voice model qwen3.6:35b
-python main.py --primary-model "gemma3:31b" --inner-voice-model "qwen3.6:35b" --inner-voice-type "llm" --experiment "d.py" --variant 2 --ollama-url "http://localhost:11434"
+```powershell
+# Example for inner voice CLI parameters (for game examples see above):
+python .\src\wolf_llm_labeling\main.py <game_labels.json> <game.csv> --primary-model "gemma4:31b" --inner-voice-model "qwen3.6:35b" --inner-voice-type "llm" --experiment "d" --variant 2 --cutoff 3 --ollama-url "https://gpu.snet.tu-berlin.de/echelon/ollama"
 ```
 
 
@@ -242,9 +242,9 @@ python main.py --primary-model "gemma3:31b" --inner-voice-model "qwen3.6:35b" --
 
 All input game records and generated output label files have a JSON Schema  stored under `schemas/`:
 
-*   **`game_events_schema.json`**: Raw game event export files (`game-<ID>.json`).
-*   **`human_game_labels_schema.json`**: Ground-truth human trust label export files (`game-<ID>-labels.json`).
-*   **`label_output_schema.json`**: Generated LLM labeling engine result files (`<model>-labels-output.json`).
+*   **`game_events_schema.json`**: Raw game event export files (`game-<ID>.json`)
+*   **`human_game_labels_schema.json`**: Ground-truth human trust label export files (`game-<ID>-labels.json`)
+*   **`label_output_schema.json`**: Generated LLM labeling engine result files (`<model>-labels-output.json`)
 
 
 ---
@@ -361,7 +361,7 @@ python print_context.py --player "Blue" --phase 0 --json
 ## Timeout Protection (against Reasoning Loops)
 
 
-> **Automatic 15-Minute Timeout:** Each player phase evaluation (not the entire player execution across all phases) is protected by a 15-minute timeout and automatic 3x retry mechanism, for example, if a reasoning loop occurs. If a model call stalls for more than 15 minutes, it automatically cancels, retries, and prevents single player evaluation tasks from hanging indefinitely
+**Automatic 15-Minute Timeout:** Each player phase evaluation (not the entire player execution across all phases) is protected by a 15-minute timeout and automatic 3x retry mechanism, for example, if a reasoning loop occurs. If a model call stalls for more than 15 minutes, it automatically cancels, retries, and prevents single player evaluation tasks from hanging indefinitely
 
 ---
 
@@ -374,7 +374,7 @@ python print_context.py --player "Blue" --phase 0 --json
 
 ## Local Testing with LM Studio
 
-LM Studio hosts local models behind an OpenAI-compatible API endpoint (default: `http://localhost:1234/v1`) 
+LM Studio hosts local models behind an OpenAI-compatible API endpoint (default: `http://localhost:1234/v1`). More for LM Studio on [https://lmstudio.ai/docs/developer/openai-compat](https://lmstudio.ai/docs/developer/openai-compat)
 
 If the `--ollama-url` parameter contains `1234` or `/v1`, the labeling engine automatically switches to the `ChatOpenAI` client behind the scenes. This allows to run trust evaluations locally against any loaded model (e.g. Gemma, Llama, etc.)
 
@@ -394,7 +394,7 @@ python .\src\wolf_llm_labeling\main.py `
 ---
 ## Batch Execution & Automation
 
-> NOTE:
+> Note:
 > By default (without specifying a specific game ID via `game_pattern`), `batch_runner.py` executes all available game files in the game-records directory and repeat runs sequentially to avoid server overloading. Consequently, large batch runs take a significant amount of time to complete and are less extensively tested than direct single-run commands
 
 You can automate experiments across multiple games, models and repetitions using the config-driven **Batch Runner (`batch_runner.py`)**:
@@ -416,7 +416,7 @@ Create a `batch_config.json` file:
   ]
 }
 ```
-*(Note: Parameters like `game_pattern` (e.g. `"game-44UT6Y*.csv"` for specific games), `prompt_set`, `temperature`, `parallel`, `chronology` or `runs_count` can be specified globally or overridden per run).*
+*(Note: Parameters like `game_pattern` (e.g. `"game-44UT6Y*.csv"` for specific games), `prompt_set`, `temperature`, `parallel`, `chronology` or `runs_count` can be specified globally or overridden per run)*
 
 Execute the batch runner with your config file:
 ```powershell
