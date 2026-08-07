@@ -25,6 +25,12 @@ To start the agent simply use:
 make run
 ```
 
+For running a specific tool use
+
+```bash
+make run-tool <tool-name> <tool-parameters>
+```
+
 ## Asking the agent
 
 The orchestrator answers natural-language questions by driving the analysis
