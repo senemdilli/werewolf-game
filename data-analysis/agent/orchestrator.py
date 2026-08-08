@@ -1,4 +1,4 @@
-"""LangGraph orchestrator for natural-language analysis queries."""
+"""Orchestrator for natural-language analysis queries."""
 
 from __future__ import annotations
 

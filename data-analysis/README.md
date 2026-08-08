@@ -10,7 +10,7 @@ analysis tools to an LLM orchestrator the user can query in natural language.
 
 ## Setup
 
-Requires [uv](https://docs.astral.sh/uv/) (Python 3.12 is fetched automatically) as well as a [.env](/.env) file with an Ollama API key(see [.env.example](/.env.example)).
+Requires [uv](https://docs.astral.sh/uv/) (Python 3.12 is fetched automatically) and a local [.env](.env) file with the Ollama settings. Copy [.env.example](.env.example) to [.env](.env) and fill in your API URL/key before running the agent.
 
 ```bash
 cd data-analysis
@@ -25,24 +25,70 @@ To start the agent simply use:
 make run
 ```
 
-## Asking the agent
-
-The orchestrator answers natural-language questions by driving the analysis
-tools with a chat model on the SNET Ollama server. Copy `.env.example` to
-`.env` and set `OLLAMA_API_KEY` (note: the model is configured via
-`AGENT_MODEL`, default `gemma4:26b`), then:
+For running a specific tool from the CLI use
 
 ```bash
-uv run python main.py agent "How does human trust in werewolves evolve across phases?"
-uv run python main.py agent        # interactive: type questions, empty line exits
-make run                           # same as the interactive form
+make run-tool <tool-name> <tool-parameters>
 ```
 
-Answers take ~30–60 s (usually several tool calls). Plots the agent creates
-land in `../results/data-analysis/plots/`. Run with `LOG_LEVEL=DEBUG` to watch every tool call
-and its arguments — the agent often gets a filter wrong on the first try and
-recovers from the tool's error message; that loop is by design (see
-"Errors are prompts" below).
+---
+
+## Workflow
+
+Starting the agent (via `make run` or `uv run python main.py agent`) constructs an `Orchestrator` which performs the following steps:
+
+- Loads the unified dataset by calling `load_dataset(game_records, llm_results, cache_dir=..., use_ffill=...)` (cache, game-records and llm-results paths, and forward-fill behavior are configurable via the CLI flags).
+- Builds a `ToolRegistry` by calling `build_tool_registry(df, plots_dir=...)` and registers each analysis tool instance.
+- Creates the chat model using `build_model()` (model name, temperature, and Ollama settings are taken from CLI args or `core/settings.py` / the `.env`).
+- Wraps registered tools as LangChain StructuredTools and starts the agent loop.
+
+You can run the agent non-interactively with `--question "..."` or start the interactive REPL (submit an empty line to exit). The orchestrator always prefers tools over guessing and returns concise, tool-grounded answers; tool outputs and metadata are included in the orchestrator response.
+
+## How to add a tool
+
+A new analysis tool should follow the same pattern as the existing ones in [data-analysis/tools](data-analysis/tools):
+
+1. Create a new module in [data-analysis/tools](data-analysis/tools), for example [data-analysis/tools/my_tool.py](data-analysis/tools/my_tool.py).
+2. Make the class inherit from [data-analysis/tools/base_tool.py](data-analysis/tools/base_tool.py) and implement its `run(...)` method.
+3. Return a [data-analysis/contracts/tool_output.py](data-analysis/contracts/tool_output.py) object that matches the shared contract.
+4. Register the tool so the orchestrator can discover it.
+
+```python
+from contracts.tool_output import ToolOutput
+from data.filters import FilterSpec
+from tools.base_tool import BaseTool
+from tools.slicing import explain_empty_slice, slice_df
+
+class MyTool(BaseTool):
+    name = "my_tool"
+    description = "What the orchestrator should know about this tool."
+
+    def __init__(self, df):
+        super().__init__()
+        self._df = df
+
+    def run(self, filters: FilterSpec) -> ToolOutput:
+        rows = slice_df(self._df, filters)
+        if rows.empty:
+            return ToolOutput(
+                success=False,
+                source=self.name,
+                error=explain_empty_slice(self._df, filters),
+            )
+        return ToolOutput(
+            success=True,
+            source=self.name,
+            data={"rows": rows.to_dict(orient="records")},
+            metadata={"n_rows": len(rows)},
+        )
+```
+
+For the tool to be usable by the agent, you need to wire it up in two places:
+
+- [data-analysis/tools/__init__.py](data-analysis/tools/__init__.py): import the class and expose it through the package exports.
+- [data-analysis/agent/orchestrator.py](data-analysis/agent/orchestrator.py): add it in `build_tool_registry()` with `registry.register_tool(MyTool(df))`.
+
+If you also want the tool available from the CLI entrypoint in [data-analysis/main.py](data-analysis/main.py), add it there as well. If your tool should expose structured arguments to LangChain, define an `input_schema` on the class and the base class will expose it automatically through `as_langchain_tool()`.
 
 ---
 
@@ -307,35 +353,3 @@ delta in extremity between slices (independent Mann-Whitney U, and on
 matched cells a paired Wilcoxon); and an optional `group_by` breakdown. Also
 built on `tools/slicing.py`'s `matched_cells`, matching on `extremity`
 instead of raw `score_norm`.
-
-## Adding an analysis tool
-
-Subclass `BaseTool`; the langchain conversion is derived from your `run`
-signature:
-
-```python
-from contracts.tool_output import ToolOutput
-from tools.base_tool import BaseTool
-from tools.slicing import explain_empty_slice, slice_df
-
-class MyTool(BaseTool):
-    name = "my_tool"
-    description = "What the orchestrator should know about this tool."
-
-    def run(self, filters: FilterSpec) -> ToolOutput:
-        rows = slice_df(self._df, filters)
-        if rows.empty:
-            return ToolOutput(success=False, source=self.name,
-                              error=explain_empty_slice(self._df, filters))
-        return ToolOutput(success=True, source=self.name, data=..., metadata={"n_rows": len(rows)})
-```
-
-Conventions: tools are pure functions over the unified table (no LLM calls
-inside), always return `ToolOutput`, and report row counts in `metadata` so
-the orchestrator notices empty filter results. If your tool needs to compare
-two slices or join on "same cell" (as `compare_data`, `delta_tool`, and
-`correlation_tool` all do), build on `tools/slicing.py`'s `slice_df`,
-`matched_cells`, `matchable`/`differing_fields` rather than re-deriving cell
-identity by hand — that's the one place `MATCH_KEYS` (including `room_code`)
-is defined, so tools don't drift out of sync on what counts as "the same
-annotation" measured twice.
