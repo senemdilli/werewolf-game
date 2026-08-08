@@ -28,7 +28,13 @@ make run
 For running a specific tool from the CLI use
 
 ```bash
-make run-tool <tool-name> <tool-parameters>
+make run-tool tool=<tool-name> params='{"filters_a":{"sources":["human"]}}'
+```
+
+The target forwards the tool name and JSON parameters to the CLI entrypoint in [data-analysis/main.py](data-analysis/main.py), so you can also override the data paths or flags when needed:
+
+```bash
+make run-tool tool=plot params='{"filters":{"room_codes":["5NOHGS"]},"kind":"histogram"}' GAME_RECORDS=../results/game-records LLM_RESULTS=../results/llm-labeling
 ```
 
 ---
