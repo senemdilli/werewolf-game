@@ -160,6 +160,7 @@ def label_once(
     context_as_tool: bool = False,
     use_likert: bool = False,
     likert_type: str = "agree-disagree",
+    stop_after_report_labels: bool = False,
 ) -> tuple[dict[PlayerName, Label], LLMCallInfo]:
     # Find player_name from the context if possible (e.g. from StaticContext or GameNowContext)
     player_name = getattr(context, "player_name", None)
@@ -534,6 +535,10 @@ def label_once(
                                 content_summary = content_summary[:80] + "..."
                             print(f"      <- [Step {step_count+1}] Tool returned: {content_summary}")
                             step_count += 1
+                            if stop_after_report_labels and reported_labels_dict:
+                                print("      [CLI] --stop-after-report-labels enabled: Halting agentic loop immediately after report_labels tool execution!")
+                                stop_stream = True
+                                break
         except Exception as e:
             print(f"    Warning: Agent stream encountered exception: {e}. Falling back to normal invoke...")
             with ConsoleSpinner("Running Labeling Process (fallback)..."):

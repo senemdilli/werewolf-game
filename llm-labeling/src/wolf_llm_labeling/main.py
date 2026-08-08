@@ -94,6 +94,7 @@ def main():
     parser.add_argument("--runs", type=int, default=1, help="Number of times to run the labeling experiment (default: 1)")
     parser.add_argument("--chronology", type=str, default="numeric", choices=["numeric", "timestamp"], help="Chronology formatting type (default: numeric)")
     parser.add_argument("--parallel", type=int, nargs="?", const=2, default=0, help="Run labeling for different players in parallel (optional number of threads, default: 2)")
+    parser.add_argument("--stop-after-report-labels", action="store_true", help="Immediately stop agentic loop after report_labels tool returns, skipping final response generation to save runtime")
     
     args = parser.parse_args()
 
@@ -137,6 +138,7 @@ def main():
             likert_type=args.likert_type,
             chronology=args.chronology,
             parallel=args.parallel,
+            stop_after_report_labels=args.stop_after_report_labels,
         )
 
 

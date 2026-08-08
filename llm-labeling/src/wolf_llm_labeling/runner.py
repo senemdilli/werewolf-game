@@ -175,6 +175,7 @@ def run_labeling_experiment(
     chronology: str = "numeric",
     parallel: bool = False,
     runs: int = 1,
+    stop_after_report_labels: bool = False,
 ) -> list[str]:
     """Execute a labeling experiment for game records and save the results."""
     import time
@@ -444,6 +445,7 @@ def run_labeling_experiment(
                                 context_as_tool=context_as_tool,
                                 use_likert=use_likert,
                                 likert_type=likert_type,
+                                stop_after_report_labels=stop_after_report_labels,
                             )
                             labels, call_info = phase_future.result(timeout=phase_timeout_seconds)
                         break
