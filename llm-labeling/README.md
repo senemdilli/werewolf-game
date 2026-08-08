@@ -203,6 +203,24 @@ To do this, add the corresponding keys to your prompt set JSON file (pointing to
 *   **Replacing a Placeholder:** If your system prompt contains `[PLACEHOLDER FOR INNER VOICE TOOL]`, the engine replaces it with the loaded instruction text
 *   **Appended by Default:** If the placeholder is missing, the instruction is automatically appended to the end of the system prompt
 *   **Fallback Defaults:** If any description key is omitted from the prompt set JSON, the engine automatically uses its built-in fallback text for that voice type
+*   **String Placeholders:** Tool description templates support placeholders (`{observer}` is automatically replaced with the evaluating player's name at runtime)
+
+#### Exemplar Agent Response After Tool Calling
+When the LLM calls the mandatory `report_labels` tool, the engine returns a tool execution feedback message (`Labels successfully reported.`). The model then completes the agentic loop by generating a final response, which could be a strategic outlook (e.g. from `mistral-large:123b`):
+
+```markdown
+### Event 4 - Tool Result: `report_labels`
+
+> Labels successfully reported.
+
+### Event 5 - Thinking (source: `content`)
+
+> [Thought]: The labels have been successfully reported. Now, I need to decide on my vote. Given that Pink has expressed suspicion towards me and Violet, it might be strategic to vote against Pink to deflect attention from myself and potentially eliminate a villager. This could also help in misleading the other players about my true allegiance.
+> 
+> [Action]: Vote for Pink
+> 
+> Final Answer: I will vote for Pink.
+```
 
 ## Inner Voice Execution Variants (Variant 1 vs. Variant 2)
 
@@ -220,12 +238,12 @@ The labeling engine supports multiple inner voice providers to analyze decision-
 
 ```text
 Main Labeling Agent / Decider (primary_model)
-└── [Exposed Tool] ask_inner_trust_voice
-    └── [Calls] Inner Voice Provider
-        ├── Option 1: llm        -> Independent Inner Voice Model (inner_voice_model) or same LLM
-        ├── Option 2: human      -> Historic Human Ratings (Human Labels JSON Loader)
-        ├── Option 3: random     -> Random Control Baseline
-        └── Option 4: constant   -> Configured Constant Scores Baseline
+└─ [Exposed Tool] ask_inner_trust_voice
+    └─ [Calls] Inner Voice Provider
+        ├─ Option 1: llm        -> Independent Inner Voice Model (inner_voice_model) or same LLM
+        ├─ Option 2: human      -> Historic Human Ratings (Human Labels JSON Loader)
+        ├─ Option 3: random     -> Random Control Baseline
+        └─ Option 4: constant   -> Configured Constant Baseline
 ```
 
 This architecture allows studying whether a primary agent (e.g.: `gemma4:31b`) "listens" to a different inner voice model (e.g.: `qwen3.6:35b`), human player history, or control baselines when making trust evaluations:

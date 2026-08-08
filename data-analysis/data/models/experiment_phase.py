@@ -9,7 +9,7 @@ from data.models.llm_observation import LLMTargetLabel
 
 class InnerVoiceExchange(BaseModel):
     request: dict[str, Any]
-    response: str
+    response: str | None = None
 
 
 class LLMPhase(BaseModel):
