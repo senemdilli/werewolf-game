@@ -1,6 +1,8 @@
 ## Overview
 This is an inital draft for later creating agents, able to play the game of werewolf.
 
+*Note: This part of the project has been deprioritized and will not be finished due to time constraints (as discussed with Sandro)*
+
 ---
 
 ## Quick start
