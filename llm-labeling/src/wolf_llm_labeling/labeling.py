@@ -225,6 +225,9 @@ def label_once(
                 lbl = getattr(item, "label", None) or (item.get("label") if isinstance(item, dict) else None)
                 if not pname or not lbl:
                     continue
+                if pname.strip().lower() == player_name.strip().lower():
+                    print(f"      [Tool Call] Ignoring self-label: '{player_name}' rated itself, which the game never asks for.")
+                    continue
 
                 ts = getattr(lbl, "trust_scores", None) or (lbl.get("trust_scores") if isinstance(lbl, dict) else None)
                 reasoning = getattr(lbl, "reasoning", "") or (lbl.get("reasoning") if isinstance(lbl, dict) else "")
