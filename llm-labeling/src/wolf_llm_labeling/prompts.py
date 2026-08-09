@@ -10,9 +10,9 @@ class PromptSet:
 
     def load(self, path: str | Path) -> None:
         """
-        Loads the prompts from a JSON file.
-        The JSON contains a dictionary of prompt_id -> path/to/prompt entries.
-        Paths are resolved relative to self.prompt_dir.
+        Loads the prompts from a JSON file
+        The JSON contains a dictionary of prompt_id -> path/to/prompt entries
+        Paths are resolved relative to self.prompt_dir
         """
         json_path = Path(path)
         with open(json_path, "r", encoding="utf-8") as f:
@@ -41,13 +41,13 @@ class PromptSet:
 
     def get_prompt(self, prompt_id: str, args: dict[str, str], default_prompt: str | None = None) -> str:
         """
-        Returns a filled out prompt using string.Template for templating.
-        If the prompt does not exist in the internal prompt storage, use the default prompt as a fallback.
-        If that also doesn't exist, an error is thrown.
+        Returns a filled out prompt using string.Template for templating   
+        If the prompt does not exist in the internal prompt storage, use the default prompt as a fallback
+        If that also doesn't exist, an error is thrown
         """
         template_str = self.prompts.get(prompt_id, default_prompt)
         if template_str is None:
-            raise KeyError(f"Prompt '{prompt_id}' not found in PromptSet and no default_prompt was provided.")
+            raise KeyError(f"Prompt '{prompt_id}' not found in PromptSet and no default_prompt was provided!")
         
         t = Template(template_str)
         return t.safe_substitute(args)

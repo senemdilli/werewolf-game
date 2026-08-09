@@ -31,13 +31,13 @@ export function registerChatHandlers(io: GameServer, socket: GameSocket) {
 
       if (isNight) {
         if (player.role !== 'werewolf' || !player.isAlive) return
-        // Arena rules: no talking during the wolf night vote.
+        // Arena rules: no talking during the wolf night vote
         if (isArena) return
       } else {
         if (!['day_discussion', 'day_vote', 'mayor_election', 'mayor_advocacy', 'lobby'].includes(state.phase)) return
         if (state.phase !== 'lobby' && !player.isAlive) return
 
-        // Arena: speaking is gated by advocacy/conversation sub-state.
+        // Arena: speaking is gated by advocacy/conversation sub-state
         if (isArena && state.phase === 'mayor_advocacy') {
           if (!state.advocacy?.active) return
           if (state.advocacy.order[state.advocacy.turn] !== playerId) return
@@ -46,7 +46,7 @@ export function registerChatHandlers(io: GameServer, socket: GameSocket) {
           if (state.conversation.sub !== 'speak') return
           if (state.conversation.speakerId !== playerId) return
         }
-        // Arena: day_vote / mayor_election vote phase → no chat.
+        // Arena: day_vote / mayor_election vote phase → no chat
         if (isArena && state.phase === 'day_vote') return
         if (isArena && state.phase === 'mayor_election' && !state.conversation?.active) return
       }

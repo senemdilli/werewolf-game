@@ -22,7 +22,7 @@ from wolf_llm_labeling.labeling import label_once
 
 
 def run_example(llm_provider: Any, system_prompt: str, game_path: str, player_name: str) -> None:
-    """Legacy/integration entry point."""
+    """Legacy/integration entry point"""
     record = GameRecord()
     record.read_from_files(game_path)
     
@@ -80,7 +80,7 @@ def main():
     parser.add_argument("--output-dir", type=str, default="../results/llm-labeling", help="Base output directory")
     parser.add_argument("--experiment", required=True, type=str, help="Experiment id e.g. a.py or b.py")
     parser.add_argument("--max-phases", type=int, default=0, help="Limit maximum number of phases to label (0 for infinite)")
-    parser.add_argument("--experiment-args", type=str, default="", help="Config args for the experiment (legacy space-separated string)")
+    parser.add_argument("--experiment-args", type=str, default="", help="Config args for the experiment (legacy space-separated string)") # deprecated
     parser.add_argument("--cutoff", type=int, help="Historical context cutoff (number of phases to look back)")
     parser.add_argument("--variant", type=int, choices=[1, 2], help="Inner trust voice variant (1: pre-injected context, 2: agentic tool call)")
     parser.add_argument("--inner-voice-type", type=str, choices=["llm", "human", "random"], help="Implementation type of the inner trust voice")
