@@ -84,7 +84,7 @@ export function resolveDayVote(
 }
 
 /**
- * Arena day-vote resolution.
+ * Arena day-vote resolution
  *
  * Rules (per the Werewolf Arena spec):
  * - Players vote for a person to be exiled (skip option exists too).

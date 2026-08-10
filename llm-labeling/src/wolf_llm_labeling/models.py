@@ -1,4 +1,4 @@
-"""Shared domain model stubs for game records and labeling."""
+"""Shared domain model stubs for game records and labeling"""
 
 from dataclasses import dataclass, field
 from enum import StrEnum

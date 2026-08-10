@@ -1,6 +1,6 @@
 # Werewolf
 
-A multiplayer Werewolf social deduction game. Built as a research tool for studying chat dynamics, deception, and group decision-making — every message, vote, night action and private player note is logged for later analysis.
+A multiplayer Werewolf social deduction game. Built as a research tool for studying chat dynamics, deception, and group decision-making - every message, vote, night action and private player note is logged for later analysis.
 
 ## Features
 
@@ -69,7 +69,7 @@ Everything — app, Postgres, Redis — runs together:
 docker compose up --build
 ```
 
-Open <http://localhost:3001>. The admin password is set in `docker-compose.yml` (`ADMIN_SECRET`).
+Open <http://localhost:3001>. The admin password is set in `docker-compose.yml` (`ADMIN_SECRET`)
 
 ### Without Docker
 
@@ -124,7 +124,7 @@ When creating a room, the host can customize several gameplay parameters:
 ## Sandbox Mode & Speech-to-Text
 
 ### Sandbox Mode (Solo Playtesting)
-Hosts can toggle **Sandbox Mode** when creating a room. When active, any empty player slots are automatically populated with simulated bots (e.g. `Bot Lyra`, `Bot Edmund`, `Bot Casimir`) when the game starts. 
+Hosts can toggle **Sandbox Mode** when creating a room. When active, any empty player slots are automatically populated with simulated bots (e.g. `Bot Lyra`, `Bot Edmund`, `Bot Casimir`) when the game starts:
 - Bots automatically perform their night actions, day voting, and other gameplay decisions
 - Allows a developer or researcher to solo-playtest the entire multi-phase game loop in a single browser window
 
@@ -156,9 +156,6 @@ npm run db:studio    # open Prisma Studio
 npm run lint
 ```
 
-## Changelog
-
-See [CHANGELOG.md](./CHANGELOG.md) for a dated, user-facing summary of every change that has landed on `main`
 
 ## Deploying to Railway
 

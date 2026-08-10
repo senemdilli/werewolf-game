@@ -1,4 +1,4 @@
-"""Core label_once interface implementation."""
+"""Core label_once interface implementation"""
 
 import sys
 import threading
@@ -82,7 +82,7 @@ class ConsoleSpinner:
 
 
 def formatted_trust_scores(scores: TrustScores, formatter_type: FormatterType, use_likert: bool = False) -> str:
-    """Format trust scores based on formatter type (json or markdown)."""
+    """Format trust scores based on formatter type (json or markdown)"""
     
     def get_score_str(score: Score | None) -> tuple[str, str] | None:
         if not score:
