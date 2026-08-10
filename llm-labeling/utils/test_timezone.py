@@ -1,9 +1,9 @@
 import uuid
 from datetime import datetime
 
-print("--- Timezone Resolution Test ---")
+print("Timezone Resolution Test")
 
-# 1. Attempt ZoneInfo
+# Attempt ZoneInfo
 try:
     from zoneinfo import ZoneInfo
     berlin_tz = ZoneInfo("Europe/Berlin")
@@ -14,15 +14,15 @@ except Exception as e:
     print("-> Info: This is expected on Windows if the 'tzdata' package is not installed.")
     dt_berlin = None
 
-# 2. Local System Time (Fallback)
+# Local System Time 
 dt_local = datetime.now()
 print(f"Local System Time:                  {dt_local}")
 
-# 3. UTC Time
+# UTC Time
 dt_utc = datetime.utcnow()
 print(f"UTC Time:                           {dt_utc}")
 
-# 4. Resolve final string
+# Resolve final string
 resolved_dt = dt_berlin if dt_berlin is not None else dt_local
 date_str = resolved_dt.strftime("%Y-%m-%d-%H-%M")
 run_id = uuid.uuid4().hex[:8]
