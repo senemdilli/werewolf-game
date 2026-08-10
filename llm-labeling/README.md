@@ -269,6 +269,63 @@ All input game records and generated output label files have a JSON Schema  stor
 
 ---
 
+## Game Record Parser
+
+The labeling engine loads exported Werewolf games through `GameRecord` in
+`src/wolf_llm_labeling/game_records.py`. This class is the shared input layer
+for context providers and labeling experiments.
+
+A game record consists of two files:
+
+*   `game-<id>.csv`: exported game log containing chat messages, votes, system
+    events, night actions, deaths, exiles, mayor elections, winner information,
+    and timestamps where available
+*   `game-<id>-labels.json`: human trust labels recorded at game checkpoints
+
+`GameRecord.read_from_files(...)` accepts either both paths or a single CSV /
+labels path and infers the sibling file. Loading replaces the current record,
+so repeated loads do not append duplicate phases.
+
+The parser combines both files into a phase-indexed representation. Phases are
+created from exported system events such as dawn, voting start, and voting
+results. Within a phase, rows are ordered by timestamp where possible and by
+known game ordering rules where exact timestamps are missing.
+
+The parser maps exported rows into typed objects:
+
+*   `Message` for player speech in `VillageChat` or `WerewolfChat`
+*   `SystemMessage` for public moderator/system text that is not converted into
+    a more specific event
+*   `Vote` for kill, exile, and mayor votes
+*   `KillEvent`, `ExileEvent`, and `MayorElected` for public outcomes
+*   `SeerRevealed`, `WitchKilled`, and `WitchSaved` for private role actions
+
+It also tracks player roles, life status, mayor status, game ID, winner, and
+human labels. These distinctions are important for context providers: each
+context provider can decide explicitly whether the evaluated player may see
+village chat, werewolf chat, seer information, witch actions, votes, system
+messages, or previous trust labels.
+
+Useful accessors for context providers:
+
+| Method | Description |
+|---|---|
+| `get_game_id()` | Returns the loaded game ID |
+| `get_winner()` | Returns the exported winning team, if available |
+| `get_players()` | Returns a dictionary mapping player names to roles: `{player_name: role}` |
+| `get_phase_count()` | Returns the number of parsed phases |
+| `get_phase_type(phase_idx)` | Returns the phase type for the requested phase: `Morning`, `Day`, or `Evening` |
+| `get_phase_data(phase_idx)` | Returns the parsed events, messages, votes, and role actions for the requested phase |
+| `get_player_status(phase_idx, player_name)` | Returns the `PlayerStatus` (`Alive`, `Mayor`, `Dead`, or `Exiled`) at the end of that phase |
+| `get_labels(phase_idx)` | Returns human labels as `observer -> target -> labels` |
+
+Accessor errors intentionally use normal Python errors (`IndexError` for an
+invalid phase and `KeyError` for an unknown player), while file loading raises
+parser or validation errors with file and row/path information.
+
+
+---
+
 ## Context Structure & Information Filtering
 
 To prevent information leakage, the context builder dynamically filters all phase logs based on the role of the player being evaluated (because Game Results have every event):
