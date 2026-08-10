@@ -3,10 +3,8 @@ import sys
 from pathlib import Path
 from dotenv import load_dotenv
 
-# Load .env file
 load_dotenv()
 
-# Add src to python path
 sys.path.insert(0, str(Path(__file__).parents[1] / "src"))
 
 from wolf_llm_labeling.labeling import label_once
@@ -14,7 +12,7 @@ from wolf_llm_labeling.game_records import GameRecord
 from wolf_llm_labeling.inner_voice import RandomInnerVoice
 from experiments.d import experiment_d
 
-# 1. Initialize ChatOllama
+# Initialize ChatOllama
 try:
     from langchain_ollama import ChatOllama
 except ImportError:
@@ -40,7 +38,7 @@ llm = ChatOllama(
     }
 )
 
-# 2. Load game data
+# Load game data
 game_path = Path(__file__).parents[2] / "results" / "game-records" / "game-OX8OBY-3b3beea1.csv"
 if not game_path.exists():
     print(f"Error: Game record CSV not found at {game_path}")
@@ -49,7 +47,7 @@ if not game_path.exists():
 record = GameRecord()
 record.read_from_files(game_path)
 
-# 3. Setup Experiment D, Variant 2 (Agentic Loop)
+# Setup Experiment D, Variant 2 (Agentic Loop)
 player_name = "Beatrix"
 cutoff = 3
 inner_voice = RandomInnerVoice() # random inner voice stub for demo
@@ -57,7 +55,7 @@ inner_voice = RandomInnerVoice() # random inner voice stub for demo
 print(f"Setting up Experiment D (Variant 2) for player: {player_name} (cutoff: {cutoff})...")
 context, iv_tool = experiment_d(player_name, cutoff, inner_voice, variant=2)
 
-# 4. Run the labeling loop
+# Run the labeling loop
 print("Executing label_once on real Ollama server (Agent Layer)...")
 try:
     labels, call_info = label_once(

@@ -5,7 +5,7 @@ import time
 from pathlib import Path
 from dotenv import load_dotenv
 
-# Load .env file
+
 load_dotenv()
 
 # Check token
@@ -94,7 +94,7 @@ trust_factor_tool = StructuredTool.from_function(
 class ConsoleSpinner:
     def __init__(self, message="Thinking"):
         self.message = message
-        self.spinner_cycle = ["|", "/", "-", "\\"] # New spinner for showing loading
+        self.spinner_cycle = ["|", "/", "-", "\\"] # Spinner for showing loading
         self.running = False
         self._thread = None
 

@@ -1,4 +1,4 @@
-"""Small Ctx inspection script for manual experiments."""
+"""Small Ctx inspection script for manual experiments"""
 
 from __future__ import annotations
 
