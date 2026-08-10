@@ -368,68 +368,154 @@ python print_context.py --player "Blue" --phase 0 --json
 
 ## Game-Comprehension Quiz (`wolf_llm_labeling.quiz`)
 
-A separate benchmark that measures whether an LLM actually **understands** a game
-situation when given the rules and the context — a prerequisite sanity check for
-the trust-labeling engine. It is an objectively gradable quiz: fixed questions
-with known answers, generated deterministically from the game record.
+A leave-one-phase-out benchmark that measures whether an LLM can reconstruct a
+missing part of a Werewolf game. For a six-phase game, a quiz can show phases
+1–4 and 6 to the answer model, ask about phase 5, and give the judge all six
+phases. Both contexts preserve the selected player's information visibility.
 
 The pipeline has two stages:
 
-- **Generate** (no LLM): turn a game record into a quiz of question/answer pairs.
-  Questions come from the rendered phase chronology ("what comes after step N?")
-  and from structured events (votes, deaths, roles, alive counts), including
-  deliberate *trap* questions (e.g. "did you vote in the mayor election?" when the
-  player did not).
-- **Run** (needs an LLM server): show the candidate model the rules + context +
-  each question, collect its answer, then grade it. Grading tries a deterministic
-  string match first and falls back to an **LLM-as-judge** for paraphrased or
-  open-ended answers.
+- **Generate** (no LLM): create a redacted answer context, a complete judge
+  context, and deterministic ground-truth questions about the omitted phase.
+- **Run** (needs an LLM server): `gemma4:31b` reconstructs the target phase. The
+  `mistral-large:123b-instruct-2411-q6_K` judge sees the complete game and grades
+  every answer. Both model IDs remain configurable.
 
 ### Generate a quiz
 
+Phase indices are zero-based. Questions also include the day and phase name.
+
 ```bash
 python src/wolf_llm_labeling/quiz/cli.py generate \
-    --game game-44UT6Y-d59e923e.csv --player Blue --phase 0 \
-    --out quizzes/blue-p0.json
+    --game game-44UT6Y-d59e923e.csv --player Blue --hidden-phase 4 \
+    --out quizzes/blue-h4.json
 
-# Or every alive phase for every player:
+# Or one quiz for every alive phase of every player:
 python src/wolf_llm_labeling/quiz/cli.py generate \
-    --game game-44UT6Y-d59e923e.csv --all-players --all-phases \
+    --game game-44UT6Y-d59e923e.csv --all-players --all-hidden-phases \
     --out quizzes/full.json
 ```
 
-The context format is a variable you can benchmark. Use `--chronology numeric|timestamp`
-and `--list-style plain|dash` when generating to produce quizzes over different
-context presentations, then compare the run accuracy to see which the model
-comprehends best (e.g. whether timestamps or `- ` bullets actually help):
+The answerer and judge receive static player information and phase history, but
+no cumulative `Current Game State` summary that could leak the omitted phase's
+outcomes. They are anchored at the final game phase by default; use
+`--anchor-phase N` to stop both histories earlier. Context formatting remains
+configurable with `--chronology numeric|timestamp` and `--list-style plain|dash`:
 
 ```bash
-python src/wolf_llm_labeling/quiz/cli.py generate --game <file>.csv --player Blue --phase 0 \
-    --chronology timestamp --list-style dash --out quizzes/blue-p0-ts-dash.json
+python src/wolf_llm_labeling/quiz/cli.py generate --game <file>.csv --player Blue \
+    --hidden-phase 4 --chronology timestamp --list-style dash \
+    --out quizzes/blue-h4-ts-dash.json
 ```
 
 ### Run and grade a quiz
 
 ```bash
-python src/wolf_llm_labeling/quiz/cli.py run quizzes/blue-p0.json \
-    --primary-model "gemma4:26b" \
-    --ollama-url "https://gpu.snet.tu-berlin.de/echelon/ollama" \
-    --judge-model "gemma4:26b"
+python src/wolf_llm_labeling/quiz/cli.py run quizzes/blue-h4.json \
+    --ollama-url "https://gpu.snet.tu-berlin.de/echelon/ollama"
 ```
+
+The defaults are `gemma4:31b` for `--primary-model` and
+`mistral-large:123b-instruct-2411-q6_K` for `--judge-model`; pass either flag to
+override it. Each result JSON records both model IDs and the hidden/anchor phase.
+Hidden-phase questions are tagged as `objective` or `speculative`. The generator
+keeps non-duplicative transition/event questions and caps role-visible guessing
+questions at two when available. Reports show accuracy separately for both
+categories so speculative guesses do not obscure objectively reconstructable
+performance.
 
 Results (per-question verdicts + overall/per-type accuracy) are written to
 `results/quiz/<game_file>/quiz-<uuid>.json`. Prompts are swappable via
 `--rules-file`, `--answerer-prompt`, and `--judge-prompt` (defaults live in
-`prompts/quiz/`).
+`prompts/quiz/`). `prompts/quiz/rules.md` is the exact `# Game Rules` section
+from `prompts/system_prompts/pimped_system_prompt.md`.
+
+### Repeated runs and aggregation (statistical robustness)
+
+A single run at `--temperature 0.0` is deterministic. To measure robustness we
+repeat each setup many times at a non-zero temperature and report mean ± std.
+
+```bash
+python src/wolf_llm_labeling/quiz/cli.py run quizzes/blue-h4.json \
+    --ollama-url "https://gpu.snet.tu-berlin.de/echelon/ollama" \
+    --temperature 0.7 \
+    --runs 30 --run-tag blue-h4-numeric-plain
+```
+
+With `--runs > 1` the per-run reports are written to a batch folder
+`results/quiz/<game_file>/<run-tag>-x<runs>/run-001.json …`, plus:
+
+- `aggregate.json` — overall mean/std/min/max, per-question-type mean/std, and
+  per-question stability (fraction of runs each question was answered correctly).
+- `aggregate.md` — the same numbers as ready-to-paste Markdown tables.
+
+Re-aggregate an existing folder (e.g. after adding more runs) with:
+
+```bash
+python src/wolf_llm_labeling/quiz/cli.py aggregate \
+    results/quiz/game-44UT6Y-d59e923e/blue-h4-numeric-plain-x30
+```
+
+### Hidden-phase report benchmark (recommended)
+
+`scripts/run_hidden_phase_benchmark.sh` runs the fixed **6-game × 2-setup**
+matrix (12 quizzes) used for the leave-one-phase-out comprehension report:
+
+| Game | Player | Role | Hidden | Anchor | Kind |
+|---|---|---|---:|---:|---|
+| 44UT6Y | Blue | Werewolf | 3 | 4 | Morning |
+| 44UT6Y | Brown | Seer | 5 | 6 | Evening |
+| 5NOHGS | Cyan | Witch | 0 | 1 | Morning |
+| 5NOHGS | White | Villager | 5 | 6 | Evening |
+| T5AVSL | Orange | Werewolf | 3 | 4 | Morning |
+| T5AVSL | Cyan | Seer | 5 | 6 | Evening |
+| 928B2K | Yellow | Werewolf | 3 | 4 | Morning |
+| 928B2K | Cyan | Villager | 5 | 6 | Evening |
+| VOKIJD | Green | Witch | 0 | 1 | Morning |
+| VOKIJD | Magenta | Villager | 8 | 9 | Evening |
+| CCUTH3 | Beige | Werewolf | 3 | 4 | Morning |
+| CCUTH3 | Purple | Seer | 5 | 6 | Evening |
+
+```bash
+# from the llm-labeling directory
+# 1) Generate all 12 quizzes without calling the LLM
+GENERATE_ONLY=1 ./scripts/run_hidden_phase_benchmark.sh
+
+# 2) Main report run (temp 0.0, one pass each)
+OLLAMA_URL=https://gpu.snet.tu-berlin.de/echelon/ollama \
+  ./scripts/run_hidden_phase_benchmark.sh
+
+# 3) Optional: only a subset of games, or repeated runs at temp 0.7
+GAMES=44UT6Y,5NOHGS RUNS=5 TEMPERATURE=0.7 \
+  OLLAMA_URL=https://gpu.snet.tu-berlin.de/echelon/ollama \
+  ./scripts/run_hidden_phase_benchmark.sh
+```
+
+After runs finish, collect the report table:
+
+```bash
+./.venv/bin/python scripts/summarize_hidden_phase_benchmark.py \
+    --out results/quiz/HIDDEN_PHASE_REPORT.md
+```
+
+
+The 12 experimental setups (each repeated `RUNS` times):
+
+| Game | Player | Hidden phase | Chronology | List style |
+|---|---|---|---|---|
+| game-44UT6Y-d59e923e | Blue | 0 | numeric / timestamp | plain / dash |
+| game-5NOHGS-b57eee98 | Green | 0 | numeric / timestamp | plain / dash |
+| game-T5AVSL-65a9d859 | Orange | 0 | numeric / timestamp | plain / dash |
 
 ### Question types
 
 | Type | Source | Example |
 |---|---|---|
-| `sequence_next` / `sequence_first` | rendered chronology | "What comes after step 1?" |
-| `sequence_last` | rendered chronology (trap) | "What comes after the last step?" → nothing |
-| `self_role` | Static Data block | "What is your own role?" |
-| `alive_count` | phase statuses | "How many players are alive?" |
-| `who_died` / `mayor_elected` | public events | "Who was found dead?" |
-| `own_exile_vote` / `own_mayor_vote` | observer's own visible vote | "Whom did you vote to exile?" |
-| `mayor_vote_trap` | absence of a secret vote | "Did you vote in the mayor election?" → did not vote |
+| `hidden_alive_count_start` / `hidden_alive_count` | surrounding statuses | Alive count before/after |
+| `hidden_death_count` | omitted public events | Number of deaths |
+| `hidden_who_died` / `hidden_who_exiled` | omitted public events | Death or exile |
+| `hidden_mayor_elected` | omitted public event | Mayor result |
+| `hidden_own_exile_vote` / `hidden_own_mayor_vote` | observer-visible action | Own vote |
+| `hidden_wolf_*` / `hidden_own_kill_vote` | Werewolf-visible actions | Kill targets and agreement |
+| `hidden_seer_*` / `hidden_witch_*` | Role-visible actions | Investigation or potion use |
+| `hidden_*_trap` | confirmed absence | No death, election, exile, or own vote |
