@@ -1,6 +1,6 @@
 # Data Analysis — Werewolf Trust Data Scientist Agent
 
-Analyzes how **LLM trust labeling behaves compared to human trust labeles** on the same
+Analyzes how **LLM trust labeling behaves compared to human trust labels** on the same
 werewolf games. Humans annotate trust in the web game;
 the [labeling engine](../llm-labeling/) produces LLM annotations of the same games.
 This package loads both into one unified table and exposes
@@ -43,8 +43,8 @@ make run-tool tool=plot params='{"filters":{"room_codes":["5NOHGS"]},"kind":"his
 
 Starting the agent (via `make run` or `uv run python main.py agent`) constructs an `Orchestrator` which performs the following steps:
 
-- Loads the unified dataset by calling `load_dataset(game_records, llm_results, cache_dir=..., use_ffill=...)` (cache, game-records and llm-results paths, and forward-fill behavior are configurable via the CLI flags).
-- Builds a `ToolRegistry` by calling `build_tool_registry(df, plots_dir=...)` and registers each analysis tool instance.
+- Loads the unified dataset by calling `load_dataset(game_records, llm_results, cache_dir=..., use_ffill=...)`. Cache dir, game-records/llm-results paths, and forward-fill are all configurable via CLI flags: `--game-records`, `--llm-results`, `--cache-dir`, and `--raw-human` (disables forward-fill; see "The unified table" below).
+- Builds a `ToolRegistry` by calling `build_tool_registry(df, plots_dir=..., default_full_y_scale=...)` and registers each analysis tool instance. `--full-y-scale` forces `plot`'s line/box charts onto the full `[0,1]`/`[1,7]` axis instead of auto-scaling to the data — useful for comparing plots across different filters at a glance.
 - Creates the chat model using `build_model()` (model name, temperature, and Ollama settings are taken from CLI args or `core/settings.py` / the `.env`).
 - Wraps registered tools as LangChain StructuredTools and starts the agent loop.
 
@@ -127,6 +127,15 @@ dropped** (with a warning naming the run files). The game never asks players
 to rate themselves, so self-labels can only be labeling-engine glitches — the
 LLM occasionally includes itself in its own target list and rates itself
 NEUTRAL, which would dilute means and put ghost values on heatmap diagonals.
+
+A second step, **forward-fill, is on by default**: for each
+(game, observer, target, trust_type), missing human phases are filled from
+that pair's most recent prior score, falling back to the scale midpoint
+(4/7 trust, 2/3 confidence) if there's no prior score yet, so every phase has
+a value. Pass `--raw-human` (CLI) or `use_ffill=False` (`load_dataset`) to see
+only the raw submitted labels instead — needed for any analysis where a
+missing label should read as "no data" rather than "assumed neutral until
+told otherwise."
 
 | Column(s) | Meaning |
 |---|---|
@@ -328,6 +337,14 @@ Kinds: `line_per_phase` (one game), `line_per_game` (chronological),
 (extremity vs confidence), `heatmap` (observer×target matrix, one game).
 `hue` defaults to `"source"` so human vs LLM overlay; `use_raw=true` is
 rejected when the slice mixes scales.
+
+`heatmap` is the one kind that ignores `hue`: a cell is the mean over
+*everything* in the filtered slice for that observer→target pair, collapsed
+across trust dimensions, sources, and phases alike. Unlike `use_raw`'s scale
+guard, nothing stops you from averaging alignment, information, and
+consistency (or human and LLM) into one misleadingly tidy number. Filter to
+one `trust_type` and one `source` (and expect one game-wide snapshot, not a
+per-phase view) for a heatmap that means what it looks like it means.
 
 Charts are self-describing: trust axes and the heatmap colorbar are labeled
 with the seven likert level names (`VERY_LOW_TRUST` … `NEUTRAL` …
