@@ -369,8 +369,7 @@ Built on `tools/slicing.py`'s `matched_cells`, same identity keys as
 (`filters_a` vs `filters_b`) and correlates extremity with confidence within
 each slice. `extremity = |score_norm - 0.5| * 2` (0 = midpoint, 1 = either
 endpoint) — the fold-to-endpoint distance that makes "1/7 and 7/7 are both
-extreme" one comparable number, and the correlation captures "humans are
-only confident at the extremes, LLMs may not be." Reports per-slice
+extreme" one comparable number. Reports per-slice
 `mean_extremity`, `frac_at_extreme`, and `extremity_confidence_spearman`; the
 delta in extremity between slices (independent Mann-Whitney U, and on
 matched cells a paired Wilcoxon); and an optional `group_by` breakdown. Also

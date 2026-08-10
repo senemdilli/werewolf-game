@@ -1,4 +1,4 @@
-"""Small GameRecord inspection script for manual experiments."""
+"""Small GameRecord inspection script for manual experiments"""
 
 from __future__ import annotations
 
