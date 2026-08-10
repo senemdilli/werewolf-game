@@ -272,6 +272,7 @@ active_llm_provider = contextvars.ContextVar("active_llm_provider", default=None
 active_system_prompt = contextvars.ContextVar("active_system_prompt", default=None)
 chronology_type = contextvars.ContextVar("chronology_type", default="numeric")
 parallel_mode = contextvars.ContextVar("parallel_mode", default=False)
+retry_on_self_label_mode = contextvars.ContextVar("retry_on_self_label_mode", default=False)
 
 
 from typing import Literal

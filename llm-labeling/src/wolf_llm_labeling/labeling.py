@@ -161,6 +161,7 @@ def label_once(
     use_likert: bool = False,
     likert_type: str = "agree-disagree",
     stop_after_report_labels: bool = False,
+    retry_on_self_label: bool = False,
 ) -> tuple[dict[PlayerName, Label], LLMCallInfo]:
     # Find player_name from the context if possible (e.g. from StaticContext or GameNowContext)
     player_name = getattr(context, "player_name", None)
@@ -220,6 +221,16 @@ def label_once(
         # 1. Define report_labels tool callback and tool
         def report_labels_fn(labels: list[Any]) -> str:
             print("      [Tool Call] Agent reported final trust labels.")
+            if retry_on_self_label and player_name:
+                for item in labels:
+                    pname = getattr(item, "player_name", None) or (item.get("player_name") if isinstance(item, dict) else None)
+                    if pname == player_name:
+                        print(f"      Tool Call Warning! LLM included active player '{player_name}' in report_labels. Triggering retry fallback...")
+                        return (
+                            f"Error: You included yourself ('{player_name}') in the report_labels output. "
+                            f"You must ONLY report trust labels for OTHER players in the game (do NOT evaluate yourself)! "
+                            f"Please call report_labels again with labels ONLY for other players."
+                        )
             for item in labels:
                 pname = getattr(item, "player_name", None) or (item.get("player_name") if isinstance(item, dict) else None)
                 lbl = getattr(item, "label", None) or (item.get("label") if isinstance(item, dict) else None)

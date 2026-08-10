@@ -55,6 +55,7 @@ python .\src\wolf_llm_labeling\main.py <game_record.json> <game_record.csv> [opt
 | `--runs` | `int` | Optional. Number of independent repeated runs to execute (default: `1`). Useful for gathering averages |
 | `--chronology` | `str` | Optional. Chronology formatting type: `numeric` (step numbers, default) or `timestamp` (for time prefixes) |
 | `--stop-after-report-labels` | `flag` | Optional. If set, immediately halts the agentic loop after `report_labels` tool execution, skipping final response generation to save runtime (default: `false`) |
+| `--retry-on-self-label` | `flag` | Optional. If set, rejects tool call, and requests LLM retry if the model accidentally includes itself in `report_labels` output (default: `false`) |
 
 
 ---
