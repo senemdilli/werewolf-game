@@ -4,10 +4,7 @@ Answers two related spec questions about *how* two slices of the trust table
 label, not just what they score on average:
 
  "Compare how extreme the labelling of the LLMs are compared to the humans"
-  (humans cluster near the midpoint; LLMs often hit the endpoints).
-- "Find correlation between likert value and confidence, human vs LLM"
-  (humans are confident when they commit to an extreme score; LLM confidence
-  may not track how extreme its own score is).
+ "Find correlation between likert value and confidence, human vs LLM"
 
 """
 
