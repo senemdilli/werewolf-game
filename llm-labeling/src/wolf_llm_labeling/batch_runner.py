@@ -34,6 +34,8 @@ def main():
     parser.add_argument("--parallel", type=int, nargs="?", const=2, default=None, help="Number of parallel threads for player labeling")
     parser.add_argument("--runs", type=int, default=1, help="Number of times to repeat each run (default: 1)")
     parser.add_argument("--chronology", type=str, default="numeric", choices=["numeric", "timestamp"], help="Chronology formatting type")
+    parser.add_argument("--stop-after-report-labels", action="store_true", help="Stop agentic loop immediately after report_labels tool call")
+    parser.add_argument("--retry-on-self-label", action="store_true", help="Reject self-labeling tool calls and request LLM retry")
     
     args = parser.parse_args()
     
@@ -61,6 +63,9 @@ def main():
         par = config.get("parallel", args.parallel)
         default_runs_count = config.get("runs_count", config.get("repeat", args.runs))
         chrono = config.get("chronology", args.chronology)
+        stop_after = config.get("stop_after_report_labels", args.stop_after_report_labels)
+        retry_self = config.get("retry_on_self_label", args.retry_on_self_label)
+
         
         for run in config.get("runs", []):
             game_pattern = run.get("game_pattern", "game-*.csv")
@@ -107,6 +112,8 @@ def main():
                             likert_type=run.get("likert_type", l_type),
                             chronology=run_chrono,
                             parallel=run.get("parallel", par),
+                            stop_after_report_labels=run.get("stop_after_report_labels", stop_after),
+                            retry_on_self_label=run.get("retry_on_self_label", retry_self),
                         )
                     except Exception as e:
                         print(f"Error in batch run for {csv_path} (iteration {r_idx + 1}): {e}", file=sys.stderr)
@@ -154,6 +161,8 @@ def main():
                             likert_type=args.likert_type,
                             chronology=args.chronology,
                             parallel=args.parallel,
+                            stop_after_report_labels=args.stop_after_report_labels,
+                            retry_on_self_label=args.retry_on_self_label,
                         )
                     except Exception as e:
                         print(f"Error in default batch run for {csv_path}: {e}", file=sys.stderr)
