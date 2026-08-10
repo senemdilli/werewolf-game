@@ -57,3 +57,28 @@ Each subproject manages its own configuration via a `.env` file located in its r
 - **[`design/`](./design)**: Game design concepts & rules, initial requirements, prompt structure proposals, labeling engine architecture specs and trust measurement models
 - **[`docs/`](./docs)**: Dataset schemas, CSV event documentation and export specifications
 
+---
+
+## Repository Analytics & Contributor History
+
+To inspect the repository's commit history, line metrics, and contributor statistics, run the following commands:
+
+- **Repository-wide commit distribution per contributor** *(Note: Commit counts depend on individual commit size, scope, and granularity)*:
+  ```bash
+  git shortlog -sn --no-merges
+  ```
+
+- **Subproject-specific commit distribution (e.g., for `llm-labeling/`, `werewolf-game/` or `data-analysis/`):**
+  ```bash
+  git shortlog -sn --no-merges -- llm-labeling/
+  ```
+
+- **Detailed line changes and summary for a specific contributor:**
+  ```bash
+  git log --author="<Author Name>" --shortstat
+  ```
+
+- **Chronological commit log with author names for a specific module:**
+  ```bash
+  git log --pretty=format:"%h - %an: %s" -- llm-labeling/
+  ```

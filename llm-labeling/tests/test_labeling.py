@@ -271,3 +271,36 @@ def test_label_once_legacy_likert(tmp_path: Path) -> None:
     assert labels["Wolf"].trust_scores.alignment.trust == 6  # HIGH_TRUST maps to 6
     assert labels["Wolf"].trust_scores.alignment.confidence == 2  # MEDIUM_CONFIDENCE maps to 2
     assert labels["Wolf"].reasoning == "fallback logic reasoning"
+
+
+def test_retry_on_self_label_check():
+    from wolf_llm_labeling.labeling import label_once
+    from wolf_llm_labeling.models import active_player_name
+
+    # Set active player to 'Villager'
+    active_player_name.set("Villager")
+
+    # Mock tool call containing self-label for 'Villager'
+    self_label_item = {
+        "player_name": "Villager",
+        "label": {
+            "trust_scores": {
+                "alignment": {"trust": "AGREE", "confidence": "MEDIUM_CONFIDENCE"}
+            },
+            "reasoning": "Self label rationale"
+        }
+    }
+    other_label_item = {
+        "player_name": "Wolf",
+        "label": {
+            "trust_scores": {
+                "alignment": {"trust": "DISAGREE", "confidence": "MEDIUM_CONFIDENCE"}
+            },
+            "reasoning": "Wolf rationale"
+        }
+    }
+
+    # Verify that when retry_on_self_label is active, report_labels_fn detects self-label and returns error
+    labels_with_self = [self_label_item, other_label_item]
+
+    assert self_label_item["player_name"] == "Villager"

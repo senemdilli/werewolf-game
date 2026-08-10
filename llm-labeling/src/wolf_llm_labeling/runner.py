@@ -176,6 +176,7 @@ def run_labeling_experiment(
     parallel: bool = False,
     runs: int = 1,
     stop_after_report_labels: bool = False,
+    retry_on_self_label: bool = False,
 ) -> list[str]:
     """Execute a labeling experiment for game records and save the results."""
     import time
@@ -383,10 +384,11 @@ def run_labeling_experiment(
     written_files = []
 
     def _process_player(player):
-        from wolf_llm_labeling.models import active_player_name, parallel_mode, chronology_type
+        from wolf_llm_labeling.models import active_player_name, parallel_mode, chronology_type, retry_on_self_label_mode
         active_player_name.set(player)
         chronology_type.set(chronology)
         parallel_mode.set(parallel)
+        retry_on_self_label_mode.set(retry_on_self_label)
 
         existing_json = [f for f in base_out_path.glob(f"{player}-*.json") if not f.name.endswith("-trace.md")]
         if existing_json:
@@ -446,6 +448,7 @@ def run_labeling_experiment(
                                 use_likert=use_likert,
                                 likert_type=likert_type,
                                 stop_after_report_labels=stop_after_report_labels,
+                                retry_on_self_label=retry_on_self_label,
                             )
                             labels, call_info = phase_future.result(timeout=phase_timeout_seconds)
                         break
