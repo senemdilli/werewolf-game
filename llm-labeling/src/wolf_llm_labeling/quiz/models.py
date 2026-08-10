@@ -28,6 +28,7 @@ class QuizQuestion:
     question: str
     acceptable_answers: list[str]
     grading: GradingMode = "auto"
+    category: str = "objective"
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -40,15 +41,17 @@ class QuizQuestion:
             question=data["question"],
             acceptable_answers=list(data["acceptable_answers"]),
             grading=data.get("grading", "auto"),
+            category=data.get("category", "objective"),
         )
 
 
 @dataclass
 class Quiz:
-    """All questions about one game situation (one player, one phase).
+    """All questions about one game situation from one player's perspective.
 
     `context` is the exact rendered game context the candidate model will be
-    shown, so the quiz is fully self-contained and reproducible.
+    shown. Hidden-phase quizzes additionally store the complete `judge_context`
+    so answering and grading are fully self-contained and reproducible.
     """
 
     game_file: str
@@ -56,6 +59,10 @@ class Quiz:
     player_name: str
     phase_idx: int
     context: str
+    quiz_mode: str = "standard"
+    hidden_phase_idx: int | None = None
+    anchor_phase_idx: int | None = None
+    judge_context: str | None = None
     questions: list[QuizQuestion] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
@@ -65,6 +72,10 @@ class Quiz:
             "player_name": self.player_name,
             "phase_idx": self.phase_idx,
             "context": self.context,
+            "quiz_mode": self.quiz_mode,
+            "hidden_phase_idx": self.hidden_phase_idx,
+            "anchor_phase_idx": self.anchor_phase_idx,
+            "judge_context": self.judge_context,
             "questions": [q.to_dict() for q in self.questions],
         }
 
@@ -76,6 +87,10 @@ class Quiz:
             player_name=data["player_name"],
             phase_idx=data["phase_idx"],
             context=data["context"],
+            quiz_mode=data.get("quiz_mode", "standard"),
+            hidden_phase_idx=data.get("hidden_phase_idx"),
+            anchor_phase_idx=data.get("anchor_phase_idx"),
+            judge_context=data.get("judge_context"),
             questions=[QuizQuestion.from_dict(q) for q in data.get("questions", [])],
         )
 
@@ -116,6 +131,7 @@ class QuestionResult:
     correct: bool
     graded_by: str  # "exact" | "judge"
     judge_reason: str = ""
+    category: str = "objective"
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)

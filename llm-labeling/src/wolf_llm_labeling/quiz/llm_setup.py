@@ -16,29 +16,17 @@ from typing import Any
 _PROJECT_ROOT = Path(__file__).resolve().parents[3]
 _DEFAULT_PROMPT_DIR = _PROJECT_ROOT / "prompts" / "quiz"
 
-DEFAULT_ANSWERER_SYSTEM = (
-    "You are answering factual questions about a single game of Werewolf.\n"
-    "Answer ONLY using the provided rules and game context. Be concise and "
-    "direct. If the information needed is not present in the context, answer "
-    'exactly: "Not stated in the context". Do not invent votes, deaths, roles, '
-    "or events that are not shown.\n\nRules of the game:\n${rules}"
-)
-DEFAULT_JUDGE_SYSTEM = (
-    "You are a strict grader comparing a candidate answer to reference answers "
-    "for a question about a Werewolf game. Mark the candidate correct if it "
-    "matches the meaning of ANY reference answer, ignoring wording, "
-    "capitalization, and punctuation. A different player name, number, or fact "
-    "is incorrect."
-)
-DEFAULT_RULES = (
-    "8 players: 2 werewolves, 1 seer, 1 witch, 4 villagers. Werewolves kill one "
-    "player each night and win when they equal or outnumber the villagers. The "
-    "village wins when all werewolves are exiled. Each day the village may elect "
-    "a mayor (double vote), discusses, then votes to exile one player (whose role "
-    "is revealed). At night the seer learns one player's faction, the werewolves "
-    "vote a victim, then the witch may heal or poison. Individual mayor votes are "
-    "secret; only the result is public."
-)
+
+def _bundled_prompt(filename: str) -> str:
+    """Load a required prompt shipped with the quiz benchmark."""
+    return (_DEFAULT_PROMPT_DIR / filename).read_text(encoding="utf-8")
+
+
+# Keep the public constants for callers/tests, but source them from the actual
+# prompt files so CLI defaults and documented prompts cannot silently diverge.
+DEFAULT_ANSWERER_SYSTEM = _bundled_prompt("answerer_system.md")
+DEFAULT_JUDGE_SYSTEM = _bundled_prompt("judge_system.md")
+DEFAULT_RULES = _bundled_prompt("rules.md")
 
 
 def load_prompt(path: str | Path | None, default: str) -> str:
@@ -57,11 +45,20 @@ def default_prompt_dir() -> Path:
     return _DEFAULT_PROMPT_DIR
 
 
-def build_chat_model(model_name: str, ollama_url: str, temperature: float = 0.0) -> Any:
+def build_chat_model(
+    model_name: str,
+    ollama_url: str,
+    temperature: float = 0.0,
+    request_timeout: float | None = 300.0,
+) -> Any:
     """Construct a langchain chat model for Ollama or an OpenAI-compatible server.
 
     Mirrors the detection logic used by the trust-labeling runner: URLs that look
     like LM Studio (`/v1` or port 1234) use the OpenAI-compatible client.
+
+    `request_timeout` (seconds) bounds a single request so a hung or queued call
+    fails fast instead of blocking an entire batch indefinitely. Pass ``None`` to
+    disable the timeout.
     """
     token = os.getenv("OLLAMA_API_KEY")
     is_openai = "1234" in ollama_url or "/v1" in ollama_url
@@ -77,6 +74,8 @@ def build_chat_model(model_name: str, ollama_url: str, temperature: float = 0.0)
             temperature=temperature,
             base_url=ollama_url,
             api_key=token or "lm-studio",
+            timeout=request_timeout,
+            max_retries=2,
         )
 
     try:
@@ -84,7 +83,13 @@ def build_chat_model(model_name: str, ollama_url: str, temperature: float = 0.0)
     except ImportError:  # pragma: no cover - optional dependency
         from langchain_community.chat_models import ChatOllama  # type: ignore
 
-    client_kwargs = {"headers": {"Authorization": f"Bearer {token}"}} if token else {}
+    client_kwargs: dict[str, Any] = {}
+    if token:
+        client_kwargs["headers"] = {"Authorization": f"Bearer {token}"}
+    if request_timeout is not None:
+        # Passed through to the underlying ollama.Client -> httpx.Client(timeout=...).
+        client_kwargs["timeout"] = request_timeout
+
     return ChatOllama(
         model=model_name,
         temperature=temperature,

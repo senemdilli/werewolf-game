@@ -2,7 +2,10 @@ from __future__ import annotations
 
 from typing import Any
 
+import pytest
+
 from wolf_llm_labeling.quiz.grading import (
+    _invoke_with_retry,
     answer_question,
     exact_match,
     grade_answer,
@@ -43,6 +46,7 @@ class MockJudgeModel:
         self.verdict = verdict
         self.plain = plain
         self.invoked = False
+        self.calls: list[Any] = []
 
     def with_structured_output(self, schema: Any) -> _StructuredJudge:
         if self.verdict is None:
@@ -51,6 +55,7 @@ class MockJudgeModel:
 
     def invoke(self, messages: Any) -> _Resp:
         self.invoked = True
+        self.calls.append(messages)
         return _Resp(self.plain)
 
 
@@ -99,6 +104,23 @@ def test_judge_text_fallback() -> None:
     assert correct2 is True
 
 
+def test_judge_receives_complete_game_context() -> None:
+    model = MockJudgeModel(verdict=None, plain="CORRECT")
+    correct, _ = judge(
+        model,
+        "sys",
+        "what happened?",
+        ["the event"],
+        "the event",
+        judge_context="FULL-PHASE-HISTORY",
+    )
+
+    assert correct is True
+    human_message = model.calls[0][1][1]
+    assert "Complete game context:" in human_message
+    assert "FULL-PHASE-HISTORY" in human_message
+
+
 def test_grade_answer_exact_short_circuits_judge() -> None:
     question = QuizQuestion(
         id="q1",
@@ -117,16 +139,64 @@ def test_grade_answer_exact_short_circuits_judge() -> None:
 def test_grade_answer_judge_only_always_calls_judge() -> None:
     question = QuizQuestion(
         id="q2",
-        type="mayor_vote_trap",
-        question="did you vote?",
-        acceptable_answers=["did not vote"],
+        type="sequence_last",
+        question="what comes after the last step?",
+        acceptable_answers=["nothing"],
         grading="judge_only",
     )
     judge_model = MockJudgeModel(verdict=JudgeVerdict(correct=True, reason="ok"))
     # Even though the candidate would exact-match, judge_only routes to the judge.
     correct, graded_by, reason = grade_answer(
-        question, "did not vote", judge_model, "sys"
+        question, "nothing", judge_model, "sys"
     )
     assert correct is True
     assert graded_by == "judge"
     assert reason == "ok"
+
+
+def test_grade_answer_mayor_trap_third_person_exact_match() -> None:
+    question = QuizQuestion(
+        id="q3",
+        type="mayor_vote_trap",
+        question="Did you cast a vote in the mayor election this phase?",
+        acceptable_answers=[
+            "I did not cast a vote in the mayor election.",
+            "did not vote",
+            "no",
+            "Green did not vote in the mayor election.",
+            "Green did not vote",
+        ],
+        grading="auto",
+    )
+    judge_model = MockJudgeModel(verdict=JudgeVerdict(correct=False, reason="x"))
+    correct, graded_by, _ = grade_answer(
+        question,
+        "Green did not vote in the mayor election.",
+        judge_model,
+        "sys",
+    )
+    assert correct is True
+    assert graded_by == "exact"
+    assert judge_model.invoked is False
+
+
+def test_invoke_with_retry_succeeds_after_failures() -> None:
+    calls = {"n": 0}
+
+    def flaky(_messages):
+        calls["n"] += 1
+        if calls["n"] < 3:
+            raise TimeoutError("transient")
+        return _Resp("ok")
+
+    result = _invoke_with_retry(flaky, [], attempts=3, backoff=0.0)
+    assert result.content == "ok"
+    assert calls["n"] == 3
+
+
+def test_invoke_with_retry_reraises_after_exhausting() -> None:
+    def always_fail(_messages):
+        raise TimeoutError("nope")
+
+    with pytest.raises(TimeoutError):
+        _invoke_with_retry(always_fail, [], attempts=2, backoff=0.0)

@@ -5,10 +5,26 @@ from pathlib import Path
 from wolf_llm_labeling.game_records import GameRecord
 from wolf_llm_labeling.quiz.generate import (
     _parse_top_level_steps,
+    generate_hidden_phase_quiz,
     generate_quiz,
     generate_quiz_set,
+    phase_label,
     render_context,
+    render_hidden_phase_contexts,
 )
+
+
+def test_quiz_rules_match_pimped_game_rules() -> None:
+    project_root = Path(__file__).resolve().parents[1]
+    pimped = (
+        project_root / "prompts" / "system_prompts" / "pimped_system_prompt.md"
+    ).read_text(encoding="utf-8")
+    rules = (project_root / "prompts" / "quiz" / "rules.md").read_text(
+        encoding="utf-8"
+    )
+    start = pimped.index("# Game Rules")
+    end = pimped.index("\n# Current Game", start)
+    assert rules.strip() == pimped[start:end].strip()
 
 
 def _load_record(tmp_path: Path) -> GameRecord:
@@ -81,6 +97,81 @@ def test_generate_quiz_set_serialization_roundtrip(tmp_path: Path) -> None:
     restored = QuizSet.from_dict(quiz_set.to_dict())
     assert restored.quizzes[0].player_name == "Villager"
     assert restored.quizzes[0].questions[0].id == quiz_set.quizzes[0].questions[0].id
+
+
+def test_hidden_phase_context_is_redacted_only_for_answerer(tmp_path: Path) -> None:
+    record = _load_record(tmp_path)
+    answerer_context, judge_context = render_hidden_phase_contexts(
+        record, "Villager", hidden_phase_idx=0
+    )
+
+    assert "Night 1 begins." not in answerer_context
+    assert "Night 1 begins." in judge_context
+    assert "intentionally omitted" in answerer_context
+    assert "No phase is omitted" in judge_context
+    assert "Static Data" in answerer_context
+    assert "Static Data" in judge_context
+    assert "Current Game State" not in answerer_context
+    assert "Current Game State" not in judge_context
+
+
+def test_hidden_phase_labels_are_clear(tmp_path: Path) -> None:
+    record = _load_record(tmp_path)
+    assert phase_label(record, 1) == "Day 1 discussion phase (phase index 1)"
+
+
+def test_generate_hidden_phase_quiz_metadata_and_questions(tmp_path: Path) -> None:
+    record = _load_record(tmp_path)
+    quiz = generate_hidden_phase_quiz(
+        record, "Villager", hidden_phase_idx=0, game_file="game-test"
+    )
+
+    assert quiz.quiz_mode == "hidden_phase"
+    assert quiz.phase_idx == 0
+    assert quiz.hidden_phase_idx == 0
+    assert quiz.anchor_phase_idx == record.get_phase_count() - 1
+    assert quiz.judge_context is not None
+    assert "Night 1 begins." not in quiz.context
+    assert "Night 1 begins." in quiz.judge_context
+    assert quiz.questions
+    assert all(question.grading == "judge_only" for question in quiz.questions)
+    assert all("-h0-" in question.id for question in quiz.questions)
+    assert any(question.type == "hidden_who_died" for question in quiz.questions)
+    assert any(question.type.endswith("_trap") for question in quiz.questions)
+    assert not any(
+        question.type.startswith("hidden_sequence_") for question in quiz.questions
+    )
+
+
+def test_hidden_phase_quiz_adds_werewolf_visible_actions(tmp_path: Path) -> None:
+    record = _load_record(tmp_path)
+    quiz = generate_hidden_phase_quiz(
+        record, "Wolf", hidden_phase_idx=0, game_file="game-test"
+    )
+    by_type = {question.type: question for question in quiz.questions}
+
+    assert len(quiz.questions) == 8
+    assert sum(q.category == "objective" for q in quiz.questions) == 6
+    assert sum(q.category == "speculative" for q in quiz.questions) == 2
+    assert by_type["hidden_alive_count_start"].acceptable_answers == ["4"]
+    assert by_type["hidden_death_count"].acceptable_answers == ["1"]
+    assert by_type["hidden_wolf_kill_targets"].acceptable_answers == ["Seer"]
+
+
+def test_generate_all_hidden_phases_for_alive_player(tmp_path: Path) -> None:
+    record = _load_record(tmp_path)
+    quiz_set = generate_quiz_set(
+        record,
+        game_file="game-test",
+        players=["Villager"],
+        hidden_phases=[],
+    )
+
+    assert len(quiz_set.quizzes) >= 1
+    assert all(quiz.quiz_mode == "hidden_phase" for quiz in quiz_set.quizzes)
+    assert [quiz.hidden_phase_idx for quiz in quiz_set.quizzes] == sorted(
+        quiz.hidden_phase_idx for quiz in quiz_set.quizzes
+    )
 
 
 def test_generate_quiz_werewolf_sees_kill_vote(tmp_path: Path) -> None:
