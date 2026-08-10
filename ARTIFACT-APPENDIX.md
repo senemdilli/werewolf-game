@@ -177,7 +177,7 @@ Mistral trusts almost everyone highly, and Qwen sits closest to the human values
 in game-5NOHGS. Independent variables: model and phase; dependent variable:
 average alignment trust. This is shown in Section 5.1, Table 2 (game-5NOHGS) and
 Table 3 (game-UBY0T7). Reproduced by
-[Experiment 2](#experiment-2-reproduce-the-paper-tables).
+[Stage 2](#stage-2-reproduce-the-paper-tables).
 
 #### Main Result 2: Giving the model its own previous scores raises confidence
 
@@ -186,7 +186,7 @@ B, cutoff 3), its confidence is higher than with chat logs only (Experiment A,
 cutoff 0). Independent variable: Experiment A versus B; dependent variable:
 average confidence. Shown in Appendix D.1, Table 9 (game-5NOHGS) and Table 10
 (game-UBY0T7). Reproduced by
-[Experiment 2](#experiment-2-reproduce-the-paper-tables).
+[Stage 2](#stage-2-reproduce-the-paper-tables).
 
 #### Main Result 3: The Human Historic Inner Voice moves labels toward human values
 
@@ -197,11 +197,11 @@ Experiment D). Independent variables: experiment (D, E, F) and model; dependent
 variables: average alignment trust and number of tool calls. The call counts are
 in Section 5.1, Table 4; the alignment values for Experiments D to F are in
 Appendix D.3, Table 12. Reproduced by
-[Experiment 2](#experiment-2-reproduce-the-paper-tables).
+[Stage 2](#stage-2-reproduce-the-paper-tables).
 
-### Experiments
+### Stages
 
-#### Experiment 1: Generate LLM trust labels
+#### Stage 1: Generate LLM trust labels
 
 - Time: about 5 minutes of work plus 20 to 90 minutes of compute per game,
   experiment, and model.
@@ -243,9 +243,9 @@ Each run writes one result JSON and one Markdown trace per player under
 `results/llm-labeling/<experiment>/<game>/<model>/`, in the same format as the
 files already in the repository. `--experiment` is required; the models are not
 deterministic at temperature above 0, so the numbers vary a little between runs.
-This experiment supports Main Results 1 to 3.
+This stage supports Main Results 1 to 3.
 
-#### Experiment 2: Reproduce the paper tables
+#### Stage 2: Reproduce the paper tables
 
 - Time: about 5 minutes of work plus under 5 minutes of compute.
 - Storage: none beyond the repository.
@@ -278,9 +278,9 @@ python count_inner_voice_usage.py --game UBY0T7
 Each script prints a per-phase table to the terminal. For example,
 `compute_alignment_trust.py 5NOHGS -e a b` prints the human column together with
 Gemma, Qwen, and Mistral for Experiments A and B, which matches Table 2
-(game-5NOHGS) in the paper. This experiment supports Main Results 1 to 3.
+(game-5NOHGS) in the paper. This stage supports Main Results 1 to 3.
 
-#### Experiment 3: Query the Data Analysis Agent
+#### Stage 3: Query the Data Analysis Agent
 
 - Time: about 5 minutes of work plus 1 to 2 minutes of compute per question.
 - Storage: none beyond the repository.
@@ -313,8 +313,22 @@ uv run python main.py tool compare_data --params '{
   "group_by": ["trust_type"], "correlate": true}'
 ```
 
+To create a plot, call the `plot` tool. This example renders the
+human-versus-LLM alignment-trust line chart for game-UBY0T7 (the plot in
+Appendix C.5, Figure 2) to a PNG under `results/data-analysis/plots/`:
+
+```bash
+uv run python main.py tool plot --params '{
+  "filters": {"room_codes": ["UBY0T7"], "trust_types": ["alignment"]},
+  "kind": "line_per_phase"}'
+```
+
+The agent produces the same plot from a plain-English request, for example
+`uv run python main.py agent --question "Plot alignment trust across phases for
+game UBY0T7, comparing humans and LLMs."`
+
 The agent answers in the terminal after a few tool calls, grounded in the tool
-outputs; any plots are written to `results/data-analysis/plots/`. This experiment
+outputs; any plots are written to `results/data-analysis/plots/`. This stage
 shows the Data Analysis Agent contribution.
 
 ## Limitations
